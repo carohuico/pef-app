@@ -217,7 +217,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Caja visual idéntica al wireframe
 st.markdown("""
 <div class="uploader-mock" id="mock-uploader">
     <div class="uploader-icon">

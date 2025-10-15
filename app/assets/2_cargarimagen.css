@@ -1,113 +1,7 @@
-/* Styles moved from app/pages/2_CargarImagen.py */
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 /* Apply font and page background only to html/body; avoid forcing background on every st-* element */
-html, body {
-	font-family: 'Poppins', sans-serif;
-	background-color: #F0F2F6; /* page gray */
-	color: #1a1a1a;
-	height: 100%;
-	overflow: hidden; /* avoid global scroll */
-}
-[class*="st-"] {
-	font-family: 'Poppins', sans-serif;
-	color: #1a1a1a;
-	background: transparent; 
-}
-#MainMenu, header, footer {visibility: hidden;}
 
-.page-header {
-	font-size: 2.4rem;
-	font-weight: 700;
-	margin: 0;
-	display: inline-block;
-	transform: translateY(-36px);
-	z-index: 25;
-}
-
-section.main > div.block-container,
-div.stMainBlockContainer.block-container,
-div.block-container.st-emotion {
-	height: calc(100vh - 4rem);
-	box-sizing: border-box; 
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between; 
-	align-items: stretch;
-	background: #ffffff !important;
-	border-radius: 18px !important;
-	-webkit-box-shadow: 0 6px 18px rgba(0,0,0,0.2), 0 18px 50px rgba(0,0,0,0.2) !important;
-	box-shadow: 0 6px 18px rgba(0,0,0,0.2), 0 18px 50px rgba(0,0,0,0.2) !important;
-	border: 1px solid rgba(0,0,0,0.03) !important;
-	padding: 2.5rem !important;
-	margin: 2rem!important;
-	width: calc(100% - 4rem) !important;
-	z-index: 20 !important;
-}
-
-/* Ensure parent containers don't clip the card shadow */
-div.stApp, section.main, main, body {
-	overflow: hidden !important; /* evita barras de scroll */
-}
-/* Force sidebar and app wrapper background to white to override dark theme */
-aside[role="complementary"],
-div[data-testid="stSidebar"],
-div.css-1lsmgbg, /* fallback class names used by streamlit for sidebar */
-div.stApp, section.main {
-	background: #ffffff !important;
-}
-@media (max-width: 1100px){
-	.content-card {padding: 2.25rem 2rem 3rem 2rem;}
-	.page-header {font-size: 2.1rem;}
-}
-
-
-/* STEPPER */
-.stepper {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-start; 
-	margin-bottom: 1rem; /* compacta para caber sin scroll */
-	position: relative;
-	padding-top: 0px; 
-}
-.stepper::before {
-	content: '';
-	position: absolute;
-	top: 30px; 
-	left: 5%;
-	right: 5%;
-	height: 2px;
-	background-color: #E0E0E0;
-	z-index: 0;
-}
-.step {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	position: relative;
-	z-index: 1;
-	width: 100px;
-}
-.circle {
-	height: 60px;
-	width: 60px;
-	box-sizing: border-box; 
-	border-radius: 50%;
-	border: 2px solid #E0E0E0;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	font-weight: 600;
-	font-size: 1rem;
-	margin-bottom: 0.5rem;
-	background-color: #fff;
-	color: #A0A0A0;
-}
-.step-text { font-size: 0.9rem; font-weight: 500; color: #888; }
-.step.done .circle { background-color: #000; border-color: #000; color: #FFF; }
-.step.active .circle { border-color: #000; color: #000; }
-.step.done .step-text, .step.active .step-text { color: #000; }
 
 /* --- MOCK UPLOADER --- */
 .uploader-mock {
@@ -122,7 +16,7 @@ div.stApp, section.main {
 	text-align: center;
 	transition: all 0.3s;
 	cursor: pointer;
-    margin-top: 2rem;
+    margin-top: 1rem;
 }
 .uploader-mock:hover {
 	border-color: #FFD751;
@@ -187,61 +81,3 @@ div.stApp, section.main {
 	cursor: pointer;
 }
 .modal-content button:hover { background-color: #FFD751; }
-
-/* --- (Back / Next) --- */
-.nav-footer {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-top: auto; /* empuja al fondo del contenedor */
-	padding: 0 0.25rem;
-}
-
-.nav-footer a{
-    color: #000000;
-    text-decoration: none;
-}
-
-.btn {
-    font-weight: 600;
-    border-radius: 12px;
-    padding: 0.5rem 4rem;
-    cursor: pointer;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-}
-
-.btn-back {
-   background: #f8f8f8;
-    color: #1A1A1A;
-    border: .5px solid #000000;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-    min-width: 130px;
-}
-.btn-back:hover {
-    background: #e0e0e0;
-    border-color: #000000;
-    color: #000000;
-    
-}
-
-.btn-next {
-    background: #FFE451;
-    color: #000000;
-    border: none;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
-    min-width: 130px;
-}
-.btn-next:hover {
-    background: #FFD626;
-}
-
-/* Ajuste para ambos */
-.btn:active {
-    transform: scale(0.98);
-}

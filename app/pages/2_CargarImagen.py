@@ -2,6 +2,7 @@ import sys, os
 from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import bootstrap
+from streamlit_js_eval import streamlit_js_eval
 
 from config.settings import ALLOWED_EXTENSIONS, TEMP_DIR, STD_DIR
 from services.image_preprocess import estandarizar_imagen
@@ -70,7 +71,7 @@ with st.container():
             st.markdown('<label>Nombre(s) del evaluado <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
             st.markdown('<input type="text" class="custom-input" id="nombre"/>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
-        
+            
         with col2:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Apellido(s) del evaluado</label>', unsafe_allow_html=True)
@@ -90,10 +91,10 @@ with st.container():
             st.markdown('<label>Sexo <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
             st.markdown(
                 '<select class="custom-input" id="sexo">\n'
-                '  <option selected>Selecciona una opción</option>\n'
-                '  <option class="option">Masculino</option>\n'
-                '  <option class="option">Femenino</option>\n'
-                '  <option class="option">Otro</option>\n'
+                '  <option value="" selected>Selecciona una opción</option>\n'
+                '  <option value="Masculino">Masculino</option>\n'
+                '  <option value="Femenino">Femenino</option>\n'
+                '  <option value="Otro">Otro</option>\n'
                 '</select>',
                 unsafe_allow_html=True
             )
@@ -106,12 +107,12 @@ with st.container():
             st.markdown('<label>Estado civil</label>', unsafe_allow_html=True)
             st.markdown(
                 '<select class="custom-input" id="estado_civil">\n'
-                '  <option selected>Selecciona una opción</option>\n'
-                '  <option class="option">Soltero/a</option>\n'
-                '  <option class="option">Casado/a</option>\n'
-                '  <option class="option">Divorciado/a</option>\n'
-                '  <option class="option">Viudo/a</option>\n'
-                '  <option class="option">Unión libre</option>\n'
+                '  <option value="" selected>Selecciona una opción</option>\n'
+                '  <option value="Soltero(a)">Soltero(a)</option>\n'
+                '  <option value="Casado(a)">Casado(a)</option>\n'
+                '  <option value="Divorciado(a)">Divorciado(a)</option>\n'
+                '  <option value="Viudo(a)">Viudo(a)</option>\n'
+                '  <option value="Separado(a)">Separado(a)</option>\n'
                 '</select>',
                 unsafe_allow_html=True
             )
@@ -122,12 +123,16 @@ with st.container():
             st.markdown('<label>Escolaridad</label>', unsafe_allow_html=True)
             st.markdown(
                 '<select class="custom-input" id="escolaridad">\n'
-                '  <option selected>Selecciona una opción</option>\n'
-                '  <option class="option">Primaria</option>\n'
-                '  <option class="option">Secundaria</option>\n'
-                '  <option class="option">Preparatoria</option>\n'
-                '  <option class="option">Licenciatura</option>\n'
-                '  <option class="option">Posgrado</option>\n'
+                '  <option value="" selected>Selecciona una opción</option>\n'
+                '  <option value="Ninguno">Ninguno</option>\n'
+                '  <option value="Primaria">Primaria</option>\n'
+                '  <option value="Secundaria">Secundaria</option>\n'
+                '  <option value="Preparatoria o Bachillerato">Preparatoria o Bachillerato</option>\n'
+                '  <option value="Técnico">Técnico</option>\n'
+                '  <option value="Licenciatura">Licenciatura</option>\n'
+                '  <option value="Maestría">Maestría</option>\n'
+                '  <option value="Doctorado">Doctorado</option>\n'
+                '  <option value="Posgrado">Posgrado</option>\n'
                 '</select>',
                 unsafe_allow_html=True
             )
@@ -140,13 +145,15 @@ with st.container():
             st.markdown('<label>Ocupación</label>', unsafe_allow_html=True)
             st.markdown(
                 '<select class="custom-input" id="ocupacion">\n'
-                '  <option selected>Selecciona una opción</option>\n'
-                '  <option class="option">Estudiante</option>\n'
-                '  <option class="option">Empleado</option>\n'
-                '  <option class="option">Independiente</option>\n'
-                '  <option class="option">Desempleado</option>\n'
-                '  <option class="option">Jubilado</option>\n'
-                '  <option class="option">Otro</option>\n'
+                '  <option value="" selected>Selecciona una opción</option>\n'
+                '  <option value="Empleado(a)">Empleado(a)</option>\n'
+                '  <option value="Desempleado(a)">Desempleado(a)</option>\n'
+                '  <option value="Jubilado(a) / Pensionado(a)">Jubilado(a) / Pensionado(a)</option>\n'
+                '  <option value="Trabajador(a) por cuenta propia">Trabajador(a) por cuenta propia</option>\n'
+                '  <option value="Empresario(a) / Emprendedor(a)">Empresario(a) / Emprendedor(a)</option>\n'
+                '  <option value="Dedicado(a) al hogar">Dedicado(a) al hogar</option>\n'
+                '  <option value="Estudiante">Estudiante</option>\n'
+                '  <option value="Otro">Otro</option>\n'
                 '</select>',
                 unsafe_allow_html=True
             )
@@ -155,8 +162,10 @@ with st.container():
         with col2:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Grupo al que pertenece</label>', unsafe_allow_html=True)
-            st.markdown('<input type="text" class="custom-input" id="grupo"/>', unsafe_allow_html=True)
+            st.markdown('<input type="text" class="custom-input" id="grupo" placeholder="Escribe para buscar..."/>', unsafe_allow_html=True)
+            st.markdown('<div id="grupo-suggestions" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; width: calc(50% - 20px); z-index: 1000; margin-top: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
+    
         
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -199,7 +208,8 @@ with st.container():
     col_back, col_next = st.columns([1, 1])
     with col_back:
         back_disabled = step <= 1
-        if st.button("Atrás", disabled=back_disabled, key="nav_back", type="secondary"):
+        back_label = "Atrás" if step > 1 else "Cancelar"
+        if st.button(back_label, disabled=back_disabled, key="nav_back", type="secondary"):
             if not back_disabled:
                 st.session_state["current_step"] = max(1, step - 1)
                 st.rerun()
@@ -208,7 +218,21 @@ with st.container():
         next_label = "Siguiente" if step < 4 else "Finalizar"
         if st.button(next_label, disabled=next_disabled, key="nav_next", type="primary"):
             if not next_disabled:
-                st.session_state["current_step"] = min(4, step + 1)
-                st.rerun()
+                if step == 1:
+                    nombre_value = streamlit_js_eval(js_expressions="document.getElementById('nombre').value", key="get_nombre")
+                    print(f"DEBUG: Valor de nombre: '{nombre_value}'")
+                    if not nombre_value or nombre_value.strip() == "":
+                        st.warning("⚠️ El nombre del evaluado es obligatorio")
+                    elif not all(c.isalpha() or c.isspace() for c in nombre_value):
+                        st.error("⚠️ El nombre solo debe contener letras alfabéticas y espacios")
+                    else:
+                        # Nombre válido: guardar y avanzar
+                        st.session_state["form_nombre"] = nombre_value.strip()
+                        st.session_state["current_step"] = min(4, step + 1)
+                        st.rerun()
+                else:
+                    # Para otros pasos, simplemente avanzar
+                    st.session_state["current_step"] = min(4, step + 1)
+                    st.rerun()
     
 

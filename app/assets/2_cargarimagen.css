@@ -1,7 +1,5 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-/* Apply font and page background only to html/body; avoid forcing background on every st-* element */
-
 
 /* --- MOCK UPLOADER --- */
 .uploader-mock {

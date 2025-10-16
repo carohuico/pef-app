@@ -15,7 +15,7 @@ html, body {
 #MainMenu, header, footer {visibility: hidden;}
 
 .page-header {
-	font-size: 2rem;
+	font-size: 1.5rem;
 	font-weight: 700;
 	margin: 0;
 	display: inline-block;
@@ -39,14 +39,12 @@ div.block-container.st-emotion {
 	border: 1px solid rgba(0,0,0,0.03) !important;
 	margin: 2rem!important;
     padding-top: 5rem !important;
-    	width: calc(100% - 4rem) !important;
+    width: calc(100% - 4rem) !important;
 	z-index: 20 !important;
 	overflow: hidden;
 }
 
-div.stMainBlockContainer.block-container { /* the element was .stMainBlockContainer.block-container.st-emotion-cache-zy6yx3.e4man114 */
-  padding-top:1.5rem;
-}
+
 
 div.stApp, section.main, main, body {
 	overflow: hidden !important;
@@ -125,45 +123,31 @@ div.stApp, section.main {
     text-decoration: none;
 }
 
-.btn {
-    font-weight: 600;
-    border-radius: 12px;
-    padding: 0.5rem 4rem;
-    cursor: pointer;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: 1rem;
-    transition: all 0.2s ease;
+.st-emotion-cache-1anq8dj.e7nj0r42 {
+	font-weight: 600;
+	border-radius: 12px;
+	padding: 0.5rem 4rem;
+	cursor: pointer;
+	border: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	font-size: 1rem;
+	transition: all 0.2s ease;
+	background: #f8f8f8;
+	color: #1A1A1A;
+	border: .5px solid #000000;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+	min-width: 130px;
+	margin-top: 2rem;
 }
-
-.btn-back {
-   background: #f8f8f8;
-    color: #1A1A1A;
-    border: .5px solid #000000;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-    min-width: 130px;
+.st-emotion-cache-1anq8dj.e7nj0r42:active {
+	transform: scale(0.98);
 }
-.btn-back:hover {
-    background: #e0e0e0;
-    border-color: #000000;
-    color: #000000;
-}
-
-.btn-next {
-    background: #FFE451;
-    color: #000000;
-    border: none;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
-    min-width: 130px;
-}
-.btn-next:hover {
-    background: #FFD626;
-}
-
-.btn:active {
-    transform: scale(0.98);
+.st-emotion-cache-1anq8dj.e7nj0r42:hover {
+	background: #e0e0e0;
+	border-color: #000000;
+	color: #000000;
 }
 

@@ -5,13 +5,13 @@
 [role="listbox"],
 [role="option"] {
     background: #ffffff !important;
+    margin: 0 !important;
 }
 
 .stVerticalBlock {
-    gap: 0 !important; /* sin espacio entre elementos verticales */
+    gap: 0 !important; 
     margin: 0 !important;
     padding: 0 !important;
-    
 }
 
 
@@ -25,36 +25,6 @@
     display: flex;  
     flex-direction: column;
     gap: 0; 
-    margin-bottom: 2rem ;
+    margin-bottom: 1.5rem ;
 }
 
-.stVerticalBlock .form-group .stTextInput > div > div > input,
-.stVerticalBlock .form-group .stNumberInput > div > div > input {
-    height: 44px !important;
-    padding: 10px 16px !important;
-    border: 0 !important;
-    border-radius: 12px !important;
-    font-size: 12px !important;
-    font-family: 'Poppins', sans-serif !important;
-    color: #333 !important;
-    background: #ececec !important;
-    box-shadow: inset 0 0 0 1px #d9d9d9 !important;
-}
-
-.stVerticalBlock .form-group .stSelectbox > div > div > div {
-    min-height: 44px !important;
-    padding: 10px 16px !important;
-    border: 0 !important;
-    border-radius: 12px !important;
-    font-size: 12px !important;
-    font-family: 'Poppins', sans-serif !important;
-    color: #666 !important;
-    background: #ececec !important;
-    box-shadow: inset 0 0 0 1px #d9d9d9 !important;
-}
-
-.stVerticalBlock .form-group .stTextInput > label,
-.stVerticalBlock .form-group .stNumberInput > label,
-.stVerticalBlock .form-group .stSelectbox > label {
-    display: none;
-}

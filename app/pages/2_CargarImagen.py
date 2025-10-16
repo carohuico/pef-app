@@ -32,22 +32,34 @@ if "show_modal" not in st.session_state:
     st.session_state["show_modal"] = False
 if "uploaded_file" not in st.session_state:
     st.session_state["uploaded_file"] = None
+if "current_step" not in st.session_state:
+    st.session_state["current_step"] = 1
 
 
 
 # ---------- UI ----------
 with st.container():
+    step = st.session_state.get("current_step", 1)
     st.markdown('<div class="page-header">Nueva evaluación</div>', unsafe_allow_html=True)
     
-    # Stepper
-    st.markdown("""
-    <div class="stepper">
-        <div class="step active"><div class="circle">1</div><div class="step-text">Registrar</div></div>
-        <div class="step"><div class="circle">2</div><div class="step-text">Subir dibujo</div></div>
-        <div class="step"><div class="circle">3</div><div class="step-text">Resultados</div></div>
-        <div class="step"><div class="circle">4</div><div class="step-text">Exportar</div></div>
-    </div>
-    """, unsafe_allow_html=True)
+    steps = [
+        {"label": "Registrar"},
+        {"label": "Subir dibujo"},
+        {"label": "Resultados"},
+        {"label": "Exportar"},
+    ]
+    stepper_html = '<div class="stepper">'
+    for idx, s in enumerate(steps, start=1):
+        active_class = "active" if step == idx else ""
+        class_attr = f'step {active_class}'.strip()
+        stepper_html += (
+            f'<div class="{class_attr}">' \
+            f'<div class="circle">{idx}</div>' \
+            f'<div class="step-text">{s["label"]}</div>' \
+            f'</div>'
+        )
+    stepper_html += '</div>'
+    st.markdown(stepper_html, unsafe_allow_html=True)
 
     # ---------- COMPONENTES ----------
     def registrar_component():
@@ -139,7 +151,6 @@ with st.container():
         """, unsafe_allow_html=True)
 
     # ---------- LÓGICA DE PASOS ----------
-    step = 2
     if step == 1:
         registrar_component()
     elif step == 2:
@@ -152,15 +163,19 @@ with st.container():
         
 
     st.markdown('<div class="spacer"></div>', unsafe_allow_html=True)
-    # --- Footer de navegación (Atrás / Siguiente) ---
-    st.markdown(
-        """
-        <div class="nav-footer">
-            <a class="btn btn-back">Atrás</a>
-            <a class="btn btn-next">Siguiente</a>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    col_back, col_next = st.columns([1, 1])
+    with col_back:
+        back_disabled = step <= 1
+        if st.button("Atrás", disabled=back_disabled, key="nav_back"):
+            if not back_disabled:
+                st.session_state["current_step"] = max(1, step - 1)
+                st.rerun()
+    with col_next:
+        next_disabled = step >= 4
+        next_label = "Siguiente" if step < 4 else "Finalizar"
+        if st.button(next_label, disabled=next_disabled, key="nav_next"):
+            if not next_disabled:
+                st.session_state["current_step"] = min(4, step + 1)
+                st.rerun()
     
 

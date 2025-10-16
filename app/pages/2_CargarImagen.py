@@ -68,13 +68,13 @@ with st.container():
         with col1:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Nombre(s) del evaluado <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
-            nombre = st.text_input("Nombre", key="nombre", label_visibility="collapsed")
+            st.markdown('<input type="text" class="custom-input" id="nombre"/>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Apellido(s) del evaluado</label>', unsafe_allow_html=True)
-            apellido = st.text_input("Apellido", key="apellido", label_visibility="collapsed")
+            st.markdown('<input type="text" class="custom-input" id="apellido"/>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         
         # Segunda fila: Edad y Sexo
@@ -82,13 +82,21 @@ with st.container():
         with col1:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Edad <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
-            edad = st.number_input("Edad", min_value=18, max_value=100, key="edad", label_visibility="collapsed")
+            st.markdown('<input type="number" class="custom-input" id="edad" min="18" max="100"/>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Sexo <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
-            sexo = st.selectbox("Sexo", ["Selecciona una opción", "Masculino", "Femenino", "Otro"], key="sexo", label_visibility="collapsed")
+            st.markdown(
+                '<select class="custom-input" id="sexo">\n'
+                '  <option selected>Selecciona una opción</option>\n'
+                '  <option class="option">Masculino</option>\n'
+                '  <option class="option">Femenino</option>\n'
+                '  <option class="option">Otro</option>\n'
+                '</select>',
+                unsafe_allow_html=True
+            )
             st.markdown('</div>', unsafe_allow_html=True)
         
         # Tercera fila: Estado civil y Escolaridad
@@ -96,17 +104,33 @@ with st.container():
         with col1:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Estado civil</label>', unsafe_allow_html=True)
-            estado_civil = st.selectbox("Estado civil", 
-                ["Selecciona una opción", "Soltero/a", "Casado/a", "Divorciado/a", "Viudo/a", "Unión libre"], 
-                key="estado_civil", label_visibility="collapsed")
+            st.markdown(
+                '<select class="custom-input" id="estado_civil">\n'
+                '  <option selected>Selecciona una opción</option>\n'
+                '  <option class="option">Soltero/a</option>\n'
+                '  <option class="option">Casado/a</option>\n'
+                '  <option class="option">Divorciado/a</option>\n'
+                '  <option class="option">Viudo/a</option>\n'
+                '  <option class="option">Unión libre</option>\n'
+                '</select>',
+                unsafe_allow_html=True
+            )
             st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Escolaridad</label>', unsafe_allow_html=True)
-            escolaridad = st.selectbox("Escolaridad", 
-                ["Selecciona una opción", "Primaria", "Secundaria", "Preparatoria", "Licenciatura", "Posgrado"], 
-                key="escolaridad", label_visibility="collapsed")
+            st.markdown(
+                '<select class="custom-input" id="escolaridad">\n'
+                '  <option selected>Selecciona una opción</option>\n'
+                '  <option class="option">Primaria</option>\n'
+                '  <option class="option">Secundaria</option>\n'
+                '  <option class="option">Preparatoria</option>\n'
+                '  <option class="option">Licenciatura</option>\n'
+                '  <option class="option">Posgrado</option>\n'
+                '</select>',
+                unsafe_allow_html=True
+            )
             st.markdown('</div>', unsafe_allow_html=True)
         
         # Cuarta fila: Ocupación y Grupo
@@ -114,15 +138,24 @@ with st.container():
         with col1:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Ocupación</label>', unsafe_allow_html=True)
-            ocupacion = st.selectbox("Ocupación", 
-                ["Selecciona una opción", "Estudiante", "Empleado", "Independiente", "Desempleado", "Jubilado", "Otro"], 
-                key="ocupacion", label_visibility="collapsed")
+            st.markdown(
+                '<select class="custom-input" id="ocupacion">\n'
+                '  <option selected>Selecciona una opción</option>\n'
+                '  <option class="option">Estudiante</option>\n'
+                '  <option class="option">Empleado</option>\n'
+                '  <option class="option">Independiente</option>\n'
+                '  <option class="option">Desempleado</option>\n'
+                '  <option class="option">Jubilado</option>\n'
+                '  <option class="option">Otro</option>\n'
+                '</select>',
+                unsafe_allow_html=True
+            )
             st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
             st.markdown('<div class="form-group">', unsafe_allow_html=True)
             st.markdown('<label>Grupo al que pertenece</label>', unsafe_allow_html=True)
-            grupo = st.text_input("Grupo", key="grupo", label_visibility="collapsed")
+            st.markdown('<input type="text" class="custom-input" id="grupo"/>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -166,14 +199,14 @@ with st.container():
     col_back, col_next = st.columns([1, 1])
     with col_back:
         back_disabled = step <= 1
-        if st.button("Atrás", disabled=back_disabled, key="nav_back"):
+        if st.button("Atrás", disabled=back_disabled, key="nav_back", type="secondary"):
             if not back_disabled:
                 st.session_state["current_step"] = max(1, step - 1)
                 st.rerun()
     with col_next:
         next_disabled = step >= 4
         next_label = "Siguiente" if step < 4 else "Finalizar"
-        if st.button(next_label, disabled=next_disabled, key="nav_next"):
+        if st.button(next_label, disabled=next_disabled, key="nav_next", type="primary"):
             if not next_disabled:
                 st.session_state["current_step"] = min(4, step + 1)
                 st.rerun()

@@ -28,3 +28,22 @@
     margin-bottom: 1.5rem ;
 }
 
+.custom-input{
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border:none;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(204, 204, 204, 0.5);
+    color: #777777;
+    font-size: 12px; 
+}
+
+.option{
+    font-size: 12px;
+    color: #777777;
+    background-color: #ffffff;
+    border:none;
+}

@@ -23,6 +23,7 @@ html, body {
 	z-index: 25;
 }
 
+
 section.main > div.block-container,
 div.stMainBlockContainer.block-container,
 div.block-container.st-emotion {
@@ -42,6 +43,7 @@ div.block-container.st-emotion {
     width: calc(100% - 4rem) !important;
 	z-index: 20 !important;
 	overflow: hidden;
+	position: relative;
 }
 
 
@@ -107,47 +109,43 @@ div.stApp, section.main {
 .step.active .circle { border-color: #000; color: #000; }
 .step.done .step-text, .step.active .step-text { color: #000; }
 
-/* --- (Back / Next) --- */
-.nav-footer {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 0 0.25rem;
-	margin-top: 2rem;
+/* boton primario */
+.stVerticalBlock:has(button[kind="primary"]) {
+	align-items: flex-end !important;
+	margin: 0 !important;
+}
+
+button[kind="primary"] {
+	background: #FFE451;
+    color: #000000;
+	border:none;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+    min-width: 130px;
+	margin-top: 1.5rem;
+}
+button[kind="primary"]:hover {
+	transform: scale(0.98);
+	background: #FFD626;
+}
+
+/* boton secundario */
+button[kind="secondary"] {
+	background: #ffffff;
+	border: 1px solid #000000 !important;
+	color: #000000;
+	box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+	min-width: 130px;
+	margin-top: 1.5rem;
+}
+button[kind="secondary"]:hover {
+	background: #CCCCCC;
+    color: #000000;
+    border: 1px solid #000000;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+    min-width: 130px;
 }
 
 .spacer { flex: 1 1 auto; min-height: 0; }
 
-.nav-footer a{
-    color: #000000;
-    text-decoration: none;
-}
 
-.st-emotion-cache-1anq8dj.e7nj0r42 {
-	font-weight: 600;
-	border-radius: 12px;
-	padding: 0.5rem 4rem;
-	cursor: pointer;
-	border: none;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	font-size: 1rem;
-	transition: all 0.2s ease;
-	background: #f8f8f8;
-	color: #1A1A1A;
-	border: .5px solid #000000;
-	box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-	min-width: 130px;
-	margin-top: 2rem;
-}
-.st-emotion-cache-1anq8dj.e7nj0r42:active {
-	transform: scale(0.98);
-}
-.st-emotion-cache-1anq8dj.e7nj0r42:hover {
-	background: #e0e0e0;
-	border-color: #000000;
-	color: #000000;
-}
 

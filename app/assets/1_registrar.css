@@ -47,3 +47,44 @@
     background-color: #ffffff;
     border:none;
 }
+
+
+.warning {
+    position: fixed;
+    top: 3rem;
+    right: 1rem;
+    z-index: 1000;
+    color: rgba(133, 100, 4, 0.9);
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    padding: 2rem;
+    border-radius: 4px;
+    margin-top: 4px;
+    font-size: 16px;
+    animation: slideIn 0.5s ease-out, fadeOut 10s ease-in forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}

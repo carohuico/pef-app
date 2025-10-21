@@ -62,11 +62,11 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     background-color: #fff3cd;
     border: 1px solid #ffeeba;
-    padding: 2rem;
+    padding: 1rem;
     border-radius: 4px;
-    margin-top: 4px;
-    font-size: 16px;
-    animation: slideIn 0.5s ease-out, fadeOut 10s ease-in forwards;
+    margin-top: 10px;
+    font-size: 14px;
+    animation: slideIn 0.5s ease-out;
 }
 
 @keyframes slideIn {
@@ -80,11 +80,3 @@
     }
 }
 
-@keyframes fadeOut {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-}

@@ -1,0 +1,19 @@
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    top: 50%;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+[data-testid="stButton"] div { /*!corregir para que solo aplique al boton de nueva evaluación*/
+    width: 100vh;
+    height: 100%;
+}
+
+.btn-nueva-evaluacion-wrapper button {
+    padding: 2rem !important; 
+    width: 100% !important;   
+    font-size: 1.5rem !important;
+    height: auto !important;
+}

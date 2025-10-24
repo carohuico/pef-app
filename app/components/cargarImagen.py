@@ -8,7 +8,6 @@ from config.settings import ALLOWED_EXTENSIONS, TEMP_DIR, STD_DIR
 from services.image_preprocess import estandarizar_imagen
 import streamlit as st
 from PIL import Image
-from components.sidebar_component import sidebar_component
 
 def cargar_imagen_component():
     # ---------- CONFIGURACIÓN ----------
@@ -34,8 +33,6 @@ def cargar_imagen_component():
         """, unsafe_allow_html=True)
 
     # ---------- SESIÓN ----------
-    if "show_modal" not in st.session_state:
-        st.session_state["show_modal"] = False
     if "uploaded_file" not in st.session_state:
         st.session_state["uploaded_file"] = None
     if "current_step" not in st.session_state:
@@ -187,52 +184,11 @@ def cargar_imagen_component():
                 st.markdown('</div>', unsafe_allow_html=True)
 
         def uploader_component():
-
-            st.markdown("""
-            <div class="uploader-container">
-                <form action="#" method="post" enctype="multipart/form-data">
-                    <div class="uploader-mock" id="mock-uploader">
-                        <div class="uploader-icon">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M37 28V37C37 38.0609 36.5786 39.0783 35.8284 39.8284C35.0783 40.5786 34.0609 41 33 41H15C13.9391 41 12.9217 40.5786 12.1716 39.8284C11.4214 39.0783 11 38.0609 11 37V28" stroke="#888888" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M24 7V29" stroke="#888888" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M16 15L24 7L32 15" stroke="#888888" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </div>
-                        <p class="uploader-text">Arrastra</p>
-                        <p class="uploader-text sub">o</p>
-                        <div class="uploader-button">Elige un archivo</div>
-                        <input type="file" name="file" id="file" style="opacity: 0; position: absolute; inset: 0; cursor: pointer;" onchange="handleFileUpload(event)">
-                    </div>
-                </form>
-            </div>
-
-            <script>
-            function handleFileUpload(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.style.maxWidth = '100%';
-                        img.style.borderRadius = '8px';
-                        document.body.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                }else{
-                    console.log("No file selected");
-                }
-            }
-            </script>
-
-            """, unsafe_allow_html=True)
-
-
-
-
-
-
+            uploaded_file = st.file_uploader("Sube tu archivo", type=["png", "jpg", "jpeg"], key="file_uploader")
+            if uploaded_file is not None:
+                st.session_state["uploaded_file"] = uploaded_file
+                
+                
         # ---------- LÓGICA DE PASOS ----------
         if step == 1:
             registrar_component()
@@ -312,10 +268,28 @@ def cargar_imagen_component():
                             st.session_state["form_sexo"] = sexo_value
                             st.session_state["current_step"] = min(4, step + 1)
                             st.rerun()
+                    elif step == 2:
+                        if st.session_state["uploaded_file"] is None:
+                            st.markdown("""
+                                <div class="warning">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                </svg>
+                                <span>Por favor, sube una imagen para continuar</span>
+                                </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            imagen = Image.open(st.session_state["uploaded_file"])
+                            nombre = st.session_state["uploaded_file"].name
+                            temp_path = Path(TEMP_DIR) / nombre
+                            std_path = Path(STD_DIR) / nombre
+                            imagen.save(temp_path)
+                            estandarizar_imagen(imagen, std_path)
+                            st.session_state["current_step"] = min(4, step + 1)
+                            st.rerun()
                     else:
                         st.session_state["current_step"] = min(4, step + 1)
                         st.rerun()
-
 
 
 

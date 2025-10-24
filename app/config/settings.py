@@ -7,4 +7,4 @@ STD_DIR = UPLOADS_DIR / "standardized"
 
 ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png"]
 MAX_IMAGE_MB = 10
-MAX_STD_SIZE = (512, 512)  # ancho, alto
+MAX_STD_SIZE = (512, 512)  

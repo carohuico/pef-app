@@ -3,6 +3,21 @@ body {
     overflow: hidden;
 }
 
+[data-testid="stImageContainer"] img {
+    border-radius: 50%;
+    height: auto;
+    margin: 20px;
+    background: white;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-testid="stFullScreenFrame"]{
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    display: flex;
+}
 
 [data-testid="stSidebarContent"] {
     background-color: #111;
@@ -24,15 +39,6 @@ body {
 
 .user-profile p {
     margin: 5px 0 0;
-}
-
-.user-avatar {
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    margin-bottom: 10px;
-    background: white;
 }
 
 .username {

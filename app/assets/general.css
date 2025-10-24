@@ -12,6 +12,11 @@ html, body {
 	color: #1a1a1a;
 	background: transparent;
 }
+[class*="st-"] h3 {
+	font-family: 'Poppins', sans-serif;
+	color: #1a1a1a;
+	background: transparent;
+}
 #MainMenu, header, footer {visibility: hidden;}
 
 .page-header {

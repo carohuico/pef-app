@@ -1,7 +1,8 @@
 import streamlit as st
 from pathlib import Path
 from components.sidebar_component import sidebar_component
-from components.cargarImagen import cargar_imagen_component  # Updated import
+from components.cargarImagen import cargar_imagen_component 
+from components.inicio import inicio
 
 _css_general = Path(__file__).parent / 'assets' / 'general.css'
 _css_registrar = Path(__file__).parent / 'assets' / '1_registrar.css'
@@ -26,10 +27,13 @@ if "active_view" not in st.session_state:
 sidebar_component()
 
 if st.session_state["active_view"] == "inicio":
-    st.write("Bienvenido a la vista de Inicio")
+    inicio()
+    
+elif st.session_state["active_view"] == "registrar":
+    cargar_imagen_component()
 
 elif st.session_state["active_view"] == "historial":
-    cargar_imagen_component()
+    st.write("Bienvenido a la vista de Historial")
 
 elif st.session_state["active_view"] == "estadisticas":
     st.write("Bienvenido a la vista de Estadísticas")

@@ -17,12 +17,19 @@ def sidebar_component():
             """,
             unsafe_allow_html=True
         )
-
+        
     st.sidebar.markdown(
-        """
+        f"""
             <h2 style="text-align: center; color:white; margin: 0;">Rainly</h2>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    avatar_path = Path(__file__).parent.parent / 'assets' / 'luis.jpeg'
+    st.sidebar.image(avatar_path, width=100)
+    st.sidebar.markdown(
+        f"""
             <div class="user-profile" style="margin: 0; padding: 0;">
-                <img class="user-avatar" src="app/assets/luis.jpeg" alt="User Avatar" style="display: block; margin: 0 auto;">
                 <p class="username" style="margin: 0;">Nombre</p>
                 <p class="role" style="margin: 0;">Usuario</p>
             </div>

@@ -78,8 +78,8 @@ body {
     font-weight: 600;
     border-radius: 8px; 
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: left;
+    justify-content: left;
 }
 
 [data-testid="stSidebar"] button[kind="secondary"] {
@@ -95,8 +95,8 @@ body {
     font-weight: 600;
     border-radius: 8px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: left;
+    justify-content: left;
 }
 
 [data-testid="stSidebar"] button[kind="secondary"]:hover{
@@ -112,12 +112,11 @@ body {
     font-weight: 600;
     border-radius: 8px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: left;
+    justify-content: left;
 }
 
 [data-testid="stSidebar"] button[kind="secondary"] p {
-    background-color: #111; 
     color: white;
     padding: 0;
     height: 100%;
@@ -125,7 +124,6 @@ body {
     margin: 0;
 }
 [data-testid="stSidebar"] button[kind="secondary"]:hover p {
-    background-color: white;
     color: rgb(0, 0, 0);
     padding: 0;
     height: 100%;

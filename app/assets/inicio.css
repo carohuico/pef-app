@@ -1,19 +1,79 @@
-.title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    top: 50%;
-    display: inline-block;
-    vertical-align: middle;
-}
 
-[data-testid="stButton"] div { /*!corregir para que solo aplique al boton de nueva evaluación*/
+[data-testid="stButton"] div { 
     width: 100vh;
     height: 100%;
 }
 
-.btn-nueva-evaluacion-wrapper button {
-    padding: 2rem !important; 
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *) {
     width: 100% !important;   
-    font-size: 1.5rem !important;
+    font-size: 2.5rem !important;
     height: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 20px;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):hover {
+    width: 100% !important;   
+    font-size: 2.5rem !important;
+    height: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 20px;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* boton ver todos */
+[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *) {
+    /* texto underline pára que no parezca boton */
+    text-decoration: underline;
+    font-size: 1rem !important; 
+    height: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: transparent !important;
+    align-items: right !important;
+    justify-content: flex-end !important;
+    padding: 0 !important;
+    padding-right: 0 !important;
+}
+
+[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *):hover {
+     /* texto underline pára que no parezca boton */
+    text-decoration: underline;
+    font-size: 1rem !important; 
+    height: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    align-items: right !important;
+    justify-content: flex-end !important;
+    padding: 0 !important;
+    padding-right: 0 !important;
+}
+
+[data-testid="stButton"] button[kind="primary"] p:not([data-testid="stSidebar"] *) {
+    font-size: 1rem !important; 
+    font-weight: 600 !important; 
+}
+
+h4 {
+    font-family: poppins, sans-serif !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+
+}
+
+h5 {
+    font-family: poppins, sans-serif !important;
+    font-size: 1.2rem !important;
+    font-weight: 600 !important;
+
 }

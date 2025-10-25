@@ -37,3 +37,8 @@
 	visibility: hidden;
 	width: 0;
 }
+
+[data-testid="stHorizontalBlock"] {
+	gap: 2rem;
+	height: 20px;
+}

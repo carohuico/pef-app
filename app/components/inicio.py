@@ -27,61 +27,67 @@ def inicio():
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.markdown('<div class="title">Nueva evaluación</div>', unsafe_allow_html=True)
+        st.markdown('<div class="page-header">Evaluaciones</div>', unsafe_allow_html=True)
+    
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.markdown('<div class="btn-nueva-evaluacion-wrapper">', unsafe_allow_html=True)
-
-       
-
-        if st.button("Nueva evaluación", key="new_eval_start", type="primary"):
-            st.session_state["active_view"] == "registrar"
-            st.rerun()
-
-        # 3. Cierra el contenedor
-        st.markdown('</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
                 st.markdown("""
                 <div style="margin-bottom: 20px;">
-                    <h3>01 Registrar</h3>
-                    <p>Registra los datos de la persona a evaluar.</p>
+                    <h4>01<br>Registrar</h4>
+                    <p style="color:  #6c6c6c">Registra los datos de la persona a evaluar.</p><br>
                 </div>
                 """, unsafe_allow_html=True)
 
                 st.markdown("""
                 <div style="margin-bottom: 20px;">
-                    <h3>03 Resultados</h3>
-                    <p>Descubre los resultados del dibujo que subiste.</p>
+                    <h4>03<br>Resultados</h4>
+                    <p style="color:  #6c6c6c">Descubre los resultados del dibujo que subiste.</p>
                 </div>
                 """, unsafe_allow_html=True)
         with c2:
                 st.markdown("""
-                <div style="margin-bottom: 20px;">
-                    <h3>02 Subir dibujo</h3>
-                    <p>Sube tu dibujo como archivo de imagen.</p>
+                <div style="margin-bottom: 20px; margin-right: 20px;">
+                    <h4>02<br>Subir dibujo</h4>
+                    <p style="color:  #6c6c6c">Sube tu dibujo como archivo de imagen o desde una cámara.</p><br>
                 </div>
                 """, unsafe_allow_html=True)
 
                 st.markdown("""
                 <div style="margin-bottom: 20px;">
-                    <h3>04 Exportar</h3>
-                    <p>Descarga tus resultados en un documento CSV o PDF.</p>
+                    <h4>04<br>Exportar</h4>
+                    <p style="color:  #6c6c6c">Descarga tus resultados en un documento CSV o PDF.</p>
                 </div>
                 """, unsafe_allow_html=True)
 
     with col2:
+
+        button_label = ":material/add_2: Nueva evaluación"
+
+        if st.button(button_label, key="new_eval", type="primary"):
+            st.session_state["active_view"] = "registrar"
+            st.rerun()
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("""<h5>Recientes</h5>""", unsafe_allow_html=True)
+        with col2:
+            button_label = "Ver todos :material/chevron_forward:"
+
+            if st.button(button_label, key="view_more", type="secondary"):
+                st.session_state["active_view"] = "historial"
+                st.rerun()
+
         st.markdown("""
-        <div style="border: 1px solid #ccc; border-radius: 10px; padding: 10px;">
-            <h3>Recientes</h3>
+        <div style="border: 1px solid #ccc; border-radius: 10px; padding: 10px; height: 100%;">
             <ul style="list-style-type: none; padding: 0;">
                 <li style="margin-bottom: 10px;">nombre<br><small>edad, sexo</small></li>
                 <li style="margin-bottom: 10px;">nombre<br><small>edad, sexo</small></li>
                 <li style="margin-bottom: 10px;">nombre<br><small>edad, sexo</small></li>
                 <li style="margin-bottom: 10px;">nombre<br><small>edad, sexo</small></li>
             </ul>
-            <a href="#">Ver todos</a>
         </div>
         """, unsafe_allow_html=True)

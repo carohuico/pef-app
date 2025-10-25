@@ -40,15 +40,23 @@ def sidebar_component():
     if "active_view" not in st.session_state:
         st.session_state["active_view"] = "inicio"
 
+    icons = [":material/home:", ":material/history:", ":material/analytics:", ":material/logout:"]
     nav_links = ["Inicio", "Historial", "Estadísticas", "Salir"]
 
-    for label in nav_links:
+    for icon, label in zip(icons, nav_links):
         is_active = st.session_state["active_view"] == label.lower()
         custom_class = "primary" if is_active else "secondary"
 
         st.sidebar.markdown(f'<div class="nav-item-container" style="margin: 0; padding: 0;">', unsafe_allow_html=True)
-        if st.sidebar.button(label, key=f"nav_{label}", type=custom_class):
-            st.session_state["active_view"] = label.lower()
+        if st.sidebar.button(f"{icon} {label}", key=f"nav_{label}", type=custom_class):
+            if label == "Inicio":
+                st.session_state["active_view"] = "inicio"
+            elif label == "Historial":
+                st.session_state["active_view"] = "historial"
+            elif label == "Estadísticas":
+                st.session_state["active_view"] = "estadisticas"
+            elif label == "Salir":
+                st.session_state["active_view"] = "salir"
             st.rerun()
         st.sidebar.markdown('</div>', unsafe_allow_html=True)
 

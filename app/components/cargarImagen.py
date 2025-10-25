@@ -6,6 +6,7 @@ from streamlit_js_eval import streamlit_js_eval
 
 from config.settings import ALLOWED_EXTENSIONS, TEMP_DIR, STD_DIR
 from services.image_preprocess import estandarizar_imagen
+from services.indicadores import extraer_indicadores
 import streamlit as st
 from PIL import Image
 
@@ -184,18 +185,40 @@ def cargar_imagen_component():
                 st.markdown('</div>', unsafe_allow_html=True)
 
         def uploader_component():
-            uploaded_file = st.file_uploader("Sube tu archivo", type=["png", "jpg", "jpeg"], key="file_uploader")
+            uploaded_file = st.file_uploader("Sube tu archivo", type=["png", "jpg", "jpeg", "heic"], key="file_uploader")
             if uploaded_file is not None:
                 st.session_state["uploaded_file"] = uploaded_file
                 
-                
+        def resultados_component():
+            #predicciones.txt 
+            txt = "../predicciones.txt"
+            indicadores = extraer_indicadores(txt)
+            col1, col2 = st.columns(2)
+            with col1:
+                #vista previa de la imagen subida
+                if st.session_state["uploaded_file"] is not None:
+                    image = Image.open(st.session_state["uploaded_file"])
+                    st.image(image, caption="Dibujo subido", use_container_width =True)
+            with col2:
+                st.markdown("### Indicadores extraídos")
+                if not indicadores:
+                    st.markdown("No se encontraron indicadores.")
+                else:
+                    for i, ind in enumerate(indicadores, start=1):
+                        # ind is a dict with keys: Clase, Confianza, x_min, y_min, x_max, y_max
+                        st.markdown(f"**Detección {i}**")
+                        st.markdown(f"- Clase: {ind.get('Clase')}")
+                        st.markdown(f"- Confianza: {ind.get('Confianza')}")
+                        st.markdown(f"- BBox: ({ind.get('x_min')}, {ind.get('y_min')}), ({ind.get('x_max')}, {ind.get('y_max')})")
+                        st.markdown("---")
+
         # ---------- LÓGICA DE PASOS ----------
         if step == 1:
             registrar_component()
         elif step == 2:
             uploader_component()
         elif step == 3:
-            st.write("Componente para el paso 3")
+            resultados_component()
         elif step == 4:
             st.write("Componente para el paso 4")
         
@@ -203,11 +226,16 @@ def cargar_imagen_component():
         st.markdown('<div class="spacer"></div>', unsafe_allow_html=True)
         col_back, col_next = st.columns([1, 1])
         with col_back:
-            back_disabled = step <= 1
             back_label = "Atrás" if step > 1 else "Cancelar"
-            if st.button(back_label, disabled=back_disabled, key="nav_back", type="secondary"):
-                if not back_disabled:
+
+            if st.button(back_label, key="nav_back", type="secondary"):
+                if step > 1:
                     st.session_state["current_step"] = max(1, step - 1)
+                    st.rerun()
+                else:
+                    # Cancel -> return to the app's inicio/main view
+                    st.session_state["active_view"] = "inicio"
+                    st.session_state["current_step"] = 1
                     st.rerun()
         with col_next:
             next_disabled = step > 4

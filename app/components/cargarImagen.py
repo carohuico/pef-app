@@ -1,4 +1,5 @@
 import sys, os
+import pandas as pd
 from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import bootstrap
@@ -37,7 +38,7 @@ def cargar_imagen_component():
     if "uploaded_file" not in st.session_state:
         st.session_state["uploaded_file"] = None
     if "current_step" not in st.session_state:
-        st.session_state["current_step"] = 1
+        st.session_state["current_step"] = 2
     if "form_nombre" not in st.session_state:
         st.session_state["form_nombre"] = ""
     if "form_apellido" not in st.session_state:
@@ -193,24 +194,42 @@ def cargar_imagen_component():
             #predicciones.txt 
             txt = "../predicciones.txt"
             indicadores = extraer_indicadores(txt)
-            col1, col2 = st.columns(2)
+
+            col1, col2 = st.columns(2, vertical_alignment="top")
+
             with col1:
-                #vista previa de la imagen subida
-                if st.session_state["uploaded_file"] is not None:
+                if st.session_state.get("uploaded_file") is not None:
                     image = Image.open(st.session_state["uploaded_file"])
-                    st.image(image, caption="Dibujo subido", use_container_width =True)
+                    st.image(image, caption="Dibujo subido", use_container_width=True)
+
             with col2:
-                st.markdown("### Indicadores extraídos")
-                if not indicadores:
-                    st.markdown("No se encontraron indicadores.")
-                else:
-                    for i, ind in enumerate(indicadores, start=1):
-                        # ind is a dict with keys: Clase, Confianza, x_min, y_min, x_max, y_max
-                        st.markdown(f"**Detección {i}**")
-                        st.markdown(f"- Clase: {ind.get('Clase')}")
-                        st.markdown(f"- Confianza: {ind.get('Confianza')}")
-                        st.markdown(f"- BBox: ({ind.get('x_min')}, {ind.get('y_min')}), ({ind.get('x_max')}, {ind.get('y_max')})")
-                        st.markdown("---")
+                with st.container(): 
+                    st.markdown("<h5>Indicadores extraídos</h5>", unsafe_allow_html=True)
+                    
+                    if not indicadores:
+                        st.markdown("No se encontraron indicadores.")
+                    else:
+                        rows = []
+                        for ind in indicadores:
+                            clase = ind.get('Clase', '')
+                            conf = ind.get('Confianza', None)
+                            try:
+                                conf_val = float(conf)
+                            except Exception:
+                                conf_val = None
+                            rows.append({"Indicador": clase, "Confianza": conf_val})
+
+                        df = pd.DataFrame(rows)
+                        if 'Confianza' in df.columns:
+                            df['Confianza'] = df['Confianza'].round(4) 
+
+                        styled_df = df.style \
+                                    .format({'Confianza': '{:.2%}'}) \
+                                    .set_properties(subset=['Confianza'], **{'text-align': 'center'}) \
+                                    .set_properties(subset=['Indicador'], **{'text-align': 'left'}) \
+                                    .hide(axis="index") 
+
+                        st.dataframe(styled_df, use_container_width=True)
 
         # ---------- LÓGICA DE PASOS ----------
         if step == 1:

@@ -3,6 +3,7 @@ from pathlib import Path
 from components.sidebar_component import sidebar_component
 from components.cargarImagen import cargar_imagen_component 
 from components.inicio import inicio
+from services.historial import historial
 
 _css_general = Path(__file__).parent / 'assets' / 'general.css'
 _css_registrar = Path(__file__).parent / 'assets' / '1_registrar.css'
@@ -22,7 +23,7 @@ with open(_css_general, encoding="utf-8") as f:
 st.set_page_config(page_title="Persona Bajo la Lluvia", layout="wide")
 
 if "active_view" not in st.session_state:
-    st.session_state["active_view"] = "inicio"
+    st.session_state["active_view"] = "registrar"
 
 sidebar_component()
 
@@ -33,7 +34,7 @@ elif st.session_state["active_view"] == "registrar":
     cargar_imagen_component()
 
 elif st.session_state["active_view"] == "historial":
-    st.write("Bienvenido a la vista de Historial")
+    historial()
 
 elif st.session_state["active_view"] == "estadisticas":
     st.write("Bienvenido a la vista de Estadísticas")

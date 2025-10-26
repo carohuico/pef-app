@@ -38,7 +38,8 @@
 	width: 0;
 }
 
-[data-testid="stHorizontalBlock"] {
-	gap: 2rem;
-	height: 20px;
+h5{
+	font-family: poppins, sans-serif !important;
+	font-weight: 600 !important;
 }
+

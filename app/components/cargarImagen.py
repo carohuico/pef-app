@@ -38,7 +38,7 @@ def cargar_imagen_component():
     if "uploaded_file" not in st.session_state:
         st.session_state["uploaded_file"] = None
     if "current_step" not in st.session_state:
-        st.session_state["current_step"] = 2
+        st.session_state["current_step"] = 1
     if "form_nombre" not in st.session_state:
         st.session_state["form_nombre"] = ""
     if "form_apellido" not in st.session_state:
@@ -186,26 +186,23 @@ def cargar_imagen_component():
                 st.markdown('</div>', unsafe_allow_html=True)
 
         def uploader_component():
-            uploaded_file = st.file_uploader("Sube tu archivo", type=["png", "jpg", "jpeg", "heic"], key="file_uploader")
+            uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg", "heic"], key="file_uploader")
             if uploaded_file is not None:
                 st.session_state["uploaded_file"] = uploaded_file
                 
         def resultados_component():
-            #predicciones.txt 
             txt = "../predicciones.txt"
             indicadores = extraer_indicadores(txt)
 
-            col1, col2 = st.columns(2, vertical_alignment="top")
+            col1, col2 = st.columns([1,2], vertical_alignment="top")
 
             with col1:
                 if st.session_state.get("uploaded_file") is not None:
                     image = Image.open(st.session_state["uploaded_file"])
-                    st.image(image, caption="Dibujo subido", use_container_width=True)
+                    st.image(image, use_container_width=True)
 
             with col2:
                 with st.container(): 
-                    st.markdown("<h5>Indicadores extraídos</h5>", unsafe_allow_html=True)
-                    
                     if not indicadores:
                         st.markdown("No se encontraron indicadores.")
                     else:
@@ -221,15 +218,17 @@ def cargar_imagen_component():
 
                         df = pd.DataFrame(rows)
                         if 'Confianza' in df.columns:
-                            df['Confianza'] = df['Confianza'].round(4) 
+                            df['Confianza'] = df['Confianza'].round(2) 
 
-                        styled_df = df.style \
-                                    .format({'Confianza': '{:.2%}'}) \
-                                    .set_properties(subset=['Confianza'], **{'text-align': 'center'}) \
-                                    .set_properties(subset=['Indicador'], **{'text-align': 'left'}) \
-                                    .hide(axis="index") 
+                        def style_dataframe(df):
+                            return df.style.set_properties(**{'border-radius': '10px', 'border': '1px solid #ddd', 'margin-left': '20px',
+                                          'text-align': 'center', 'background-color': "#ffffff", 'color': "#000000", 'height': '40px', 'font-family': 'Poppins'})
 
+                        styled_df = style_dataframe(df)
                         st.dataframe(styled_df, use_container_width=True)
+                        
+        def exportar_component():
+            st.markdown("""hola""")
 
         # ---------- LÓGICA DE PASOS ----------
         if step == 1:
@@ -239,7 +238,7 @@ def cargar_imagen_component():
         elif step == 3:
             resultados_component()
         elif step == 4:
-            st.write("Componente para el paso 4")
+            exportar_component()
         
 
         st.markdown('<div class="spacer"></div>', unsafe_allow_html=True)

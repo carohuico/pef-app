@@ -3,7 +3,7 @@ body {
     overflow: hidden;
 }
 
-[data-testid="stImageContainer"] img {
+[data-testid="stImageContainer"] img:not([data-testid="stMain"] *) {
     border-radius: 50%;
     height: auto;
     margin: 20px;

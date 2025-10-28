@@ -1,0 +1,35 @@
+# .streamlit/config.toml
+
+[theme]
+base="light"
+
+primaryColor="#FFC107" 
+
+# 3. Colores de Fondo
+# Fondo general de la aplicación (cuerpo principal), que es oscuro/grisáceo
+backgroundColor="#f4f4f4ff" 
+# Fondo secundario: utilizado para widgets, bloques de código, y contraste.
+# Debe ser un poco más claro que el fondo principal.
+secondaryBackgroundColor="#e4e4e4ff"
+
+# 4. Color de Texto: Blanco o gris muy claro
+textColor="#111111" 
+font="Poppins"
+baseFontSize = 14
+
+# 5. Bordes:
+# Un color de borde sutil para elementos (dataframes, expanders)
+borderColor="#b9b9b9ff" 
+# Radio para la mayoría de los elementos (botones, inputs, contenedores)
+baseRadius="0.5rem" 
+buttonRadius="0.5rem"
+
+# --- Configuración Específica de la Barra Lateral (Sidebar) ---
+# La barra lateral debe ser aún más oscura o tener un color distintivo.
+[theme.sidebar]
+# Forzamos un color de fondo más oscuro para la barra lateral
+backgroundColor="#111111" 
+# El color secundario se mantiene para contraste en widgets dentro del sidebar
+secondaryBackgroundColor="#2D2D2D" 
+# El color primario en el sidebar podría ser blanco para resaltar el botón "Historial"
+primaryColor="#FFFFFF"

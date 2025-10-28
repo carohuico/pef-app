@@ -43,3 +43,29 @@ h5{
 	font-weight: 600 !important;
 }
 
+[data-testid="stImage"] img:not([data-testid="stSidebar"] *){
+	height: 300px !important;
+	border-radius: 12px;
+	border: 1px solid #ddd;
+	margin-top:1rem;
+}	
+
+[data-testid="stImageContainer"] img:not([data-testid="stSidebar"] *){
+    height: auto;
+    background: white;	
+    align-items: center;	
+    justify-content: center;
+}	
+
+[data-testid="stDataFrameResizable"] {
+    height: 300px !important;      
+    max-height: 300px !important;  
+
+}
+
+
+[data-testid="stDataFrame"] {
+    border: none !important; 
+    margin-top: 1rem !important; 
+}
+

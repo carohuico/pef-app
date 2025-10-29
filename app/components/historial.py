@@ -3,6 +3,106 @@ import pandas as pd
 from typing import List, Dict
 from pathlib import Path
 from services.exportar import render_export_popover
+import contextlib
+
+class Modal:
+    """MODAL POP UP STREAMLIT THAT COVERS THE SCREEN WITH A SEMI-TRANSPARENT BACKDROP AND STYLED DIALOG."""
+
+    def __init__(self, title: str, key: str | None = None):
+        self.title = title
+        self.key = key or f"modal_{title}"
+        if self.key not in st.session_state:
+            st.session_state[self.key] = False
+
+    def open(self):
+        st.session_state[self.key] = True
+
+    def close(self):
+        st.session_state[self.key] = False
+
+    def is_open(self) -> bool:
+        return bool(st.session_state.get(self.key, False))
+
+    @contextlib.contextmanager
+    def container(self):
+        """When open, injects styled backdrop + modal wrapper and yields a Streamlit container
+        whose outputs are wrapped inside the modal. The opening <div> is rendered before yielding
+        and a closing </div> is rendered after, so Streamlit widgets placed inside the with-block
+        appear inside the modal box."""
+        if not self.is_open():
+            yield None
+            return
+
+        overlay_css = f"""
+        <style>
+        /* Backdrop */
+        .modal-backdrop-{self.key} {{
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 9997;
+            backdrop-filter: blur(2px);
+        }}
+        /* Modal box */
+        .modal-content-{self.key} {{
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            width: min(800px, 92%);
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(2,6,23,0.2);
+            font-family: "Poppins", sans-serif;
+            color: #222;
+        }}
+        .modal-header-{self.key} {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }}
+        .modal-title-{self.key} {{
+            font-size: 18px;
+            font-weight: 600;
+        }}
+        .modal-close-{self.key} {{
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            color: #666;
+        }}
+        .modal-body-{self.key} {{
+            margin-top: 6px;
+        }}
+        /* Make sure internal Streamlit elements inside modal stay above backdrop */
+        </style>
+        """
+
+        open_html = (
+            overlay_css
+            + f"<div class='modal-backdrop-{self.key}'></div>"
+            + f"<div class='modal-content-{self.key}'>"
+            + f"<div class='modal-header-{self.key}'>"
+            + f"<div class='modal-title-{self.key}'>{self.title}</div>"
+            + f"</div>"
+            + f"<div class='modal-body-{self.key}'>"
+        )
+        close_html = "</div></div>"
+
+        container = st.container()
+        # Render the opening HTML (starts the modal box)
+        container.markdown(open_html, unsafe_allow_html=True)
+        try:
+            yield container
+        finally:
+            # Close the modal HTML wrapper
+            container.markdown(close_html, unsafe_allow_html=True)
 
 def styled_search_bar():
     st.markdown("""
@@ -122,32 +222,12 @@ def historial():
             st.button(button_label, use_container_width=True)
         with col3:
             button_label = ":material/file_download: Exportar"
-            
-            if 'show_export_popover' not in st.session_state:
-                st.session_state['show_export_popover'] = False
-                
-            if st.button(button_label, key="export_button", use_container_width=True):
-                sel = st.session_state.get('historial_selection', [])
-                
-                if not sel:
-                    st.warning("No hay filas seleccionadas para exportar.")
-                else:
-                    st.session_state['show_export_popover'] = True
-            
-            if st.session_state['show_export_popover']:
-                df_to_display = st.session_state.get("filtered_historial_data", pd.DataFrame(get_historial_data()))
-                try:
-                    selected_rows = df_to_display.iloc[st.session_state.get('historial_selection', [])]
-                except Exception:
-                    selected_rows = df_to_display.loc[st.session_state.get('historial_selection', [])]
-
-                # Renderizar el popover que contiene el st.download_button.
-                # Esta línea necesita ser llamada CADA VEZ que el script corre,
-                # pero el popover solo estará abierto si se hizo clic en el botón.
-                render_export_popover(selected_rows)
+            if st.button(button_label, use_container_width=True):
+                st.session_state['show_export_popover'] = True
         with col4:
             button_label = ":material/add_2: Nuevo"
-            st.button(button_label, type="primary", use_container_width=True)
+            if st.button(button_label, type="primary", use_container_width=True):
+                st.session_state["active_view"] = "registrar"
         
     df_to_display = st.session_state.get("filtered_historial_data", pd.DataFrame(get_historial_data()))
     event = st.dataframe(
@@ -158,15 +238,46 @@ def historial():
         use_container_width=True 
     )
     
-    # persist selection in session_state so buttons elsewhere can access it on next run
     if getattr(event, 'selection', None):
         rows = event.selection.get('rows', [])
         st.session_state['historial_selection'] = rows
     else:
-        # keep previous selection if any, or clear
         if 'historial_selection' not in st.session_state:
             st.session_state['historial_selection'] = []
     
+    if 'show_export_popover' not in st.session_state:
+                st.session_state['show_export_popover'] = False
+                
+    if st.button(button_label, key="export_button", use_container_width=True):
+        sel = st.session_state.get('historial_selection', [])
+        
+        if not sel:
+            st.markdown("""<div class="warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                        </svg>
+                        <span>Seleccione al menos una fila para exportar los datos.</span>
+                        </div>""", unsafe_allow_html=True)
+        else:
+            st.session_state['show_export_popover'] = True
+    
+    if st.session_state['show_export_popover']:
+        confirmationEdit = Modal("Atención", key= "popUp_edit")
+        submitted = st.button("Enviar")
+        if submitted:
+            confirmationEdit.open()
+            
+        if confirmationEdit.is_open():
+            with confirmationEdit.container():
+                st.markdown(""" ### ¿Deseas guardar los cambios? """)
+                yes = st.button("Sí")
+                no  = st.button("No")
+
+                if yes == True:
+                    confirmationEdit.close()
+
+                if no == True:
+                    confirmationEdit.close()
     
     
     

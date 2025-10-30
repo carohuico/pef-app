@@ -5,6 +5,8 @@ from components.cargarImagen import cargar_imagen_component
 from components.inicio import inicio
 from components.historial import historial
 from components.individual import individual
+from components.estadisticas import estadisticas
+from components.ajustes import ajustes
 
 _css_general = Path(__file__).parent / 'assets' / 'general.css'
 _css_registrar = Path(__file__).parent / 'assets' / '1_registrar.css'
@@ -24,7 +26,7 @@ with open(_css_general, encoding="utf-8") as f:
 st.set_page_config(page_title="Persona Bajo la Lluvia", layout="wide")
 
 if "active_view" not in st.session_state:
-    st.session_state["active_view"] = "historial"
+    st.session_state["active_view"] = "inicio"
 
 sidebar_component()
 
@@ -37,13 +39,15 @@ elif st.session_state["active_view"] == "registrar":
 elif st.session_state["active_view"] == "historial":
     historial()
     
+elif st.session_state["active_view"] == "ajustes":
+    ajustes()
+    
 elif st.session_state["active_view"] == "individual":
-    #vista individual desde el historial, se pasa el id por session state
-    info = st.session_state.get("individual", None)
+    info = st.session_state.get("individual", None) #se pasa el objeto (fila) seleccionado
     individual(info)
 
 elif st.session_state["active_view"] == "estadisticas":
-    st.write("Bienvenido a la vista de Estadísticas")
+    estadisticas()
 
 elif st.session_state["active_view"] == "salir":
     st.write("Has salido de la aplicación")

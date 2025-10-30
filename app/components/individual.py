@@ -559,10 +559,8 @@ def individual(info: object):
     </html>
     """
     
-    # Renderizar HTML en un contenedor de ancho completo
     st.components.v1.html(html_content, height=500, width=800, scrolling=False)
     
-    # Actualizar índice si cambió desde el HTML
     new_index = st.session_state.get('current_image_index', current_index)
     if new_index != current_index:
         st.session_state.current_image_index = new_index

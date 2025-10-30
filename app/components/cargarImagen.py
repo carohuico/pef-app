@@ -10,6 +10,7 @@ from services.image_preprocess import estandarizar_imagen
 from services.indicadores import extraer_indicadores
 import streamlit as st
 from PIL import Image
+import datetime
 
 def cargar_imagen_component():
     # ---------- CONFIGURACIÓN ----------
@@ -43,8 +44,8 @@ def cargar_imagen_component():
         st.session_state["form_nombre"] = ""
     if "form_apellido" not in st.session_state:
         st.session_state["form_apellido"] = ""
-    if "form_edad" not in st.session_state:
-        st.session_state["form_edad"] = 18
+    if "form_fecha_nacimiento" not in st.session_state:
+        st.session_state["form_fecha_nacimiento"] = None
     if "form_sexo" not in st.session_state:
         st.session_state["form_sexo"] = "Selecciona una opción"
     if "form_estado_civil" not in st.session_state:
@@ -98,18 +99,24 @@ def cargar_imagen_component():
                 st.session_state["form_apellido"] = apellido_value.strip()
                 st.markdown('</div>', unsafe_allow_html=True)
 
-            # Segunda fila: Edad y Sexo
+            # Segunda fila: Fecha de nacimiento y Sexo
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown('<div class="form-group">', unsafe_allow_html=True)
-                st.markdown('<label>Edad <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
-                st.number_input(
-                    "Edad del evaluado", 
-                    key="form_edad", 
-                    min_value=18, 
-                    max_value=100, 
-                    step=1, 
-                    label_visibility="collapsed"
+                st.markdown('<label>Fecha de nacimiento <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
+                today = datetime.date.today()
+                #november 01
+                max_dob = today - datetime.timedelta(days=18 * 365)
+                min_dob = today - datetime.timedelta(days=100 * 365)
+
+                st.date_input(
+                    "Fecha de nacimiento del evaluado",
+                    key="form_fecha_nacimiento",
+                    label_visibility="collapsed",
+                    min_value=min_dob,
+                    max_value=max_dob,
+                    value=st.session_state["form_fecha_nacimiento"],
+                    format="DD/MM/YYYY"
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -189,7 +196,7 @@ def cargar_imagen_component():
             uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg", "heic"], key="file_uploader")
             if uploaded_file is not None:
                 st.session_state["uploaded_file"] = uploaded_file
-                
+                    
         def resultados_component():
             txt = "../predicciones.txt"
             indicadores = extraer_indicadores(txt)
@@ -263,7 +270,7 @@ def cargar_imagen_component():
                     if step == 1:
                         nombre_value = st.session_state.get("nombre", "").strip()
                         apellido_value = st.session_state.get("apellido", "").strip()
-                        edad_value = st.session_state.get("form_edad", 0)
+                        fecha_nacimiento = st.session_state.get("form_fecha_nacimiento", "")
                         sexo_value = st.session_state.get("sexo", "Selecciona una opción")
                         estado_civil_value = st.session_state.get("estado_civil", "Selecciona una opción")
                         escolaridad_value = st.session_state.get("escolaridad", "Selecciona una opción")
@@ -287,13 +294,13 @@ def cargar_imagen_component():
                                 <span>El nombre solo debe contener letras alfabéticas y espacios</span>
                                 </div>
                             """, unsafe_allow_html=True)
-                        elif not edad_value or edad_value < 18:
+                        elif not fecha_nacimiento:
                             st.markdown("""
                                 <div class="warning">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                                 </svg>
-                                <span>La edad del evaluado es obligatoria y debe ser mayor o igual a 18 años</span>
+                                <span>La fecha de nacimiento del evaluado es obligatoria</span>
                                 </div>
                             """, unsafe_allow_html=True)
                         elif not sexo_value or sexo_value == "Selecciona una opción":

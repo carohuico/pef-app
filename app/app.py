@@ -4,6 +4,7 @@ from components.sidebar_component import sidebar_component
 from components.cargarImagen import cargar_imagen_component 
 from components.inicio import inicio
 from components.historial import historial
+from components.individual import individual
 
 _css_general = Path(__file__).parent / 'assets' / 'general.css'
 _css_registrar = Path(__file__).parent / 'assets' / '1_registrar.css'
@@ -35,6 +36,11 @@ elif st.session_state["active_view"] == "registrar":
 
 elif st.session_state["active_view"] == "historial":
     historial()
+    
+elif st.session_state["active_view"] == "individual":
+    #vista individual desde el historial, se pasa el id por session state
+    info = st.session_state.get("individual", None)
+    individual(info)
 
 elif st.session_state["active_view"] == "estadisticas":
     st.write("Bienvenido a la vista de Estadísticas")

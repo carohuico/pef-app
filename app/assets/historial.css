@@ -6,9 +6,17 @@
 [data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *) {
     width: 100% !important;   
     font-size: 2.5rem !important;
-    height: auto !important;
     margin-bottom: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+/* Botón secundario deshabilitado (excluye sidebar) */
+[data-testid^="stBaseButton-secondary"]:disabled:not([data-testid="stSidebar"] *) {
+    background: #ffffff;
+	border: 1px solid #000000 !important;
+	color: #000000;
+	box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+	margin-top: 1.5rem;
+	width: 100px;
 }
 
 .warning {
@@ -30,3 +38,6 @@
     font-size: 14px;
     animation: slideIn 0.5s ease-out;
 }
+
+
+.stCheckbox, .stCheckbox > label, .stCheckbox input { display:flex !important; align-items:center !important; justify-content:center !important; margin: 0 !important; padding: 0 !important; height: 18px !important; }

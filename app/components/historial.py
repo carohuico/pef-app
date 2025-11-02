@@ -3,6 +3,8 @@ import pandas as pd
 from typing import List, Dict
 from pathlib import Path
 from services.exportar import render_export_popover
+from services.db import fetch_df
+from services.queries import LISTADO_EVALUADOS_SQL
 
 def styled_search_bar():
     st.markdown("""
@@ -70,23 +72,58 @@ def styled_search_bar():
         st.session_state["filtered_historial_data"] = pd.DataFrame(original_data)
 
 def get_historial_data(num_rows: int = 8) -> List[Dict]:
-    data = []
-    nombres = ["caro", "juan", "maria", "luis", "ana", "carlos", "sofia", "diego"]
-    apellidos = ["huico", "gomez", "lopez", "martinez", "garcia", "rodriguez", "fernandez", "sanchez"]
-    sexos = ["Femenino", "Masculino"]
-    for i in range(num_rows):
-        row = {
-            "Nombre": nombres[i % len(nombres)],
-            "Apellido": "Hola ipsum",
-            "Edad": "Hole ipsum",
-            "Sexo": sexos[i % len(sexos)],
-            "Estado civil": "Holu ipsum",
-            "Escolaridad": "Hohohoho ipsum",
-            "Ocupación": "Holo ipsum",
-            "Grupo": "Holo ipsum",
-        }
-        data.append(row)
-    return data
+    """Attempt to fetch historial data from the DB using the LISTADO_EVALUADOS_SQL.
+
+    Falls back to a small hard-coded sample if the DB is unavailable or the query fails.
+    Returns a list of dicts matching the keys expected by the UI.
+    """
+    try:
+        df = fetch_df(LISTADO_EVALUADOS_SQL)
+        if df is None or df.empty:
+            raise ValueError("No rows returned from DB")
+
+        # Normalize column names to match existing UI expectations
+        # - 'Ocupacion' -> 'Ocupación' (accent)
+        if 'Ocupacion' in df.columns:
+            df = df.rename(columns={'Ocupacion': 'Ocupación'})
+
+        # Ensure the keys used by the UI exist; if not, fill with empty strings
+        expected_cols = [
+            'Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil',
+            'Escolaridad', 'Ocupación', 'Grupo'
+        ]
+        for c in expected_cols:
+            if c not in df.columns:
+                df[c] = ''
+
+        # Convert to list of dicts for the rest of the component
+        records = df[expected_cols].fillna('').to_dict(orient='records')
+        return records
+    except Exception as e:
+        st.error(f"Error fetching data from database: {e}")
+        # Fallback sample data (keeps previous behavior when DB not available)
+        data = []
+        nombres = ["caro", "juan", "maria", "luis", "ana", "carlos", "sofia", "diego"]
+        apellidos = ["huico", "gomez", "lopez", "martinez", "garcia", "rodriguez", "fernandez", "sanchez"]
+        edades = [25, 30, 22, 35, 28, 40, 32, 29]
+        estados_civiles = ["Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)", "Separado(a)"]
+        escolaridades = ["Primaria", "Secundaria", "Preparatoria", "Universidad"]
+        ocupaciones = ["Estudiante", "Empleado", "Desempleado", "Estudiante"]
+        grupos = ["Grupo A", "Grupo B", "Grupo C", "Grupo D"]
+        sexos = ["Femenino", "Masculino"]
+        for i in range(num_rows):
+            row = {
+                "Nombre": nombres[i % len(nombres)],
+                "Apellido": apellidos[i % len(apellidos)],
+                "Edad": edades[i % len(edades)],
+                "Sexo": sexos[i % len(sexos)],
+                "Estado civil": estados_civiles[i % len(estados_civiles)],
+                "Escolaridad": escolaridades[i % len(escolaridades)],
+                "Ocupación": ocupaciones[i % len(ocupaciones)],
+                "Grupo": grupos[i % len(grupos)],
+            }
+            data.append(row)
+        return data
 
 def historial():
     # ---------- CONFIGURACIÓN ----------

@@ -26,7 +26,7 @@ def sidebar_component():
         unsafe_allow_html=True
     )
     
-    avatar_path = Path(__file__).parent.parent / 'assets' / 'luis.jpeg'
+    avatar_path = Path(__file__).parent.parent / 'assets' / 'avatar.webp'
     st.sidebar.image(avatar_path, width=100)
     st.sidebar.markdown(
         f"""

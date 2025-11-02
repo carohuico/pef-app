@@ -125,10 +125,10 @@ def cargar_imagen_component():
                 st.markdown('<label>Sexo <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
                 sexo_value = st.selectbox(
                     "Sexo del evaluado",
-                    ["Selecciona una opción", "Masculino", "Femenino", "Otro"],
+                    ["Selecciona una opción", "Femenino", "Masculino"],
                     key="sexo",
                     label_visibility="collapsed",
-                    index=["Selecciona una opción", "Masculino", "Femenino", "Otro"].index(st.session_state["form_sexo"])
+                    index=["Selecciona una opción", "Femenino", "Masculino"].index(st.session_state["form_sexo"])
                 )
                 st.session_state["form_sexo"] = sexo_value
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -235,7 +235,7 @@ def cargar_imagen_component():
                         st.dataframe(styled_df, use_container_width=True)
                         
         def exportar_component():
-            st.markdown("""hola""")
+            st.markdown("""Vista de exportación de resultados en proceso...""")
 
         # ---------- LÓGICA DE PASOS ----------
         if step == 1:

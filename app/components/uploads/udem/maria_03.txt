@@ -1,0 +1,13 @@
+--- Imagen: pred15.jpg ---
+  [1] Crop: pred15_crop_1_Paraguas.jpg
+      Etiqueta Base: Paraguas (0.768)
+      Contexto: sin espacio para resguardo (el paraguas toca los bordes)
+      Id: 12
+      BBox: [x1: 3, y1: 0, x2: 519, y2: 521]
+  [2] Crop: pred15_crop_2_FiguraHumana.jpg
+      Etiqueta Base: FiguraHumana (0.752)
+      Submodelo (Morfología): sin_rasgos_faciales (0.72)
+      Contexto: sale de los márgenes de la hoja
+      Id: 36
+      BBox: [x1: 238, y1: 189, x2: 732, y2: 1138]
+  -> Imagen anotada: pred15.jpg

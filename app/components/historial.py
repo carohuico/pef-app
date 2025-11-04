@@ -3,8 +3,9 @@ import pandas as pd
 from typing import List, Dict
 from pathlib import Path
 from services.exportar import render_export_popover
-from services.db import fetch_df
-from services.queries import LISTADO_EVALUADOS_SQL
+from services.db import fetch_df, get_engine
+from services.queries.q_historial import LISTADO_EVALUADOS_SQL, ELIMINAR_EVALUADOS
+from sqlalchemy import text
 
 def styled_search_bar():
     st.markdown("""
@@ -82,48 +83,25 @@ def get_historial_data(num_rows: int = 8) -> List[Dict]:
         if df is None or df.empty:
             raise ValueError("No rows returned from DB")
 
-        # Normalize column names to match existing UI expectations
+    # Normalize column names to match existing UI expectations
         # - 'Ocupacion' -> 'Ocupación' (accent)
         if 'Ocupacion' in df.columns:
             df = df.rename(columns={'Ocupacion': 'Ocupación'})
 
         # Ensure the keys used by the UI exist; if not, fill with empty strings
+        # Keep id_evaluado so we can map selections back to DB ids
         expected_cols = [
-            'Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil',
+            'id_evaluado', 'Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil',
             'Escolaridad', 'Ocupación', 'Grupo'
         ]
         for c in expected_cols:
             if c not in df.columns:
                 df[c] = ''
 
-        # Convert to list of dicts for the rest of the component
         records = df[expected_cols].fillna('').to_dict(orient='records')
         return records
     except Exception as e:
         st.error(f"Error fetching data from database: {e}")
-        # Fallback sample data (keeps previous behavior when DB not available)
-        data = []
-        nombres = ["caro", "juan", "maria", "luis", "ana", "carlos", "sofia", "diego"]
-        apellidos = ["huico", "gomez", "lopez", "martinez", "garcia", "rodriguez", "fernandez", "sanchez"]
-        edades = [25, 30, 22, 35, 28, 40, 32, 29]
-        estados_civiles = ["Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)", "Separado(a)"]
-        escolaridades = ["Primaria", "Secundaria", "Preparatoria", "Universidad"]
-        ocupaciones = ["Estudiante", "Empleado", "Desempleado", "Estudiante"]
-        grupos = ["Grupo A", "Grupo B", "Grupo C", "Grupo D"]
-        sexos = ["Femenino", "Masculino"]
-        for i in range(num_rows):
-            row = {
-                "Nombre": nombres[i % len(nombres)],
-                "Apellido": apellidos[i % len(apellidos)],
-                "Edad": edades[i % len(edades)],
-                "Sexo": sexos[i % len(sexos)],
-                "Estado civil": estados_civiles[i % len(estados_civiles)],
-                "Escolaridad": escolaridades[i % len(escolaridades)],
-                "Ocupación": ocupaciones[i % len(ocupaciones)],
-                "Grupo": grupos[i % len(grupos)],
-            }
-            data.append(row)
-        return data
 
 def historial():
     # ---------- CONFIGURACIÓN ----------
@@ -154,7 +132,37 @@ def historial():
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             button_label = ":material/delete: Eliminar"
-            st.button(button_label, use_container_width=True)
+            if st.button(button_label, use_container_width=True):
+                # tomar el id de los evaluados seleccionados y eliminarlos
+                sel = st.session_state.get('historial_selection', [])
+                if sel:
+                    # df_to_display puede contener la columna id_evaluado (no mostrada)
+                    df_current = st.session_state.get('filtered_historial_data')
+                    if df_current is None:
+                        df_current = pd.DataFrame(get_historial_data())
+
+                    # Obtener ids seleccionados
+                    try:
+                        selected_ids = df_current.iloc[sel]['id_evaluado'].tolist()
+                    except Exception:
+                        selected_ids = []
+
+                    if not selected_ids:
+                        st.warning('No se pudieron resolver los ids seleccionados.')
+                    else:
+                        ids_csv = ','.join(str(int(x)) for x in selected_ids if x != '')
+                        try:
+                            with get_engine().begin() as conn:
+                                res = conn.execute(text(ELIMINAR_EVALUADOS), {"ids_csv": ids_csv})
+                                deleted_rows = res.fetchall()
+                                rows_deleted = len(deleted_rows)
+                            st.success(f"Se eliminaron {rows_deleted} evaluado(s).")
+                            # Refrescar datos en la UI
+                            st.session_state['filtered_historial_data'] = pd.DataFrame(get_historial_data())
+                            st.session_state['historial_selection'] = []
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error al eliminar evaluados: {e}")
         with col2:
             button_label = ":material/filter_list: Filtros"
             st.button(button_label, use_container_width=True)
@@ -171,24 +179,27 @@ def historial():
                 st.session_state["active_view"] = "registrar"
         
     df_to_display = st.session_state.get("filtered_historial_data", pd.DataFrame(get_historial_data()))
+    # Mostrar una versión sin la columna id_evaluado para no exponerla en la UI
+    display_df = df_to_display.drop(columns=['id_evaluado'], errors='ignore')
     event = st.dataframe(
-        df_to_display, 
+        display_df,
         key="data",
         on_select="rerun",
         selection_mode='multi-row',
         use_container_width=True,
-        hide_index=True, 
+        hide_index=True,
         height=300
     )
     
     if event and getattr(event, 'selection', None):
         rows = event.selection.rows
+        # export_rows should include id_evaluado; use original df_to_display
         export_rows = df_to_display.iloc[rows]
         st.session_state['historial_selection'] = rows
-        
+
         if st.session_state.get('show_export_popover', False):
-           render_export_popover(export_rows)
-           st.session_state['show_export_popover'] = False
+            render_export_popover(export_rows)
+            st.session_state['show_export_popover'] = False
     else:
         st.session_state['historial_selection'] = []
         rows = []

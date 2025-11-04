@@ -1,0 +1,9 @@
+Detecciones:
+-------------------------------
+Clase	Confianza	x_min	y_min	x_max	y_max
+-------------------------------
+Sin detalles	79.06%	373.06	199.18	474.06	369.12
+Detrás del cuerpo	73.15%	451.05	97.03	554.04	151.09
+Trazos presionados	62.61%	37.22	289.26	234.08	445.37
+Sin resguardo	79.84%	325.83	38.69	467.16	98.28
+Gran cantidad de detalles irrelevantes o bizarros (paraguas con forma de animal, nubes con caras)	88.67%	475.02	293.73	550.71	428.5

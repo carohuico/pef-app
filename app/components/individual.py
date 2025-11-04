@@ -1,47 +1,63 @@
+from services.queries.q_individual import GET_PRUEBAS_POR_EVALUADO
+from services.agregar_dibujo import agregar_dibujo
+from services.db import fetch_df
+import pandas as pd
 import streamlit as st
 from pathlib import Path
 import base64
 import json
 
 def get_pruebas_data(id: str):
+    print(f"Fetching pruebas for evaluado ID: {id}")
     """Obtiene las pruebas del evaluado"""
-    pruebas = [
-        {
-            "id_prueba": 1,
-            "nombre_archivo": "prueba1.png",
-            "ruta_imagen": "dibujos\\1.jpg",
-            "formato": "jpg",
-            "fecha": "2023-01-01"
-        },
-        {
-            "id_prueba": 2,
-            "nombre_archivo": "prueba2.jpg",
-            "ruta_imagen": "dibujos\\2.jpg",
-            "formato": "jpg",
-            "fecha": "2023-02-01"
-        },
-        {
-            "id_prueba": 3,
-            "nombre_archivo": "prueba3.jpg",
-            "ruta_imagen": "dibujos\\3.jpg",
-            "formato": "jpg",
-            "fecha": "2023-03-01"
-        },
-        {
-            "id_prueba": 4,
-            "nombre_archivo": "prueba4.jpg",
-            "ruta_imagen": "dibujos\\4.jpg",
-            "formato": "jpg",
-            "fecha": "2023-04-01"
-        },
-        {
-            "id_prueba": 5,
-            "nombre_archivo": "prueba5.jpg",
-            "ruta_imagen": "dibujos\\5.jpg",
-            "formato": "jpg",
-            "fecha": "2023-05-01"
-        }
-    ]
+    # Validate id and avoid calling DB with invalid values (e.g. 'Desconocido')
+    try:
+        if id is None:
+            return []
+        # allow numeric strings or ints
+        try:
+            id_int = int(id)
+        except Exception:
+            # invalid id -> no pruebas
+            return []
+
+        df = fetch_df(GET_PRUEBAS_POR_EVALUADO, {"id_evaluado": id_int})
+        if df is None or df.empty:
+            return []
+
+        # Ensure expected columns exist and normalize them
+        expected_cols = ['id_prueba', 'nombre_archivo', 'ruta_imagen', 'formato', 'fecha']
+        for c in expected_cols:
+            if c not in df.columns:
+                df[c] = ''
+
+        # Normalize and format fecha to YYYY-MM-DD (tolerant to strings or datetimes)
+        try:
+            df['fecha'] = pd.to_datetime(df['fecha'], errors='coerce').dt.strftime('%Y-%m-%d')
+            df['fecha'] = df['fecha'].fillna('')
+        except Exception:
+            df['fecha'] = df['fecha'].astype(str).fillna('')
+
+        # Normalize 'formato' (remove leading dots, lowercase)
+        df['formato'] = df['formato'].astype(str).fillna('').str.replace('.', '', regex=False).str.lower()
+
+        # Normalize ruta_imagen to use backslashes for Windows-style paths
+        df['ruta_imagen'] = df['ruta_imagen'].astype(str).fillna('').str.replace('/', r'\\')
+
+        # Ensure id_prueba is int where possible
+        def safe_int(x):
+            try:
+                return int(x)
+            except Exception:
+                return None
+
+        df['id_prueba'] = df['id_prueba'].apply(safe_int)
+
+        # Return only the expected columns in the requested order
+        pruebas = df[expected_cols].to_dict(orient="records")
+    except Exception as e:
+        st.error(f"Error fetching pruebas data: {e}")
+        pruebas = []
     return pruebas
 
 def encode_image_to_base64(image_path):
@@ -49,11 +65,12 @@ def encode_image_to_base64(image_path):
     try:
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
-    except:
+    except Exception as e:
+        print(f"Error al leer imagen {image_path}: {e}")
         return None
 
 def individual(info: object):
-    id_val = info.get("id", "Desconocido") if info else "Desconocido"
+    id_val = info.get("id_evaluado", "Desconocido") if info else "Desconocido"
     expediente = get_pruebas_data(id_val)
     
     # ---------- CONFIGURACIÓN ----------
@@ -62,6 +79,9 @@ def individual(info: object):
     # Inicializar estado
     if 'current_image_index' not in st.session_state:
         st.session_state.current_image_index = 0
+    # initialize add_drawing flag (do not show modal by default)
+    if 'add_drawing' not in st.session_state:
+        st.session_state['add_drawing'] = False
     
     # Header con botón de regreso - sin usar columnas que limitan el ancho
     st.markdown("""
@@ -82,17 +102,36 @@ def individual(info: object):
     sexo = info.get("Sexo", "N/A") if info else "N/A"
     estado_civil = info.get("Estado civil", "N/A") if info else "N/A"
     escolaridad = info.get("Escolaridad", "N/A") if info else "N/A"
+    ocupacion = info.get("Ocupación", "N/A") if info else "N/A"
+    grupo = info.get("Grupo", "N/A") if info else "N/A"
     
+    # Ensure we have pruebas; if none, show message and exit early
+    if not expediente:
+        st.warning("No hay pruebas para este evaluado.")
+        return
+
+    # Ensure current index is within bounds
     current_index = st.session_state.current_image_index
+    if current_index >= len(expediente):
+        st.session_state.current_image_index = 0
+        current_index = 0
+
     current_prueba = expediente[current_index]
     fecha = current_prueba.get("fecha", "N/A")
     
     # Preparar datos para el HTML
     # Construir data URIs para las imágenes locales para que el HTML pueda cargarlas
     images_data = []
+    fechas_data = []
     for prueba in expediente:
         img_rel = prueba.get('ruta_imagen', '')
-        img_path = (Path(__file__).parent.parent / img_rel).resolve()
+        
+        # Remover el slash inicial si existe
+        img_rel_clean = img_rel.lstrip('/').lstrip('\\')
+        
+        # porque las imágenes están en components/uploads/
+        img_path = (Path(__file__).parent / img_rel_clean).resolve()
+        
         b64 = encode_image_to_base64(str(img_path))
         if b64:
             mime = 'jpeg' if prueba.get('formato', '').lower() in ('jpg', 'jpeg') else prueba.get('formato', 'png')
@@ -102,11 +141,21 @@ def individual(info: object):
         else:
             prueba['_data_uri'] = img_rel
             images_data.append(img_rel)
+        
+        fechas_data.append(prueba.get('fecha', 'N/A'))
 
     imagen_actual = current_prueba.get('_data_uri', current_prueba.get('ruta_imagen'))
     
     # Generar HTML del carrusel con las miniaturas
-    carousel_items_html = ""
+    # Primero el botón de agregar
+    carousel_items_html = """
+    <div class="carousel-item add-item" onclick="addDrawing()">
+        <div class="add-icon">+</div>
+        <div class="add-label">Agregar</div>
+    </div>
+    """
+    
+    # Luego las imágenes
     for i, prueba in enumerate(expediente):
         active = "active" if i == current_index else ""
         img_src = prueba.get('_data_uri', prueba.get('ruta_imagen'))
@@ -194,6 +243,25 @@ def individual(info: object):
                 transform: translateY(-2px);
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
                 border: 1px solid rgba(255, 255, 255, 0.25);
+            }}
+            
+            /* Fecha - Efecto Glass */
+            .date-card {{
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: rgba(70, 70, 70, 0.45);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-radius: 12px;
+                padding: 8px 16px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                z-index: 9999;
+                font-weight: 600;
+                color: #ffffff;
+                font-size: 14px;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             }}
             
             /* Botones de acción - Efecto Glass */
@@ -433,6 +501,37 @@ def individual(info: object):
                 font-size: 11px;
                 font-weight: 600;
             }}
+            
+            /* Botón de agregar */
+            .carousel-item.add-item {{
+                background: #FFE451;
+                color: #000000;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border: none;
+            }}
+            
+            .carousel-item.add-item:hover {{
+                background: #FFD626;
+                transform: translateY(-2px) scale(1.05);
+                border: none;
+            }}
+            
+            .add-icon {{
+                font-size: 48px;
+                color: #111;
+                font-weight: 300;
+                line-height: 1;
+            }}
+            
+            .add-label {{
+                color: #111;
+                font-size: 12px;
+                font-weight: 200;
+                margin-top: 4px;
+            }}
         </style>
     </head>
     <body>
@@ -448,15 +547,19 @@ def individual(info: object):
                         <div class="info-row"><span class="info-label">Sexo:</span> {sexo}</div>
                         <div class="info-row"><span class="info-label">Estado civil:</span> {estado_civil}</div>
                         <div class="info-row"><span class="info-label">Escolaridad:</span> {escolaridad}</div>
+                        <div class="info-row"><span class="info-label">Ocupación:</span> {ocupacion}</div>
+                        <div class="info-row"><span class="info-label">Grupo:</span> {grupo}</div>
                     </div>
                 </div>
                 
+                <div class="date-card" id="dateCard">{fecha}</div>
+                
                 <div class="action-buttons">
+                    <div class="action-btn" onclick="exportImage()" title="Descargar imagen">
+                        ⤓
+                    </div>
                     <div class="action-btn" onclick="expandImage()" title="Expandir imagen">
                         ⛶
-                    </div>
-                    <div class="action-btn" onclick="exportImage()" title="Exportar imagen">
-                        ⤓
                     </div>
                 </div>
                 
@@ -477,6 +580,7 @@ def individual(info: object):
         <script>
             let currentIndex = {current_index};
             const images = {json.dumps(images_data)};
+            const fechas = {json.dumps(fechas_data)};
             const totalImages = {len(expediente)};
             
             function toggleInfo() {{
@@ -486,7 +590,6 @@ def individual(info: object):
             
             function expandImage() {{
                 const mainImage = document.getElementById('mainImage');
-                // Abrir imagen en nueva ventana/pestaña
                 window.open(mainImage.src, '_blank');
             }}
             
@@ -500,33 +603,41 @@ def individual(info: object):
                 document.body.removeChild(link);
             }}
             
+            function addDrawing() {{
+                // Notify Streamlit to set the add_drawing flag to true
+                window.parent.postMessage({{
+                    type: 'streamlit:setComponentValue',
+                    key: 'add_drawing',
+                    value: true
+                }}, '*');
+            }}
+            
             function updateImage(index) {{
                 const mainImage = document.getElementById('mainImage');
+                const dateCard = document.getElementById('dateCard');
                 
-                // Fade out
                 mainImage.classList.add('fade-out');
                 
                 setTimeout(() => {{
                     currentIndex = index;
                     mainImage.src = images[index];
+                    dateCard.textContent = fechas[index];
                     
-                    // Fade in
                     mainImage.classList.remove('fade-out');
                     
-                    // Actualizar miniaturas activas
                     document.querySelectorAll('.carousel-item').forEach((item, i) => {{
-                        if (i === index) {{
+                        // El primer item es el botón de agregar, así que ajustamos el índice
+                        if (i === 0) return; // Skip el botón de agregar
+                        if (i - 1 === index) {{
                             item.classList.add('active');
                         }} else {{
                             item.classList.remove('active');
                         }}
                     }});
                     
-                    // Actualizar estado de botones del carrusel
                     document.getElementById('prevBtn').disabled = (index === 0);
                     document.getElementById('nextBtn').disabled = (index === totalImages - 1);
                     
-                    // Comunicar cambio a Streamlit
                     window.parent.postMessage({{
                         type: 'streamlit:setComponentValue',
                         key: 'current_image_index',
@@ -551,7 +662,6 @@ def individual(info: object):
                 }}
             }}
             
-            // Inicializar estado de botones
             document.getElementById('prevBtn').disabled = (currentIndex === 0);
             document.getElementById('nextBtn').disabled = (currentIndex === totalImages - 1);
         </script>
@@ -560,6 +670,10 @@ def individual(info: object):
     """
     
     st.components.v1.html(html_content, height=500, width=800, scrolling=False)
+    
+    if st.session_state.get('add_drawing', False):
+        agregar_dibujo(st.session_state.get('current_image_index', current_index))
+        st.session_state['add_drawing'] = False
     
     new_index = st.session_state.get('current_image_index', current_index)
     if new_index != current_index:

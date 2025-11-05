@@ -43,8 +43,8 @@ elif st.session_state["active_view"] == "ajustes":
     ajustes()
     
 elif st.session_state["active_view"] == "individual":
-    info = st.session_state.get("individual", None) #se pasa el objeto (fila) seleccionado
-    individual(info)
+    id = st.session_state.get("selected_evaluation_id", None)
+    individual(id)
 
 elif st.session_state["active_view"] == "estadisticas":
     estadisticas()

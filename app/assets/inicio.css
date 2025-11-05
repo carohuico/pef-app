@@ -24,41 +24,6 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* boton ver todos */
-[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *) {
-    /* texto underline pára que no parezca boton */
-    text-decoration: underline;
-    font-size: 1rem !important; 
-    height: auto !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    background-color: transparent !important;
-    align-items: right !important;
-    justify-content: flex-end !important;
-    padding: 0 !important;
-    padding-right: 0 !important;
-}
-
-[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *):hover {
-     /* texto underline pára que no parezca boton */
-    text-decoration: underline;
-    font-size: 1rem !important; 
-    height: auto !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background-color: transparent !important;
-    border: none !important;
-    align-items: right !important;
-    justify-content: flex-end !important;
-    padding: 0 !important;
-    padding-right: 0 !important;
-}
-
 [data-testid="stButton"] button[kind="primary"] p:not([data-testid="stSidebar"] *) {
     font-size: 1rem !important; 
     font-weight: 600 !important; 
@@ -75,5 +40,58 @@ h5 {
     font-family: poppins, sans-serif !important;
     font-size: 1.2rem !important;
     font-weight: 600 !important;
+}
 
+[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *) {
+    width: 100% !important;   
+    font-size: 2.5rem !important;
+    height: auto !important;
+    margin-top: 10px !important;
+    border-radius: 12px !important;
+}
+[data-testid="stButton"] button[kind="secondary"] p:not([data-testid="stSidebar"] *) {
+    align-items: left !important;
+     justify-content: left !important;
+     
+}
+
+.success {
+    position: fixed;
+    top: 3rem;
+    right: 1rem;
+    z-index: 1000;
+    color: rgba(87, 177, 27, 0.781);
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-size: 14px;
+    will-change: opacity, transform;
+    animation: slideIn 0.5s ease-out forwards, fadeOut 3s ease-in 0.5s forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
 }

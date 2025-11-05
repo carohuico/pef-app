@@ -1,6 +1,7 @@
 import streamlit as st
 from pathlib import Path
 import unicodedata
+from base64 import b64encode
 
 def render_sidebar():
     st.sidebar.title("Rainly")
@@ -19,12 +20,15 @@ def sidebar_component():
             unsafe_allow_html=True
         )
         
-    st.sidebar.markdown(
-        f"""
-            <h2 style="text-align: center; color:white; margin: 0;">Rainly</h2>
-        """,
-        unsafe_allow_html=True
-    )
+    logo_path = Path(__file__).parent.parent / 'assets' / 'logo.png'
+    with open(logo_path, "rb") as _img:
+        _b64 = b64encode(_img.read()).decode("utf-8")
+    html_logo = f"""
+    <div class="sidebar-logo-container" style="text-align: center; ">
+        <img src="data:image/png;base64,{_b64}" alt="Rainly Logo" class="sidebar-logo" style="width:100px; height:auto;" />
+    </div>
+    """
+    st.sidebar.html(html_logo)
     
     avatar_path = Path(__file__).parent.parent / 'assets' / 'avatar.webp'
     st.sidebar.image(avatar_path, width=100)

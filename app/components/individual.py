@@ -7,44 +7,89 @@ from pathlib import Path
 import base64
 import json
 
-def get_pruebas_data(id: str):
-    print(f"Fetching pruebas for evaluado ID: {id}")
-    """Obtiene las pruebas del evaluado"""
-    # Validate id and avoid calling DB with invalid values (e.g. 'Desconocido')
+def get_info(id: str):
+    """Obtiene la información demográfica del evaluado"""
     try:
         if id is None:
             return []
-        # allow numeric strings or ints
         try:
             id_int = int(id)
         except Exception:
-            # invalid id -> no pruebas
+            return []
+
+        
+        df = fetch_df("""
+        SELECT
+            e.nombre AS "Nombre",
+            e.apellido AS "Apellido",
+            CONVERT(VARCHAR(10), e.fecha_nacimiento, 120) AS fecha_nacimiento,
+            e.sexo AS "Sexo",
+            e.estado_civil AS "Estado civil",
+            e.escolaridad AS "Escolaridad",
+            e.ocupacion AS "Ocupación",
+            g.nombre AS "Grupo",
+            e.id_grupo
+        FROM dbo.Evaluado e
+        LEFT JOIN dbo.Grupo g ON e.id_grupo = g.id_grupo
+        WHERE e.id_evaluado = :id_evaluado
+        """, {"id_evaluado": id_int})
+
+        if df is None or df.empty:
+            return []
+
+        info = df.iloc[0].to_dict()
+
+        # Compute Edad from fecha_nacimiento if available (expecting YYYY-MM-DD)
+        try:
+            fn = info.get('fecha_nacimiento')
+            if fn and str(fn).strip():
+                from datetime import datetime, date
+                try:
+                    bdate = datetime.strptime(str(fn), '%Y-%m-%d').date()
+                    today = date.today()
+                    edad = today.year - bdate.year - ((today.month, today.day) < (bdate.month, bdate.day))
+                    info['Edad'] = edad
+                except Exception:
+                    info['Edad'] = 'N/A'
+            else:
+                info['Edad'] = 'N/A'
+        except Exception:
+            info['Edad'] = 'N/A'
+    except Exception as e:
+        st.error(f"Error fetching evaluado info: {e}")
+        info = {}
+    return info
+
+def get_pruebas_data(id: str):
+    print(f"Fetching pruebas for evaluado ID: {id}")
+    """Obtiene las pruebas del evaluado"""
+    try:
+        if id is None:
+            return []
+        try:
+            id_int = int(id)
+        except Exception:
             return []
 
         df = fetch_df(GET_PRUEBAS_POR_EVALUADO, {"id_evaluado": id_int})
         if df is None or df.empty:
             return []
 
-        # Ensure expected columns exist and normalize them
         expected_cols = ['id_prueba', 'nombre_archivo', 'ruta_imagen', 'formato', 'fecha']
         for c in expected_cols:
             if c not in df.columns:
                 df[c] = ''
 
-        # Normalize and format fecha to YYYY-MM-DD (tolerant to strings or datetimes)
         try:
             df['fecha'] = pd.to_datetime(df['fecha'], errors='coerce').dt.strftime('%Y-%m-%d')
             df['fecha'] = df['fecha'].fillna('')
         except Exception:
             df['fecha'] = df['fecha'].astype(str).fillna('')
 
-        # Normalize 'formato' (remove leading dots, lowercase)
         df['formato'] = df['formato'].astype(str).fillna('').str.replace('.', '', regex=False).str.lower()
 
-        # Normalize ruta_imagen to use backslashes for Windows-style paths
         df['ruta_imagen'] = df['ruta_imagen'].astype(str).fillna('').str.replace('/', r'\\')
 
-        # Ensure id_prueba is int where possible
         def safe_int(x):
             try:
                 return int(x)
@@ -53,7 +98,6 @@ def get_pruebas_data(id: str):
 
         df['id_prueba'] = df['id_prueba'].apply(safe_int)
 
-        # Return only the expected columns in the requested order
         pruebas = df[expected_cols].to_dict(orient="records")
     except Exception as e:
         st.error(f"Error fetching pruebas data: {e}")
@@ -69,10 +113,23 @@ def encode_image_to_base64(image_path):
         print(f"Error al leer imagen {image_path}: {e}")
         return None
 
-def individual(info: object):
-    id_val = info.get("id_evaluado", "Desconocido") if info else "Desconocido"
-    expediente = get_pruebas_data(id_val)
+def individual(id_evaluado: str = None):
+    info = get_info(id_evaluado)
+    expediente = get_pruebas_data(id_evaluado)
     
+    try:
+        open_prueba = st.session_state.pop('open_prueba_id', None)
+        if open_prueba is not None and expediente:
+            for idx, p in enumerate(expediente):
+                try:
+                    if p.get('id_prueba') is not None and int(p.get('id_prueba')) == int(open_prueba):
+                        st.session_state.current_image_index = idx
+                        break
+                except Exception:
+                    continue
+    except Exception:
+        pass
+
     # ---------- CONFIGURACIÓN ----------
     st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
     
@@ -82,7 +139,17 @@ def individual(info: object):
     # initialize add_drawing flag (do not show modal by default)
     if 'add_drawing' not in st.session_state:
         st.session_state['add_drawing'] = False
-    
+        
+    #info
+    nombre = info.get("Nombre", "Desconocido") if info else "Desconocido"
+    apellido = info.get("Apellido", "Desconocido") if info else "Desconocido"
+    edad = info.get("Edad", "N/A") if info else "N/A"
+    sexo = info.get("Sexo", "N/A") if info else "N/A"
+    estado_civil = info.get("Estado civil", "N/A") if info else "N/A"
+    escolaridad = info.get("Escolaridad", "N/A") if info else "N/A"
+    ocupacion = info.get("Ocupación", "N/A") if info else "N/A"
+    grupo = info.get("Grupo", "N/A") if info else "N/A"
+
     # Header con botón de regreso - sin usar columnas que limitan el ancho
     st.markdown("""
     <style>
@@ -94,16 +161,6 @@ def individual(info: object):
     }
     </style>
     """, unsafe_allow_html=True)
-    
-    # Datos demográficos
-    nombre = info.get("Nombre", "Desconocido") if info else "Desconocido"
-    apellido = info.get("Apellido", "Desconocido") if info else "Desconocido"
-    edad = info.get("Edad", "N/A") if info else "N/A"
-    sexo = info.get("Sexo", "N/A") if info else "N/A"
-    estado_civil = info.get("Estado civil", "N/A") if info else "N/A"
-    escolaridad = info.get("Escolaridad", "N/A") if info else "N/A"
-    ocupacion = info.get("Ocupación", "N/A") if info else "N/A"
-    grupo = info.get("Grupo", "N/A") if info else "N/A"
     
     # Ensure we have pruebas; if none, show message and exit early
     if not expediente:
@@ -147,15 +204,9 @@ def individual(info: object):
     imagen_actual = current_prueba.get('_data_uri', current_prueba.get('ruta_imagen'))
     
     # Generar HTML del carrusel con las miniaturas
-    # Primero el botón de agregar
-    carousel_items_html = """
-    <div class="carousel-item add-item" onclick="addDrawing()">
-        <div class="add-icon">+</div>
-        <div class="add-label">Agregar</div>
-    </div>
-    """
+    carousel_items_html = ""
     
-    # Luego las imágenes
+    # Imágenes del carrusel
     for i, prueba in enumerate(expediente):
         active = "active" if i == current_index else ""
         img_src = prueba.get('_data_uri', prueba.get('ruta_imagen'))
@@ -166,7 +217,18 @@ def individual(info: object):
         </div>
         """
     
-    # HTML completo con JavaScript integrado
+    
+        svg_download = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>'''
+        # Use a clearer "expand" icon (corners outward) to ensure visibility
+        svg_expand = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8v-4h-4M4 16v4h4M20 16v4h-4" />
+</svg>'''
+        svg_add = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5H4.5" />
+</svg>'''
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -292,6 +354,14 @@ def individual(info: object):
                 color: #ffffff;
                 font-size: 20px;
             }}
+
+            /* Make inline SVG icons a bit larger, white and with shadow to match header/date */
+            .action-btn svg {{
+                width: 20px;
+                height: 20px;
+                display: block;
+                filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45));
+            }}
             
             .action-btn:hover {{
                 background: rgba(70, 70, 70, 0.55);
@@ -303,6 +373,27 @@ def individual(info: object):
             .action-btn:active {{
                 transform: translateY(0);
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            }}
+            
+            /* Botón amarillo de agregar */
+            .action-btn.add-btn {{
+                background: rgba(255, 228, 81, 0.9);
+                border: 1px solid rgba(255, 193, 7, 0.3);
+                color: #ffffff; /* make icon white on yellow */
+                font-size: 28px;
+                font-weight: 300;
+            }}
+            
+            .action-btn.add-btn:hover {{
+                background: rgba(255, 214, 38, 0.95);
+                border: 1px solid rgba(255, 193, 7, 0.5);
+                transform: translateY(-2px) scale(1.05);
+                box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+            }}
+            
+            .action-btn.add-btn:active {{
+                transform: translateY(0) scale(1);
+                box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
             }}
             
             .info-toggle {{
@@ -501,37 +592,6 @@ def individual(info: object):
                 font-size: 11px;
                 font-weight: 600;
             }}
-            
-            /* Botón de agregar */
-            .carousel-item.add-item {{
-                background: #FFE451;
-                color: #000000;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                border: none;
-            }}
-            
-            .carousel-item.add-item:hover {{
-                background: #FFD626;
-                transform: translateY(-2px) scale(1.05);
-                border: none;
-            }}
-            
-            .add-icon {{
-                font-size: 48px;
-                color: #111;
-                font-weight: 300;
-                line-height: 1;
-            }}
-            
-            .add-label {{
-                color: #111;
-                font-size: 12px;
-                font-weight: 200;
-                margin-top: 4px;
-            }}
         </style>
     </head>
     <body>
@@ -556,10 +616,13 @@ def individual(info: object):
                 
                 <div class="action-buttons">
                     <div class="action-btn" onclick="exportImage()" title="Descargar imagen">
-                        ⤓
+                        <span id="svgDownload">{svg_download}</span>
                     </div>
                     <div class="action-btn" onclick="expandImage()" title="Expandir imagen">
-                        ⛶
+                        <span id="svgExpand">{svg_expand}</span>
+                    </div>
+                    <div class="action-btn add-btn" onclick="addDrawing()" title="Agregar dibujo">
+                        <span id="svgAdd">{svg_add}</span>
                     </div>
                 </div>
                 
@@ -626,9 +689,7 @@ def individual(info: object):
                     mainImage.classList.remove('fade-out');
                     
                     document.querySelectorAll('.carousel-item').forEach((item, i) => {{
-                        // El primer item es el botón de agregar, así que ajustamos el índice
-                        if (i === 0) return; // Skip el botón de agregar
-                        if (i - 1 === index) {{
+                        if (i === index) {{
                             item.classList.add('active');
                         }} else {{
                             item.classList.remove('active');

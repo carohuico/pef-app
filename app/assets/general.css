@@ -154,3 +154,8 @@ button[kind="secondary"]:hover {
 }
 
 .spacer { flex: 1 1 auto; min-height: 0; }
+
+[data-testid="stDialog"] div {
+	align-items: center !important;
+	justify-content: center !important;
+}

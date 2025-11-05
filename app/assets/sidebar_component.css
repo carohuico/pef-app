@@ -6,7 +6,7 @@ body {
 [data-testid="stImageContainer"] img:not([data-testid="stMain"] *) {
     border-radius: 50%;
     height: auto;
-    margin: 20px;
+    margin: 10px;
     background: white;
     align-items: center;
     justify-content: center;

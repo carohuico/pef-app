@@ -136,12 +136,10 @@ def historial():
                 # tomar el id de los evaluados seleccionados y eliminarlos
                 sel = st.session_state.get('historial_selection', [])
                 if sel:
-                    # df_to_display puede contener la columna id_evaluado (no mostrada)
                     df_current = st.session_state.get('filtered_historial_data')
                     if df_current is None:
                         df_current = pd.DataFrame(get_historial_data())
 
-                    # Obtener ids seleccionados
                     try:
                         selected_ids = df_current.iloc[sel]['id_evaluado'].tolist()
                     except Exception:
@@ -157,7 +155,6 @@ def historial():
                                 deleted_rows = res.fetchall()
                                 rows_deleted = len(deleted_rows)
                             st.success(f"Se eliminaron {rows_deleted} evaluado(s).")
-                            # Refrescar datos en la UI
                             st.session_state['filtered_historial_data'] = pd.DataFrame(get_historial_data())
                             st.session_state['historial_selection'] = []
                             st.rerun()
@@ -179,7 +176,6 @@ def historial():
                 st.session_state["active_view"] = "registrar"
         
     df_to_display = st.session_state.get("filtered_historial_data", pd.DataFrame(get_historial_data()))
-    # Mostrar una versión sin la columna id_evaluado para no exponerla en la UI
     display_df = df_to_display.drop(columns=['id_evaluado'], errors='ignore')
     event = st.dataframe(
         display_df,
@@ -218,6 +214,6 @@ def historial():
                     help=help_msg if not is_single_selection else None):
             #selected data object
             selected_data = df_to_display.iloc[sel[0]]
-            st.session_state["individual"] = selected_data.to_dict()
+            st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
             st.session_state["active_view"] = "individual"
             st.rerun()

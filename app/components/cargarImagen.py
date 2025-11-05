@@ -424,6 +424,7 @@ def cargar_imagen_component():
                             }
                             try:
                                 engine = get_engine()
+                                st.session_state['created_ok'] = False
                                 with engine.begin() as conn:
                                     # Resolver id_grupo si se proporcionó nombre de grupo
                                     id_grupo = None
@@ -448,6 +449,7 @@ def cargar_imagen_component():
                                         except Exception:
                                             # fallback if row is tuple
                                             st.session_state['id_evaluado'] = int(row[0])
+                                st.session_state['created_ok'] = True
                             except Exception as e:
                                 st.error(f"Error al crear evaluado en la base de datos: {e}")
                                 # No avanzar de paso si falla la inserción

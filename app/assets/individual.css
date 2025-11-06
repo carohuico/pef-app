@@ -1,0 +1,104 @@
+/* Botones primarios fuera del stDialog (y fuera del sidebar) */
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
+    background: #FFE451;
+    color: #000000;
+	border:none;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+	width: 100px;
+    transform: translateY(-36px);
+	margin: 0;
+	display: inline-block;
+}
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):hover {
+    background: #FFD626;
+    transform: translateY(-36px);
+}
+
+/* Botones primarios dentro del stDialog */
+[data-testid="stDialog"] [data-testid^="stBaseButton-primary"] {
+    background: #FFE451;
+    color: #000;
+    border: none;
+}
+[data-testid="stDialog"] [data-testid^="stBaseButton-primary"]:hover {
+    background: #FFD626;
+}
+
+/* Reglas de layout para bloques horizontales (se mantienen) */
+.stHorizontalBlock:has(button[kind="primary"]) > div:last-child,
+.stHorizontalBlock:has(button[kind="primary"]) > div:last-child *:not(button) {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+.stHorizontalBlock:has(button[kind="primary"]) button[kind="primary"] {
+    white-space: nowrap !important;
+    min-width: max-content !important;
+    /* center the content inside the button (text / icons) */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    /* small padding to keep visual balance */
+    padding: 8px 16px !important;
+}
+
+/* Estilos para el título de la página */
+.page-header {
+    font-size: 1.5rem;
+	font-weight: 700;
+	margin: 0;
+	display: inline-block;
+	transform: translateY(-36px);
+	z-index: 25;
+}
+
+/*drag and drop*/
+[data-testid="stFileUploaderDropzone"] {
+	position: relative;
+	border: 2px dashed #888;
+	border-radius: 12px;
+	padding: 40px;
+	text-align: center;
+	background-color: #fafafa;
+	transition: background-color 0.2s ease;
+	cursor: pointer;
+	height: 200px;
+}
+[data-testid="stFileUploaderDropzone"]:hover {
+	background-color: #fcebb2;
+	border: 2px dashed #FFD751;
+}
+.uploader-button {
+	background-color: #111;
+	color: #fff;
+	padding: 8px 18px;
+	border-radius: 8px;
+	display: inline-block;
+	font-weight: 600;
+	margin-top: 5px;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"] span{
+	font-size: 0.9rem;
+	color: #111;
+	align-items: left;
+	justify-content: left;
+	width : fit-content;
+}
+
+
+[data-testid="stImage"] img:not([data-testid="stSidebar"] *){
+	height: 200px !important;
+	border-radius: 12px;
+	border: 1px solid #ddd;
+	margin-top:1rem;
+}	
+
+[data-testid="stImageContainer"] img:not([data-testid="stSidebar"] *){
+    height: auto;
+    background: white;	
+    align-items: center;	
+    justify-content: center;
+}	

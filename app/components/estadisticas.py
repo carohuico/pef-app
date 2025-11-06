@@ -23,7 +23,7 @@ import pandas as pd
 import datetime
 import altair as alt
 
-@st.dialog("🔍 Filtros de búsqueda", width="large")
+@st.dialog("Filtros de estadística", width="large")
 def modal_filtros():
     """Modal de filtros usando st.dialog nativo de Streamlit"""
     

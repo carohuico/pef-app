@@ -114,6 +114,16 @@ def encode_image_to_base64(image_path):
         return None
 
 def individual(id_evaluado: str = None):
+    
+     # ---------- CSS (externo) ----------
+    _css_individual = Path(__file__).parent.parent / 'assets' / 'individual.css'      
+    
+    try:
+        with open(_css_individual, 'r', encoding='utf-8') as _f:
+            st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Error loading CSS: {e}")
+    
     info = get_info(id_evaluado)
     expediente = get_pruebas_data(id_evaluado)
     
@@ -141,33 +151,22 @@ def individual(id_evaluado: str = None):
         st.session_state['add_drawing'] = False
         
     #info
-    nombre = info.get("Nombre", "Desconocido") if info else "Desconocido"
-    apellido = info.get("Apellido", "Desconocido") if info else "Desconocido"
-    edad = info.get("Edad", "N/A") if info else "N/A"
-    sexo = info.get("Sexo", "N/A") if info else "N/A"
-    estado_civil = info.get("Estado civil", "N/A") if info else "N/A"
-    escolaridad = info.get("Escolaridad", "N/A") if info else "N/A"
-    ocupacion = info.get("Ocupación", "N/A") if info else "N/A"
-    grupo = info.get("Grupo", "N/A") if info else "N/A"
-
-    # Header con botón de regreso - sin usar columnas que limitan el ancho
-    st.markdown("""
-    <style>
-    .header-container {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 24px;
+    info_obj = {
+        "id_evaluado": id_evaluado,
+        "Nombre": info.get("Nombre", "Desconocido"),
+        "Apellido": info.get("Apellido", "Desconocido"),
+        "Edad": info.get("Edad", "N/A"),
+        "Sexo": info.get("Sexo", "N/A"),
+        "Estado civil": info.get("Estado civil", "N/A"),
+        "Escolaridad": info.get("Escolaridad", "N/A"),
+        "Ocupación": info.get("Ocupación", "N/A"),
+        "Grupo": info.get("Grupo", "N/A")
     }
-    </style>
-    """, unsafe_allow_html=True)
     
-    # Ensure we have pruebas; if none, show message and exit early
     if not expediente:
         st.warning("No hay pruebas para este evaluado.")
         return
 
-    # Ensure current index is within bounds
     current_index = st.session_state.current_image_index
     if current_index >= len(expediente):
         st.session_state.current_image_index = 0
@@ -176,8 +175,6 @@ def individual(id_evaluado: str = None):
     current_prueba = expediente[current_index]
     fecha = current_prueba.get("fecha", "N/A")
     
-    # Preparar datos para el HTML
-    # Construir data URIs para las imágenes locales para que el HTML pueda cargarlas
     images_data = []
     fechas_data = []
     for prueba in expediente:
@@ -203,7 +200,6 @@ def individual(id_evaluado: str = None):
 
     imagen_actual = current_prueba.get('_data_uri', current_prueba.get('ruta_imagen'))
     
-    # Generar HTML del carrusel con las miniaturas
     carousel_items_html = ""
     
     # Imágenes del carrusel
@@ -251,6 +247,7 @@ def individual(id_evaluado: str = None):
             }}
             
             .container {{
+                margin-top: 0px !important;
                 width: 100%;
                 min-width: 100%;
                 padding: 0;
@@ -263,7 +260,7 @@ def individual(id_evaluado: str = None):
                 border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                margin-bottom: 20px;
+                margin-bottom: 0;
                 width: 100%;
                 height: 300px;
                 display: flex;
@@ -373,27 +370,6 @@ def individual(id_evaluado: str = None):
             .action-btn:active {{
                 transform: translateY(0);
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            }}
-            
-            /* Botón amarillo de agregar */
-            .action-btn.add-btn {{
-                background: rgba(255, 228, 81, 0.9);
-                border: 1px solid rgba(255, 193, 7, 0.3);
-                color: #ffffff; /* make icon white on yellow */
-                font-size: 28px;
-                font-weight: 300;
-            }}
-            
-            .action-btn.add-btn:hover {{
-                background: rgba(255, 214, 38, 0.95);
-                border: 1px solid rgba(255, 193, 7, 0.5);
-                transform: translateY(-2px) scale(1.05);
-                box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
-            }}
-            
-            .action-btn.add-btn:active {{
-                transform: translateY(0) scale(1);
-                box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
             }}
             
             .info-toggle {{
@@ -599,16 +575,16 @@ def individual(id_evaluado: str = None):
             <div class="main-image-container">
                 <div class="info-card" id="infoCard" onclick="toggleInfo()">
                     <div class="info-toggle">
-                        <span>{nombre} {apellido}</span>
+                        <span>Datos personales</span>
                         <span class="info-arrow">▶</span>
                     </div>
                     <div class="info-details">
-                        <div class="info-row"><span class="info-label">Edad:</span> {edad}</div>
-                        <div class="info-row"><span class="info-label">Sexo:</span> {sexo}</div>
-                        <div class="info-row"><span class="info-label">Estado civil:</span> {estado_civil}</div>
-                        <div class="info-row"><span class="info-label">Escolaridad:</span> {escolaridad}</div>
-                        <div class="info-row"><span class="info-label">Ocupación:</span> {ocupacion}</div>
-                        <div class="info-row"><span class="info-label">Grupo:</span> {grupo}</div>
+                        <div class="info-row"><span class="info-label">Edad: </span>{info_obj.get("Edad", "N/A")}</div>
+                        <div class="info-row"><span class="info-label">Sexo:</span> {info_obj.get("Sexo", "N/A")}</div>
+                        <div class="info-row"><span class="info-label">Estado civil:</span> {info_obj.get("Estado civil", "N/A")}</div>
+                        <div class="info-row"><span class="info-label">Escolaridad:</span> {info_obj.get("Escolaridad", "N/A")}</div>
+                        <div class="info-row"><span class="info-label">Ocupación:</span> {info_obj.get("Ocupación", "N/A")}</div>
+                        <div class="info-row"><span class="info-label">Grupo:</span> {info_obj.get("Grupo", "N/A")}</div>
                     </div>
                 </div>
                 
@@ -620,9 +596,6 @@ def individual(id_evaluado: str = None):
                     </div>
                     <div class="action-btn" onclick="expandImage()" title="Expandir imagen">
                         <span id="svgExpand">{svg_expand}</span>
-                    </div>
-                    <div class="action-btn add-btn" onclick="addDrawing()" title="Agregar dibujo">
-                        <span id="svgAdd">{svg_add}</span>
                     </div>
                 </div>
                 
@@ -667,11 +640,10 @@ def individual(id_evaluado: str = None):
             }}
             
             function addDrawing() {{
-                // Notify Streamlit to set the add_drawing flag to true
+                console.log("Adding drawing...");
                 window.parent.postMessage({{
                     type: 'streamlit:setComponentValue',
-                    key: 'add_drawing',
-                    value: true
+                    value: {{ action: 'add_drawing', index: currentIndex }}
                 }}, '*');
             }}
             
@@ -729,14 +701,22 @@ def individual(id_evaluado: str = None):
     </body>
     </html>
     """
-    
+    # ---------- TÍTULO Y BOTÓN DE FILTROS ----------
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        nombre=info_obj.get("Nombre", "Desconocido")
+        apellido=info_obj.get("Apellido", "Desconocido")
+        st.markdown(f'<div class="page-header">{nombre} {apellido}</div>', unsafe_allow_html=True)
+    with col2:
+        button_label = ":material/add: Agregar dibujo"
+        if st.button(button_label, use_container_width=True, type="primary"):
+            agregar_dibujo(info_obj)
+            st.session_state['add_drawing'] = True
+
     st.components.v1.html(html_content, height=500, width=800, scrolling=False)
-    
-    if st.session_state.get('add_drawing', False):
-        agregar_dibujo(st.session_state.get('current_image_index', current_index))
-        st.session_state['add_drawing'] = False
-    
+
     new_index = st.session_state.get('current_image_index', current_index)
     if new_index != current_index:
         st.session_state.current_image_index = new_index
         st.rerun()
+    

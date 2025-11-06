@@ -11,7 +11,7 @@ def exportar_datos(selected_rows: pd.DataFrame, file_type: str, filename: str):
             label="Descargar datos como CSV",
             data=csv,
             file_name=filename,
-            mime='text/csv; charset=utf-8',
+            mime='text/csv; charset=utf-8-sig',
         )
     elif file_type == "pdf":
         """Exporta los datos del DataFrame a un archivo PDF descargable."""

@@ -15,5 +15,5 @@ SELECT
     CONVERT(VARCHAR(10), fecha, 120) AS fecha
 FROM dbo.Prueba
 WHERE id_evaluado = :id_evaluado
-ORDER BY fecha DESC;
+ORDER BY fecha ASC;
 """

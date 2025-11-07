@@ -88,8 +88,6 @@ def get_historial_data(num_rows: int = 8) -> List[Dict]:
         if 'Ocupacion' in df.columns:
             df = df.rename(columns={'Ocupacion': 'Ocupación'})
 
-        # Ensure the keys used by the UI exist; if not, fill with empty strings
-        # Keep id_evaluado so we can map selections back to DB ids
         expected_cols = [
             'id_evaluado', 'Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil',
             'Escolaridad', 'Ocupación', 'Grupo'

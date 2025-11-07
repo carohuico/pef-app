@@ -13,6 +13,34 @@ from services.indicadores import simular_resultado
 from services.db import get_engine
 from services.queries.q_registro import POST_PRUEBA, POST_RESULTADO
 from components.bounding_boxes import imagen_bboxes
+try:
+    import numpy as _np
+except Exception:
+    _np = None
+
+
+def _normalize_param_value(v):
+    """Convert numpy scalar types and Paths to native types acceptable by pyodbc."""
+    from pathlib import Path as _Path
+    try:
+        if _np is not None and isinstance(v, _np.generic):
+            return v.item()
+    except Exception:
+        pass
+    item = getattr(v, "item", None)
+    if callable(item):
+        try:
+            return item()
+        except Exception:
+            pass
+    # Path -> str
+    if isinstance(v, _Path):
+        return str(v)
+    return v
+
+
+def _normalize_params(d):
+    return {k: _normalize_param_value(v) for k, v in d.items()}
 
 @st.dialog("Agregar nueva prueba", width="large")
 def agregar_dibujo(info_obj):
@@ -223,16 +251,16 @@ def agregar_dibujo(info_obj):
                         with engine.begin() as conn:
                             # Insertar la prueba
                             id = info_obj.get("id_evaluado")
-                            id_prueba = conn.execute(
-                                text(POST_PRUEBA),
-                                {
-                                    "id_evaluado": id,
-                                    "nombre_archivo": nombre_archivo,
-                                    "ruta_imagen": ruta_imagen,
-                                    "formato": formato,
-                                    "fecha": fecha_actual
-                                }
-                            ).fetchone()["id_prueba"]
+                            print("ID Evaluado:", id)
+                            params_prueba = {
+                                "id_evaluado": id,
+                                "nombre_archivo": nombre_archivo,
+                                "ruta_imagen": ruta_imagen,
+                                "formato": formato,
+                                "fecha": fecha_actual
+                            }
+                            params_prueba = _normalize_params(params_prueba)
+                            id_prueba = conn.execute(text(POST_PRUEBA), params_prueba).fetchone()["id_prueba"]
                             
                             # Insertar resultados
                             indicadores = st.session_state.get("agregar_indicadores", [])
@@ -262,18 +290,17 @@ def agregar_dibujo(info_obj):
                                     w_norm = (x_max - x_min)
                                     h_norm = (y_max - y_min)
 
-                                conn.execute(
-                                    text(POST_RESULTADO),
-                                    {
-                                        "id_prueba": id_prueba,
-                                        "id_indicador": iid,
-                                        "x_min": x_min_norm,
-                                        "y_min": y_min_norm,
-                                        "x_max": w_norm,
-                                        "y_max": h_norm,
-                                        "confianza": confianza
-                                    }
-                                )
+                                params_result = {
+                                    "id_prueba": id_prueba,
+                                    "id_indicador": iid,
+                                    "x_min": x_min_norm,
+                                    "y_min": y_min_norm,
+                                    "x_max": w_norm,
+                                    "y_max": h_norm,
+                                    "confianza": confianza
+                                }
+                                params_result = _normalize_params(params_result)
+                                conn.execute(text(POST_RESULTADO), params_result)
                         
                         # Limpiar y cerrar
                         st.session_state["agregar_step"] = 1

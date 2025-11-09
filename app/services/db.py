@@ -36,15 +36,21 @@ def fetch_df(sql: str, params: dict | None = None):
     """
     engine = get_engine()
     try:
-        with engine.connect() as conn:
+        # Use a transaction block so INSERT/UPDATE/DELETE are committed.
+        with engine.begin() as conn:
             result = conn.execute(text(sql), params or {})
-            try:
-                rows = result.mappings().all()
-                df = pd.DataFrame(rows)
-            except Exception:
-                rows = result.fetchall()
-                df = pd.DataFrame(rows, columns=result.keys())
-        return df
+            # If the statement returns rows (SELECT), build a DataFrame.
+            if getattr(result, 'returns_rows', False):
+                try:
+                    rows = result.mappings().all()
+                    df = pd.DataFrame(rows)
+                except Exception:
+                    rows = result.fetchall()
+                    df = pd.DataFrame(rows, columns=result.keys())
+                return df
+            else:
+                # DML statement executed (no rows to return). Return empty DataFrame.
+                return pd.DataFrame()
     except Exception as e:
         print("Error al ejecutar consulta:", e)
         raise

@@ -1,0 +1,67 @@
+/* ========================================
+   ESTADÍSTICAS - CSS
+   ======================================== */
+
+/*boton de filtrar*/
+[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *) {
+    background: #ffffff;
+	border: 1px solid #000000 !important;
+	color: #000000;
+	box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+	width: 100%;
+	margin: 0;
+	display: inline-block;
+}
+
+/*boton filtrar*/
+.stHorizontalBlock:has(button[kind="secondary"]) > div:last-child,
+.stHorizontalBlock:has(button[kind="secondary"]) > div:last-child *:not(button) {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: flex-end !important;
+    width: 100% !important;
+}
+
+.stHorizontalBlock:has(button[kind="secondary"]) button[kind="secondary"] {
+    white-space: nowrap !important;
+    min-width: max-content !important;
+    justify-content: flex-start !important;
+}
+/* 
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
+    background: #FFE451;
+    color: #000000;
+	border:none;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+	width: 100px;
+	margin: 0;
+
+}
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):hover {
+    background: #FFD626;
+} */
+
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *) {
+    background: #FFE451;
+	color: #000000;
+	box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+	width: 100%;
+	margin: 0;
+	display: inline-block;
+}
+
+/*boton filtrar*/
+.stHorizontalBlock:has(button[kind="primary"]) > div:last-child,
+.stHorizontalBlock:has(button[kind="primary"]) > div:last-child *:not(button) {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: flex-end !important;
+    width: 100% !important;
+}
+
+.stHorizontalBlock:has(button[kind="primary"]) button[kind="primary"] {
+    white-space: nowrap !important;
+    min-width: max-content !important;
+    justify-content: flex-start !important;
+}
+

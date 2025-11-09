@@ -14,6 +14,21 @@
     transform: translateY(-36px);
 }
 
+/*secundarios*/
+[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
+	background: #FFFFFF;
+	color: #000000;
+	box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+	width: 100px;
+	transform: translateY(-36px);
+	margin: 0;
+	display: inline-block;
+}
+[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):hover {
+	background: #F0F0F0;
+	transform: translateY(-36px);
+}
+
 /* Botones primarios dentro del stDialog */
 [data-testid="stDialog"] [data-testid^="stBaseButton-primary"] {
     background: #FFE451;

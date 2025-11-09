@@ -129,12 +129,14 @@ def cargar_imagen_component():
             with col2:
                 st.markdown('<div class="form-group">', unsafe_allow_html=True)
                 st.markdown('<label>Sexo <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
+                sexo_options = ["Selecciona una opción", "Mujer", "Hombre"]
+                sexo_index = sexo_options.index(st.session_state.get("form_sexo")) if st.session_state.get("form_sexo") in sexo_options else 0
                 sexo_value = st.selectbox(
                     "Sexo del evaluado",
-                    ["Selecciona una opción", "Mujer", "Hombre"],
+                    sexo_options,
                     key="sexo",
                     label_visibility="collapsed",
-                    index=["Selecciona una opción", "Mujer", "Hombre"].index(st.session_state["form_sexo"])
+                    index=sexo_index
                 )
                 st.session_state["form_sexo"] = sexo_value
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -147,12 +149,14 @@ def cargar_imagen_component():
                 if "form_estado_civil" not in st.session_state or st.session_state["form_estado_civil"] not in ["Selecciona una opción", "Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)", "Separado(a)", "Convivencia civil"]:
                     st.session_state["form_estado_civil"] = "Selecciona una opción"
 
+                estado_options = ["Selecciona una opción", "Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)", "Separado(a)", "Convivencia civil"]
+                estado_index = estado_options.index(st.session_state.get("form_estado_civil")) if st.session_state.get("form_estado_civil") in estado_options else 0
                 estado_civil_value = st.selectbox(
                     "Estado civil del evaluado",
-                    ["Selecciona una opción", "Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)", "Separado(a)", "Convivencia civil"],
+                    estado_options,
                     key="estado_civil",
                     label_visibility="collapsed",
-                    index=["Selecciona una opción", "Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)", "Separado(a)", "Convivencia civil"].index(st.session_state["form_estado_civil"])
+                    index=estado_index
                 )
                 st.session_state["form_estado_civil"] = estado_civil_value
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -163,12 +167,14 @@ def cargar_imagen_component():
                 if "form_escolaridad" not in st.session_state or st.session_state["form_escolaridad"] not in ["Selecciona una opción", "Ninguno", "Primaria", "Secundaria", "Preparatoria o Bachillerato", "Técnico", "Licenciatura", "Maestría", "Doctorado", "Posgrado"]:
                     st.session_state["form_escolaridad"] = "Selecciona una opción"
 
+                escolaridad_options = ["Selecciona una opción", "Ninguno", "Primaria", "Secundaria", "Preparatoria o Bachillerato", "Técnico", "Licenciatura", "Maestría", "Doctorado", "Posgrado"]
+                escolaridad_index = escolaridad_options.index(st.session_state.get("form_escolaridad")) if st.session_state.get("form_escolaridad") in escolaridad_options else 0
                 escolaridad_value = st.selectbox(
                     "Último grado de estudios del evaluado",
-                    ["Selecciona una opción", "Ninguno", "Primaria", "Secundaria", "Preparatoria o Bachillerato", "Técnico", "Licenciatura", "Maestría", "Doctorado", "Posgrado"],
+                    escolaridad_options,
                     key="escolaridad",
                     label_visibility="collapsed",
-                    index=["Selecciona una opción", "Ninguno", "Primaria", "Secundaria", "Preparatoria o Bachillerato", "Técnico", "Licenciatura", "Maestría", "Doctorado", "Posgrado"].index(st.session_state["form_escolaridad"])
+                    index=escolaridad_index
                 )
                 st.session_state["form_escolaridad"] = escolaridad_value
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -181,12 +187,14 @@ def cargar_imagen_component():
                 if "form_ocupacion" not in st.session_state or st.session_state["form_ocupacion"] not in ["Selecciona una opción", "Empleado(a)", "Desempleado(a)", "Jubilado(a) / Pensionado(a)", "Trabajador(a) por cuenta propia", "Empresario(a) / Emprendedor(a)", "Dedicado(a) al hogar", "Estudiante", "Otro"]:
                     st.session_state["form_ocupacion"] = "Selecciona una opción"
 
+                ocupacion_options = ["Selecciona una opción", "Empleado(a)", "Desempleado(a)", "Jubilado(a) / Pensionado(a)", "Trabajador(a) por cuenta propia", "Empresario(a) / Emprendedor(a)", "Dedicado(a) al hogar", "Estudiante", "Otro"]
+                ocupacion_index = ocupacion_options.index(st.session_state.get("form_ocupacion")) if st.session_state.get("form_ocupacion") in ocupacion_options else 0
                 ocupacion_value = st.selectbox(
                     "Ocupación del evaluado",
-                    ["Selecciona una opción", "Empleado(a)", "Desempleado(a)", "Jubilado(a) / Pensionado(a)", "Trabajador(a) por cuenta propia", "Empresario(a) / Emprendedor(a)", "Dedicado(a) al hogar", "Estudiante", "Otro"],
+                    ocupacion_options,
                     key="ocupacion",
                     label_visibility="collapsed",
-                    index=["Selecciona una opción", "Empleado(a)", "Desempleado(a)", "Jubilado(a) / Pensionado(a)", "Trabajador(a) por cuenta propia", "Empresario(a) / Emprendedor(a)", "Dedicado(a) al hogar", "Estudiante", "Otro"].index(st.session_state["form_ocupacion"])
+                    index=ocupacion_index
                 )
                 st.session_state["form_ocupacion"] = ocupacion_value
                 st.markdown('</div>', unsafe_allow_html=True)

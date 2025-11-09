@@ -172,6 +172,7 @@ def historial():
             button_label = ":material/add_2: Nuevo"
             if st.button(button_label, type="primary", use_container_width=True):
                 st.session_state["active_view"] = "registrar"
+                st.rerun()
         
     df_to_display = st.session_state.get("filtered_historial_data", pd.DataFrame(get_historial_data()))
     display_df = df_to_display.drop(columns=['id_evaluado'], errors='ignore')

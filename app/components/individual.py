@@ -711,7 +711,13 @@ def individual(id_evaluado: str = None):
             #boton de regresar
             button_label = ":material/arrow_back:"
             if st.button(button_label, use_container_width=True, type="secondary"):
-                st.session_state['active_view'] = 'historial'
+                #regresar a ajustes si vengo de ajustes
+                if 'from_ajustes' in st.session_state and st.session_state['from_ajustes']:
+                    st.session_state['from_ajustes'] = False
+                    st.session_state['active_view'] = 'ajustes'
+                else:
+                    st.session_state['from_ajustes'] = False
+                    st.session_state['active_view'] = 'historial'
                 st.session_state['current_image_index'] = 0
                 st.session_state['add_drawing'] = False
                 st.rerun()

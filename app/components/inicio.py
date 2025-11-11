@@ -152,6 +152,8 @@ def inicio():
                         st.session_state['open_prueba_id'] = id_prueba
 
                     st.session_state['selected_evaluation_id'] = id_evaluado
+                    # Venimos desde inicio, no desde ajustes
+                    st.session_state['from_ajustes'] = False
                     st.session_state['active_view'] = 'individual'
                     st.rerun()
         

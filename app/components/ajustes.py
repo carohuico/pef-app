@@ -11,13 +11,11 @@ def ajustes():
     st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
     # ---------- CSS (externo) ----------
     _css_general = Path(__file__).parent.parent / 'assets' / 'general.css'      
-    _css_ajustes = Path(__file__).parent.parent / 'assets' / 'ajustes.css'
     
     try:
         with open(_css_general, 'r', encoding='utf-8') as _f:
             st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
-        with open(_css_ajustes, 'r', encoding='utf-8') as _f:
-            st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
+       
     except Exception as _e:
         st.markdown("""
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">

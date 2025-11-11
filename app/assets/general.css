@@ -159,3 +159,13 @@ button[kind="secondary"]:hover {
 	align-items: center !important;
 	justify-content: center !important;
 }
+
+div[role="dialog"] {
+    width: 700px !important;
+    max-width: 95vw !important;
+}
+
+div[role="dialog"] > div:first-child {
+    width: 700px !important;
+    max-width: 95vw !important;
+}

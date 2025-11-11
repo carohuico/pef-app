@@ -134,6 +134,7 @@ def dialog_filtros():
     # Botones de acción
     col1, col2, col3 = st.columns(3)
     with col1:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
         if st.button(":material/refresh: Limpiar", use_container_width=True, key="clear_filters"):
             st.session_state['active_historial_filters'] = {}
             if 'historial_df' in st.session_state:
@@ -141,6 +142,7 @@ def dialog_filtros():
             st.rerun()
     
     with col3:
+        st.markdown("<br><br/>", unsafe_allow_html=True)  
         if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key="apply_filters"):
             # Guardar filtros activos
             filters = {}
@@ -211,7 +213,7 @@ def historial():
     st.set_page_config(page_title="Rainly - Historial", layout="wide", initial_sidebar_state="auto")
     
     # ---------- CSS (externo) ----------
-    _css_historial = Path(__file__).parent.parent / 'assets' / 'historial.css'      
+    _css_historial = Path(__file__).parent.parent / 'assets' / 'grupos.css'      
     _css_ajustes = Path(__file__).parent.parent / 'assets' / 'ajustes.css'
     
     try:
@@ -322,9 +324,10 @@ def historial():
                 selected_data = df.loc[idx]
                 st.session_state["open_prueba_id"] = selected_data['id_prueba']
                 st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
+                # Indicar que venimos desde historial (no desde ajustes)
+                st.session_state['from_ajustes'] = False
                 st.session_state["active_view"] = "individual"
                 st.rerun()
             except Exception as e:
                 st.error(f":material/error: Error: {e}")
     
-    # (La acción de "Ver más" fue movida al toolbar a la derecha de Exportar)

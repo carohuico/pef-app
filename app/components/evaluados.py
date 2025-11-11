@@ -28,10 +28,11 @@ def confirmar_eliminacion_historial(selected_rows_df):
     else:
         st.warning(f"¿Estás seguro de que deseas eliminar **{n} evaluado(s)**?")
 
-    st.write("Esta acción no se puede deshacer.")
+    st.markdown("<span style='color: #e60000;'>Esta acción no se puede deshacer.</span>", unsafe_allow_html=True)
 
     col_yes, col_no = st.columns(2)
     with col_yes:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/check: Sí, eliminar"
         if st.button(label, use_container_width=True, type="primary", key="hist_confirmar_eliminar"):
             try:
@@ -64,6 +65,7 @@ def confirmar_eliminacion_historial(selected_rows_df):
             st.rerun()
 
     with col_no:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/cancel: Cancelar"
         if st.button(label, use_container_width=True, key="hist_cancelar_eliminar"):
             st.rerun()
@@ -255,18 +257,6 @@ def dialog_crear_evaluado():
 @st.dialog(":material/edit: Editar Evaluado")
 def dialog_editar_evaluado(evaluado_data):
     """Diálogo para editar información de un evaluado existente."""
-    # Hacer el diálogo más ancho para edición (mantener diseño de 2 columnas)
-    st.markdown(
-        """
-        <style>
-        div[role="dialog"] {
-            width: 900px !important;
-            max-width: 95vw !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
 
     with st.form("form_editar_evaluado", border=False):
         
@@ -381,9 +371,11 @@ def dialog_editar_evaluado(evaluado_data):
         # Botones de acción
         col1, col2 = st.columns(2)
         with col1:
+            st.markdown("<br><br/>", unsafe_allow_html=True)
             cancelar = st.form_submit_button(":material/cancel: Cancelar", use_container_width=True)
         
         with col2:
+            st.markdown("<br><br/>", unsafe_allow_html=True)
             submitted = st.form_submit_button(":material/check: Guardar Cambios", use_container_width=True, type="primary")
         
         if cancelar:
@@ -539,16 +531,15 @@ def dialog_filtros():
     # Botones de acción
     col1, col2, col3 = st.columns(3)
     with col1:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
         if st.button(":material/refresh: Limpiar", use_container_width=True, key="clear_filters"):
             st.session_state['active_filters'] = {}
             del st.session_state['evaluados_df']
             st.rerun()
-    
-    with col2:
-        if st.button(":material/cancel: Cancelar", use_container_width=True, key="cancel_filters"):
-            st.rerun()
+
     
     with col3:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
         if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key="apply_filters"):
             # Guardar filtros activos
             filters = {}
@@ -746,6 +737,8 @@ def evaluados():
                     idx = seleccionados.index[0]
                     selected_data = df.loc[idx]
                     st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
+                    # marcar si venimos desde la vista 'ajustes' para que el botón de regresar funcione correctamente
+                    st.session_state['from_ajustes'] = True if st.session_state.get('active_view') == 'ajustes' else False
                     st.session_state["active_view"] = "individual"
                     st.rerun()
                 except Exception as e:

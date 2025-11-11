@@ -1,0 +1,2957 @@
+[
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred1.jpeg",
+    "image_filename": "pred1.jpeg",
+    "image_width": 800,
+    "image_height": 800,
+    "detections": [
+      {
+        "indicator_ids": [
+          9
+        ],
+        "pred_filename": "pred1_crop_1_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.916,
+        "bbox_original": [
+          287,
+          86,
+          557,
+          221
+        ],
+        "bbox_width": 270,
+        "bbox_height": 135,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          2
+        ],
+        "crop_filename": "pred1_crop_2_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.824,
+        "bbox_original": [
+          633,
+          69,
+          697,
+          550
+        ],
+        "bbox_width": 64,
+        "bbox_height": 481,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "suave"
+            ],
+            "probabilities": {
+              "suave": 1.0,
+              "controlada": 0.0,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          2
+        ],
+        "crop_filename": "pred1_crop_3_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.799,
+        "bbox_original": [
+          137,
+          46,
+          363,
+          612
+        ],
+        "bbox_width": 226,
+        "bbox_height": 566,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "suave"
+            ],
+            "probabilities": {
+              "suave": 0.98,
+              "controlada": 0.02,
+              "excesivamente_torrencial": 0.01
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          36
+        ],
+        "crop_filename": "pred1_crop_4_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.779,
+        "bbox_original": [
+          390,
+          168,
+          561,
+          639
+        ],
+        "bbox_width": 171,
+        "bbox_height": 471,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "sin_rasgos_faciales"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.34,
+              "esquematica": 0.04,
+              "sin_rasgos_faciales": 0.75
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred1_crop_5_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.53,
+        "bbox_original": [
+          435,
+          501,
+          470,
+          546
+        ],
+        "bbox_width": 35,
+        "bbox_height": 45,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred1.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred10.jpeg",
+    "image_filename": "pred10.jpeg",
+    "image_width": 896,
+    "image_height": 1280,
+    "detections": [
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred10_crop_1_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.96,
+        "bbox_original": [
+          99,
+          253,
+          766,
+          1107
+        ],
+        "bbox_width": 667,
+        "bbox_height": 854,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.03,
+              "controlada": 0.81,
+              "excesivamente_torrencial": 0.16
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred10_crop_2_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.94,
+        "bbox_original": [
+          338,
+          455,
+          674,
+          662
+        ],
+        "bbox_width": 336,
+        "bbox_height": 207,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          31,
+          32
+        ],
+        "crop_filename": "pred10_crop_3_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.872,
+        "bbox_original": [
+          330,
+          631,
+          509,
+          1114
+        ],
+        "bbox_width": 179,
+        "bbox_height": 483,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "esquematica"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.05,
+              "esquematica": 0.65,
+              "sin_rasgos_faciales": 0.15
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred10.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred11.jpeg",
+    "image_filename": "pred11.jpeg",
+    "image_width": 980,
+    "image_height": 980,
+    "detections": [
+      {
+        "indicator_ids": [
+          32,
+          36
+        ],
+        "crop_filename": "pred11_crop_1_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.916,
+        "bbox_original": [
+          400,
+          520,
+          593,
+          971
+        ],
+        "bbox_width": 193,
+        "bbox_height": 451,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "sin_rasgos_faciales"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.19,
+              "esquematica": 0.02,
+              "sin_rasgos_faciales": 0.98
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred11_crop_2_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.839,
+        "bbox_original": [
+          311,
+          137,
+          698,
+          373
+        ],
+        "bbox_width": 387,
+        "bbox_height": 236,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred11_crop_3_Resguardo.jpg",
+        "base_label_yolo": "Resguardo",
+        "confidence_base": 0.768,
+        "bbox_original": [
+          336,
+          380,
+          671,
+          570
+        ],
+        "bbox_width": 335,
+        "bbox_height": 190,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          2
+        ],
+        "crop_filename": "pred11_crop_4_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.663,
+        "bbox_original": [
+          335,
+          376,
+          674,
+          571
+        ],
+        "bbox_width": 339,
+        "bbox_height": 195,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "suave"
+            ],
+            "probabilities": {
+              "suave": 1.0,
+              "controlada": 0.0,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred11.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred12.jpeg",
+    "image_filename": "pred12.jpeg",
+    "image_width": 800,
+    "image_height": 600,
+    "detections": [
+      {
+        "indicator_ids": [
+          2
+        ],
+        "crop_filename": "pred12_crop_1_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.926,
+        "bbox_original": [
+          191,
+          57,
+          633,
+          394
+        ],
+        "bbox_width": 442,
+        "bbox_height": 337,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "suave"
+            ],
+            "probabilities": {
+              "suave": 0.97,
+              "controlada": 0.03,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          36
+        ],
+        "crop_filename": "pred12_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.905,
+        "bbox_original": [
+          305,
+          148,
+          465,
+          499
+        ],
+        "bbox_width": 160,
+        "bbox_height": 351,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "sin_rasgos_faciales"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.01,
+              "esquematica": 0.01,
+              "sin_rasgos_faciales": 0.98
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred12_crop_3_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.904,
+        "bbox_original": [
+          345,
+          78,
+          548,
+          215
+        ],
+        "bbox_width": 203,
+        "bbox_height": 137,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred12.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred13.jpeg",
+    "image_filename": "pred13.jpeg",
+    "image_width": 1969,
+    "image_height": 2048,
+    "detections": [
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred13_crop_1_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.944,
+        "bbox_original": [
+          825,
+          896,
+          1399,
+          1422
+        ],
+        "bbox_width": 574,
+        "bbox_height": 526,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred13_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.88,
+        "bbox_original": [
+          810,
+          424,
+          1420,
+          1621
+        ],
+        "bbox_width": 610,
+        "bbox_height": 1197,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.05,
+              "esquematica": 0.08,
+              "sin_rasgos_faciales": 0.03
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred13_crop_3_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.861,
+        "bbox_original": [
+          73,
+          125,
+          1895,
+          1571
+        ],
+        "bbox_width": 1822,
+        "bbox_height": 1446,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.18,
+              "controlada": 0.81,
+              "excesivamente_torrencial": 0.01
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred13_crop_4_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.802,
+        "bbox_original": [
+          823,
+          1282,
+          946,
+          1391
+        ],
+        "bbox_width": 123,
+        "bbox_height": 109,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred13.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred14.jpeg",
+    "image_filename": "pred14.jpeg",
+    "image_width": 540,
+    "image_height": 960,
+    "detections": [
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred14_crop_1_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.97,
+        "bbox_original": [
+          162,
+          427,
+          397,
+          744
+        ],
+        "bbox_width": 235,
+        "bbox_height": 317,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred14_crop_2_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.922,
+        "bbox_original": [
+          0,
+          3,
+          536,
+          811
+        ],
+        "bbox_width": 536,
+        "bbox_height": 808,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.14,
+              "controlada": 0.86,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred14_crop_3_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.89,
+        "bbox_original": [
+          62,
+          139,
+          498,
+          345
+        ],
+        "bbox_width": 436,
+        "bbox_height": 206,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred14_crop_4_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.889,
+        "bbox_original": [
+          147,
+          261,
+          405,
+          841
+        ],
+        "bbox_width": 258,
+        "bbox_height": 580,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.16,
+              "esquematica": 0.13,
+              "sin_rasgos_faciales": 0.2
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred14.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred15.jpeg",
+    "image_filename": "pred15.jpeg",
+    "image_width": 770,
+    "image_height": 1139,
+    "detections": [
+      {
+        "indicator_ids": [
+          12
+        ],
+        "crop_filename": "pred15_crop_1_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.768,
+        "bbox_original": [
+          3,
+          0,
+          519,
+          521
+        ],
+        "bbox_width": 516,
+        "bbox_height": 521,
+        "context_general": [],
+        "context_specific": [
+          "sin espacio para resguardo (el paraguas toca los bordes)"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          34,
+          36
+        ],
+        "crop_filename": "pred15_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.752,
+        "bbox_original": [
+          238,
+          189,
+          732,
+          1138
+        ],
+        "bbox_width": 494,
+        "bbox_height": 949,
+        "context_general": [
+          "sale de los márgenes de la hoja"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "sin_rasgos_faciales"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.14,
+              "esquematica": 0.04,
+              "sin_rasgos_faciales": 0.72
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred15.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred16.jpeg",
+    "image_filename": "pred16.jpeg",
+    "image_width": 736,
+    "image_height": 1056,
+    "detections": [
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred16_crop_1_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.638,
+        "bbox_original": [
+          362,
+          372,
+          418,
+          434
+        ],
+        "bbox_width": 56,
+        "bbox_height": 62,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          36
+        ],
+        "crop_filename": "pred16_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.577,
+        "bbox_original": [
+          106,
+          273,
+          545,
+          938
+        ],
+        "bbox_width": 439,
+        "bbox_height": 665,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "sin_rasgos_faciales"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.15,
+              "esquematica": 0.23,
+              "sin_rasgos_faciales": 0.78
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred16.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred17.jpeg",
+    "image_filename": "pred17.jpeg",
+    "image_width": 640,
+    "image_height": 640,
+    "detections": [
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_1_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.918,
+        "bbox_original": [
+          274,
+          63,
+          411,
+          147
+        ],
+        "bbox_width": 137,
+        "bbox_height": 84,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_2_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.914,
+        "bbox_original": [
+          55,
+          62,
+          228,
+          149
+        ],
+        "bbox_width": 173,
+        "bbox_height": 87,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_3_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.908,
+        "bbox_original": [
+          149,
+          448,
+          195,
+          506
+        ],
+        "bbox_width": 46,
+        "bbox_height": 58,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred17_crop_4_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.906,
+        "bbox_original": [
+          299,
+          127,
+          408,
+          245
+        ],
+        "bbox_width": 109,
+        "bbox_height": 118,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.29,
+              "controlada": 0.71,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          1,
+          3
+        ],
+        "crop_filename": "pred17_crop_5_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.902,
+        "bbox_original": [
+          89,
+          119,
+          209,
+          240
+        ],
+        "bbox_width": 120,
+        "bbox_height": 121,
+        "context_general": [],
+        "context_specific": [
+          "lejos del paraguas"
+        ],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.01,
+              "controlada": 0.99,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_6_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.9,
+        "bbox_original": [
+          487,
+          461,
+          540,
+          527
+        ],
+        "bbox_width": 53,
+        "bbox_height": 66,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_7_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.886,
+        "bbox_original": [
+          445,
+          50,
+          584,
+          158
+        ],
+        "bbox_width": 139,
+        "bbox_height": 108,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred17_crop_8_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.862,
+        "bbox_original": [
+          290,
+          250,
+          456,
+          325
+        ],
+        "bbox_width": 166,
+        "bbox_height": 75,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_9_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.825,
+        "bbox_original": [
+          46,
+          444,
+          90,
+          512
+        ],
+        "bbox_width": 44,
+        "bbox_height": 68,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          31,
+          32,
+          33
+        ],
+        "crop_filename": "pred17_crop_10_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.823,
+        "bbox_original": [
+          282,
+          304,
+          400,
+          516
+        ],
+        "bbox_width": 118,
+        "bbox_height": 212,
+        "context_general": [
+          "escondida",
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "esquematica"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.04,
+              "esquematica": 0.99,
+              "sin_rasgos_faciales": 0.09
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_11_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.712,
+        "bbox_original": [
+          501,
+          0,
+          639,
+          54
+        ],
+        "bbox_width": 138,
+        "bbox_height": 54,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_12_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.699,
+        "bbox_original": [
+          569,
+          479,
+          614,
+          524
+        ],
+        "bbox_width": 45,
+        "bbox_height": 45,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred17_crop_13_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.684,
+        "bbox_original": [
+          489,
+          143,
+          574,
+          255
+        ],
+        "bbox_width": 85,
+        "bbox_height": 112,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.08,
+              "controlada": 0.92,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_14_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.461,
+        "bbox_original": [
+          214,
+          16,
+          339,
+          65
+        ],
+        "bbox_width": 125,
+        "bbox_height": 49,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred17_crop_15_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.448,
+        "bbox_original": [
+          31,
+          448,
+          627,
+          529
+        ],
+        "bbox_width": 596,
+        "bbox_height": 81,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred17.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred18.jpeg",
+    "image_filename": "pred18.jpeg",
+    "image_width": 640,
+    "image_height": 640,
+    "detections": [
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred18_crop_1_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.877,
+        "bbox_original": [
+          25,
+          46,
+          639,
+          314
+        ],
+        "bbox_width": 614,
+        "bbox_height": 268,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.0,
+              "controlada": 0.94,
+              "excesivamente_torrencial": 0.06
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred18_crop_2_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.737,
+        "bbox_original": [
+          93,
+          45,
+          143,
+          81
+        ],
+        "bbox_width": 50,
+        "bbox_height": 36,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          32
+        ],
+        "crop_filename": "pred18_crop_3_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.653,
+        "bbox_original": [
+          282,
+          538,
+          375,
+          624
+        ],
+        "bbox_width": 93,
+        "bbox_height": 86,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.05,
+              "esquematica": 0.17,
+              "sin_rasgos_faciales": 0.23
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred18_crop_4_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.607,
+        "bbox_original": [
+          152,
+          41,
+          206,
+          82
+        ],
+        "bbox_width": 54,
+        "bbox_height": 41,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred18.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred19.jpeg",
+    "image_filename": "pred19.jpeg",
+    "image_width": 640,
+    "image_height": 640,
+    "detections": [
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred19_crop_1_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.935,
+        "bbox_original": [
+          235,
+          301,
+          463,
+          410
+        ],
+        "bbox_width": 228,
+        "bbox_height": 109,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          32
+        ],
+        "crop_filename": "pred19_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.882,
+        "bbox_original": [
+          260,
+          430,
+          334,
+          578
+        ],
+        "bbox_width": 74,
+        "bbox_height": 148,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.06,
+              "esquematica": 0.07,
+              "sin_rasgos_faciales": 0.17
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          2
+        ],
+        "crop_filename": "pred19_crop_3_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.881,
+        "bbox_original": [
+          201,
+          22,
+          483,
+          298
+        ],
+        "bbox_width": 282,
+        "bbox_height": 276,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "suave"
+            ],
+            "probabilities": {
+              "suave": 1.0,
+              "controlada": 0.0,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred19.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred2.jpeg",
+    "image_filename": "pred2.jpeg",
+    "image_width": 376,
+    "image_height": 528,
+    "detections": [
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred2_crop_1_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.955,
+        "bbox_original": [
+          101,
+          176,
+          184,
+          309
+        ],
+        "bbox_width": 83,
+        "bbox_height": 133,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred2_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.921,
+        "bbox_original": [
+          100,
+          138,
+          184,
+          386
+        ],
+        "bbox_width": 84,
+        "bbox_height": 248,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.32,
+              "esquematica": 0.06,
+              "sin_rasgos_faciales": 0.3
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred2_crop_3_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.884,
+        "bbox_original": [
+          126,
+          64,
+          360,
+          120
+        ],
+        "bbox_width": 234,
+        "bbox_height": 56,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred2_crop_4_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.534,
+        "bbox_original": [
+          14,
+          250,
+          76,
+          331
+        ],
+        "bbox_width": 62,
+        "bbox_height": 81,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred2.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred20.jpeg",
+    "image_filename": "pred20.jpeg",
+    "image_width": 168,
+    "image_height": 300,
+    "detections": [
+      {
+        "indicator_ids": [
+          30,
+          33,
+          34
+        ],
+        "crop_filename": "pred20_crop_1_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.929,
+        "bbox_original": [
+          47,
+          86,
+          150,
+          299
+        ],
+        "bbox_width": 103,
+        "bbox_height": 213,
+        "context_general": [
+          "escondida",
+          "sale de los márgenes de la hoja"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "de_espaldas"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.81,
+              "esquematica": 0.25,
+              "sin_rasgos_faciales": 0.0
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred20_crop_2_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.908,
+        "bbox_original": [
+          10,
+          1,
+          167,
+          294
+        ],
+        "bbox_width": 157,
+        "bbox_height": 293,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.01,
+              "controlada": 0.99,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          9,
+          12
+        ],
+        "crop_filename": "pred20_crop_3_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.897,
+        "bbox_original": [
+          51,
+          0,
+          166,
+          86
+        ],
+        "bbox_width": 115,
+        "bbox_height": 86,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre",
+          "sin espacio para resguardo (el paraguas toca los bordes)"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred20_crop_4_Resguardo.jpg",
+        "base_label_yolo": "Resguardo",
+        "confidence_base": 0.525,
+        "bbox_original": [
+          9,
+          1,
+          166,
+          296
+        ],
+        "bbox_width": 157,
+        "bbox_height": 295,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred20_crop_5_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.383,
+        "bbox_original": [
+          51,
+          145,
+          133,
+          280
+        ],
+        "bbox_width": 82,
+        "bbox_height": 135,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred20.jpeg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred21.jpeg",
+    "image_filename": "pred21.jpeg",
+    "image_width": 409,
+    "image_height": 612,
+    "detections": [
+      {
+        "indicator_ids": [
+          5
+        ],
+        "crop_filename": "pred21_crop_1_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.94,
+        "bbox_original": [
+          18,
+          19,
+          391,
+          264
+        ],
+        "bbox_width": 373,
+        "bbox_height": 245,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "excesivamente_torrencial"
+            ],
+            "probabilities": {
+              "suave": 0.0,
+              "controlada": 0.18,
+              "excesivamente_torrencial": 0.82
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred21_crop_2_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.919,
+        "bbox_original": [
+          72,
+          114,
+          317,
+          220
+        ],
+        "bbox_width": 245,
+        "bbox_height": 106,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          31
+        ],
+        "crop_filename": "pred21_crop_3_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.891,
+        "bbox_original": [
+          84,
+          210,
+          206,
+          593
+        ],
+        "bbox_width": 122,
+        "bbox_height": 383,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "esquematica"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.02,
+              "esquematica": 0.99,
+              "sin_rasgos_faciales": 0.1
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred21.jpeg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred22.jpeg",
+    "image_filename": "pred22.jpeg",
+    "image_width": 640,
+    "image_height": 640,
+    "detections": [
+      {
+        "indicator_ids": [
+          32
+        ],
+        "crop_filename": "pred22_crop_1_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.909,
+        "bbox_original": [
+          267,
+          282,
+          367,
+          564
+        ],
+        "bbox_width": 100,
+        "bbox_height": 282,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.05,
+              "esquematica": 0.15,
+              "sin_rasgos_faciales": 0.15
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          8
+        ],
+        "crop_filename": "pred22_crop_2_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.834,
+        "bbox_original": [
+          255,
+          220,
+          338,
+          291
+        ],
+        "bbox_width": 83,
+        "bbox_height": 71,
+        "context_general": [],
+        "context_specific": [
+          "chico"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred22_crop_3_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.687,
+        "bbox_original": [
+          31,
+          16,
+          635,
+          573
+        ],
+        "bbox_width": 604,
+        "bbox_height": 557,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.23,
+              "controlada": 0.77,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred22_crop_4_Resguardo.jpg",
+        "base_label_yolo": "Resguardo",
+        "confidence_base": 0.59,
+        "bbox_original": [
+          355,
+          78,
+          466,
+          560
+        ],
+        "bbox_width": 111,
+        "bbox_height": 482,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred22.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred23.jpeg",
+    "image_filename": "pred23.jpeg",
+    "image_width": 640,
+    "image_height": 640,
+    "detections": [
+      {
+        "indicator_ids": [
+          32,
+          36
+        ],
+        "crop_filename": "pred23_crop_1_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.896,
+        "bbox_original": [
+          483,
+          444,
+          588,
+          591
+        ],
+        "bbox_width": 105,
+        "bbox_height": 147,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "sin_rasgos_faciales"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.02,
+              "esquematica": 0.08,
+              "sin_rasgos_faciales": 0.92
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred23_crop_2_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.889,
+        "bbox_original": [
+          0,
+          20,
+          263,
+          118
+        ],
+        "bbox_width": 263,
+        "bbox_height": 98,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred23_crop_3_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.873,
+        "bbox_original": [
+          312,
+          13,
+          526,
+          77
+        ],
+        "bbox_width": 214,
+        "bbox_height": 64,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          1,
+          3
+        ],
+        "crop_filename": "pred23_crop_4_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.859,
+        "bbox_original": [
+          8,
+          61,
+          608,
+          385
+        ],
+        "bbox_width": 600,
+        "bbox_height": 324,
+        "context_general": [],
+        "context_specific": [
+          "lejos del paraguas"
+        ],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.14,
+              "controlada": 0.86,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          8
+        ],
+        "crop_filename": "pred23_crop_5_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.852,
+        "bbox_original": [
+          437,
+          401,
+          533,
+          439
+        ],
+        "bbox_width": 96,
+        "bbox_height": 38,
+        "context_general": [],
+        "context_specific": [
+          "chico"
+        ],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred23.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred24.jpeg",
+    "image_filename": "pred24.jpeg",
+    "image_width": 640,
+    "image_height": 640,
+    "detections": [
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred24_crop_1_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.96,
+        "bbox_original": [
+          240,
+          237,
+          416,
+          557
+        ],
+        "bbox_width": 176,
+        "bbox_height": 320,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.06,
+              "esquematica": 0.22,
+              "sin_rasgos_faciales": 0.19
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred24_crop_2_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.935,
+        "bbox_original": [
+          404,
+          99,
+          574,
+          560
+        ],
+        "bbox_width": 170,
+        "bbox_height": 461,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred24_crop_3_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.889,
+        "bbox_original": [
+          177,
+          46,
+          447,
+          201
+        ],
+        "bbox_width": 270,
+        "bbox_height": 155,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred24_crop_4_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.886,
+        "bbox_original": [
+          251,
+          304,
+          408,
+          484
+        ],
+        "bbox_width": 157,
+        "bbox_height": 180,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred24_crop_5_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.726,
+        "bbox_original": [
+          387,
+          396,
+          417,
+          423
+        ],
+        "bbox_width": 30,
+        "bbox_height": 27,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred24_crop_6_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.706,
+        "bbox_original": [
+          243,
+          260,
+          273,
+          292
+        ],
+        "bbox_width": 30,
+        "bbox_height": 32,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred24_crop_7_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.6,
+        "bbox_original": [
+          161,
+          491,
+          211,
+          558
+        ],
+        "bbox_width": 50,
+        "bbox_height": 67,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred24_crop_8_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.556,
+        "bbox_original": [
+          112,
+          465,
+          213,
+          558
+        ],
+        "bbox_width": 101,
+        "bbox_height": 93,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred24_crop_9_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.515,
+        "bbox_original": [
+          112,
+          466,
+          155,
+          526
+        ],
+        "bbox_width": 43,
+        "bbox_height": 60,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred24.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred25.jpeg",
+    "image_filename": "pred25.jpeg",
+    "image_width": 640,
+    "image_height": 640,
+    "detections": [
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred25_crop_1_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.908,
+        "bbox_original": [
+          250,
+          359,
+          377,
+          435
+        ],
+        "bbox_width": 127,
+        "bbox_height": 76,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          32
+        ],
+        "crop_filename": "pred25_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.889,
+        "bbox_original": [
+          251,
+          432,
+          330,
+          595
+        ],
+        "bbox_width": 79,
+        "bbox_height": 163,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.02,
+              "esquematica": 0.07,
+              "sin_rasgos_faciales": 0.07
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          1,
+          3
+        ],
+        "crop_filename": "pred25_crop_3_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.873,
+        "bbox_original": [
+          62,
+          123,
+          614,
+          308
+        ],
+        "bbox_width": 552,
+        "bbox_height": 185,
+        "context_general": [],
+        "context_specific": [
+          "lejos del paraguas"
+        ],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.01,
+              "controlada": 0.99,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred25_crop_4_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.791,
+        "bbox_original": [
+          440,
+          31,
+          594,
+          130
+        ],
+        "bbox_width": 154,
+        "bbox_height": 99,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred25_crop_5_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.778,
+        "bbox_original": [
+          66,
+          46,
+          201,
+          138
+        ],
+        "bbox_width": 135,
+        "bbox_height": 92,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred25_crop_6_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.717,
+        "bbox_original": [
+          246,
+          44,
+          378,
+          130
+        ],
+        "bbox_width": 132,
+        "bbox_height": 86,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred25_crop_7_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.462,
+        "bbox_original": [
+          65,
+          28,
+          604,
+          141
+        ],
+        "bbox_width": 539,
+        "bbox_height": 113,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred25.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred3.jpeg",
+    "image_filename": "pred3.jpeg",
+    "image_width": 512,
+    "image_height": 512,
+    "detections": [
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred3_crop_1_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.946,
+        "bbox_original": [
+          109, 
+          116, 
+          384, 
+          253 
+        ],
+        "bbox_width": 275,
+        "bbox_height": 137,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          30,
+          33
+        ],
+        "crop_filename": "pred3_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.859,
+        "bbox_original": [
+          149,
+          194,
+          275,
+          446
+        ],
+        "bbox_width": 126,
+        "bbox_height": 252,
+        "context_general": [
+          "escondida"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "de_espaldas"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.89,
+              "esquematica": 0.04,
+              "sin_rasgos_faciales": 0.09
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred3_crop_3_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.795,
+        "bbox_original": [
+          154,
+          266,
+          271,
+          400
+        ],
+        "bbox_width": 117,
+        "bbox_height": 134,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred3.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred4.jpeg",
+    "image_filename": "pred4.jpeg",
+    "image_width": 1500,
+    "image_height": 1179,
+    "detections": [
+      {
+        "indicator_ids": [
+          5
+        ],
+        "crop_filename": "pred4_crop_1_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.931,
+        "bbox_original": [
+          0,
+          43,
+          1496,
+          1071
+        ],
+        "bbox_width": 1496,
+        "bbox_height": 1028,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "excesivamente_torrencial"
+            ],
+            "probabilities": {
+              "suave": 0.0,
+              "controlada": 0.0,
+              "excesivamente_torrencial": 1.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred4_crop_2_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.9,
+        "bbox_original": [
+          569,
+          478,
+          839,
+          615
+        ],
+        "bbox_width": 270,
+        "bbox_height": 137,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          32
+        ],
+        "crop_filename": "pred4_crop_3_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.876,
+        "bbox_original": [
+          633,
+          589,
+          779,
+          968
+        ],
+        "bbox_width": 146,
+        "bbox_height": 379,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.05,
+              "esquematica": 0.05,
+              "sin_rasgos_faciales": 0.37
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred4_crop_4_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.674,
+        "bbox_original": [
+          0,
+          0,
+          1499,
+          135
+        ],
+        "bbox_width": 1499,
+        "bbox_height": 135,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred4_crop_5_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.389,
+        "bbox_original": [
+          304,
+          346,
+          550,
+          479
+        ],
+        "bbox_width": 246,
+        "bbox_height": 133,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred4.jpg"
+  },
+  {
+    "image_original_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\data\\processed\\pred\\images\\pred5.png",
+    "image_filename": "pred5.png",
+    "image_width": 298,
+    "image_height": 397,
+    "detections": [
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred5_crop_1_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.944,
+        "bbox_original": [
+          8,
+          1,
+          294,
+          378
+        ],
+        "bbox_width": 286,
+        "bbox_height": 377,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.01,
+              "controlada": 0.99,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred5_crop_2_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.92,
+        "bbox_original": [
+          56,
+          40,
+          202,
+          135
+        ],
+        "bbox_width": 146,
+        "bbox_height": 95,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred5_crop_3_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.903,
+        "bbox_original": [
+          98,
+          115,
+          184,
+          386
+        ],
+        "bbox_width": 86,
+        "bbox_height": 271,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.03,
+              "esquematica": 0.14,
+              "sin_rasgos_faciales": 0.08
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred5_crop_4_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.826,
+        "bbox_original": [
+          97,
+          176,
+          180,
+          268
+        ],
+        "bbox_width": 83,
+        "bbox_height": 92,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred5_crop_5_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.774,
+        "bbox_original": [
+          160,
+          252,
+          179,
+          273
+        ],
+        "bbox_width": 19,
+        "bbox_height": 21,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred5_crop_6_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.543,
+        "bbox_original": [
+          121,
+          232,
+          137,
+          247
+        ],
+        "bbox_width": 16,
+        "bbox_height": 15,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred5_crop_7_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.495,
+        "bbox_original": [
+          113,
+          197,
+          176,
+          317
+        ],
+        "bbox_width": 63,
+        "bbox_height": 120,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred5.png"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred6.jpeg",
+    "image_filename": "pred6.jpeg",
+    "image_width": 703,
+    "image_height": 1080,
+    "detections": [
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred6_crop_1_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.908,
+        "bbox_original": [
+          61,
+          293,
+          361,
+          1062
+        ],
+        "bbox_width": 300,
+        "bbox_height": 769,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.06,
+              "esquematica": 0.05,
+              "sin_rasgos_faciales": 0.09
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          8
+        ],
+        "crop_filename": "pred6_crop_2_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.863,
+        "bbox_original": [
+          112,
+          124,
+          539,
+          327
+        ],
+        "bbox_width": 427,
+        "bbox_height": 203,
+        "context_general": [],
+        "context_specific": [
+          "chico"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred6_crop_3_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.827,
+        "bbox_original": [
+          56,
+          696,
+          115,
+          781
+        ],
+        "bbox_width": 59,
+        "bbox_height": 85,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred6_crop_4_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.635,
+        "bbox_original": [
+          312,
+          454,
+          378,
+          528
+        ],
+        "bbox_width": 66,
+        "bbox_height": 74,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred6_crop_5_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.593,
+        "bbox_original": [
+          0,
+          0,
+          699,
+          982
+        ],
+        "bbox_width": 699,
+        "bbox_height": 982,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.09,
+              "controlada": 0.91,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred6_crop_6_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.473,
+        "bbox_original": [
+          171,
+          350,
+          259,
+          408
+        ],
+        "bbox_width": 88,
+        "bbox_height": 58,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred6.jpg"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred7.jpeg",
+    "image_filename": "pred7.jpeg",
+    "image_width": 1265,
+    "image_height": 1390,
+    "detections": [
+      {
+        "indicator_ids": [
+          5
+        ],
+        "crop_filename": "pred7_crop_1_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.902,
+        "bbox_original": [
+          11,
+          50,
+          1242,
+          1299
+        ],
+        "bbox_width": 1231,
+        "bbox_height": 1249,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "excesivamente_torrencial"
+            ],
+            "probabilities": {
+              "suave": 0.04,
+              "controlada": 0.09,
+              "excesivamente_torrencial": 0.87
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred7_crop_2_Ropa.jpg",
+        "base_label_yolo": "Ropa",
+        "confidence_base": 0.585,
+        "bbox_original": [
+          400,
+          522,
+          906,
+          1052
+        ],
+        "bbox_width": 506,
+        "bbox_height": 530,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred7.jpg"
+  },
+  {
+    "image_original_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\data\\processed\\pred\\images\\pred8.png",
+    "image_filename": "pred8.png",
+    "image_width": 1200,
+    "image_height": 1696,
+    "detections": [
+      {
+        "indicator_ids": [
+          32
+        ],
+        "crop_filename": "pred8_crop_1_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.917,
+        "bbox_original": [
+          417,
+          389,
+          705,
+          848
+        ],
+        "bbox_width": 288,
+        "bbox_height": 459,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [],
+            "probabilities": {
+              "de_espaldas": 0.01,
+              "esquematica": 0.02,
+              "sin_rasgos_faciales": 0.04
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          3
+        ],
+        "crop_filename": "pred8_crop_2_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.904,
+        "bbox_original": [
+          292,
+          96,
+          921,
+          846
+        ],
+        "bbox_width": 629,
+        "bbox_height": 750,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "controlada"
+            ],
+            "probabilities": {
+              "suave": 0.06,
+              "controlada": 0.92,
+              "excesivamente_torrencial": 0.02
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          9
+        ],
+        "crop_filename": "pred8_crop_3_Paraguas.jpg",
+        "base_label_yolo": "Paraguas",
+        "confidence_base": 0.849,
+        "bbox_original": [
+          389,
+          286,
+          869,
+          429
+        ],
+        "bbox_width": 480,
+        "bbox_height": 143,
+        "context_general": [],
+        "context_specific": [
+          "grande/cubre"
+        ],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred8_crop_4_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.497,
+        "bbox_original": [
+          664,
+          596,
+          703,
+          654
+        ],
+        "bbox_width": 39,
+        "bbox_height": 58,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred8_crop_5_Manos.jpg",
+        "base_label_yolo": "Manos",
+        "confidence_base": 0.415,
+        "bbox_original": [
+          425,
+          624,
+          460,
+          665
+        ],
+        "bbox_width": 35,
+        "bbox_height": 41,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred8.png"
+  },
+  {
+    "image_original_path": "C:\\Users\\Usuario\\Desktop\\9no\\PEF\\pef-app\\app\\components\\uploads\\udem\\pred9.jpeg",
+    "image_filename": "pred9.jpeg",
+    "image_width": 967,
+    "image_height": 1300,
+    "detections": [
+      {
+        "indicator_ids": [],
+        "crop_filename": "pred9_crop_1_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.928,
+        "bbox_original": [
+          44,
+          35,
+          895,
+          619
+        ],
+        "bbox_width": 851,
+        "bbox_height": 584,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {}
+      },
+      {
+        "indicator_ids": [
+          2
+        ],
+        "crop_filename": "pred9_crop_2_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.816,
+        "bbox_original": [
+          141,
+          620,
+          791,
+          1157
+        ],
+        "bbox_width": 650,
+        "bbox_height": 537,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "suave"
+            ],
+            "probabilities": {
+              "suave": 0.86,
+              "controlada": 0.14,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          32,
+          36
+        ],
+        "crop_filename": "pred9_crop_3_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.792,
+        "bbox_original": [
+          406,
+          773,
+          542,
+          965
+        ],
+        "bbox_width": 136,
+        "bbox_height": 192,
+        "context_general": [
+          "pequeña"
+        ],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "sin_rasgos_faciales"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.09,
+              "esquematica": 0.62,
+              "sin_rasgos_faciales": 0.96
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      }
+    ],
+    "annotated_image_path": "D:\\.vscode\\PEF\\PBLL-AI-Final\\runs\\global_inference\\inference_results\\test_inference29\\annotated\\pred9.jpg"
+  }
+]

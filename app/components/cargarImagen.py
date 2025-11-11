@@ -242,8 +242,9 @@ def cargar_imagen_component():
             #nombre archivo pero .txt
             if st.session_state.get("uploaded_file") is not None:
                 filename = st.session_state["uploaded_file"].name
-                txt_filename = os.path.splitext(filename)[0] + ".txt"
-            indicadores = simular_resultado(txt_filename)
+                indicadores = simular_resultado(filename)
+            else:
+                indicadores = []
             st.session_state["indicadores"] = indicadores
 
             col1, col2 = st.columns([1,2], vertical_alignment="top")

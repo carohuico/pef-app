@@ -1,0 +1,20 @@
+Imagen: D:\.vscode\PEF\PBLL-AI-Final\data\processed\pred\images\pred12.png
+Tamaño original: (1696, 1200)
+Tiempo (ms): {'preprocess': 2.907700021751225, 'inference': 63.921399996615946, 'postprocess': 129.1205000015907}
+Tiempo (s):  {'preprocess': 0.0029, 'inference': 0.0639, 'postprocess': 0.1291}
+Tiempo total (ms): 195.95
+Tiempo total (s):  0.1959
+
+Detecciones:
+Clase           Confianza  x_min    y_min    x_max    y_max   
+----------------------------------------------------------------------
+FiguraHumana    0.91       417.5    385.4    708.5    853.1   
+Lluvia          0.89       296.1    74.6     969.6    864.0   
+Paraguas        0.74       391.3    280.5    872.0    434.5   
+Manos           0.35       427.5    631.1    459.4    663.6   
+Manos           0.30       667.9    593.0    705.0    654.1   
+FiguraHumana    0.91       417.5    385.4    708.5    853.1   
+Lluvia          0.89       296.1    74.6     969.6    864.0   
+Paraguas        0.74       391.3    280.5    872.0    434.5   
+Manos           0.35       427.5    631.1    459.4    663.6   
+Manos           0.30       667.9    593.0    705.0    654.1

@@ -709,7 +709,8 @@ def individual(id_evaluado: str = None):
         boton_regresar, col_nombre = st.columns([1, 8])
         with boton_regresar:
             #boton de regresar
-            if st.button("← Regresar", use_container_width=True, type="secondary"):
+            button_label = ":material/arrow_back:"
+            if st.button(button_label, use_container_width=True, type="secondary"):
                 st.session_state['active_view'] = 'historial'
                 st.session_state['current_image_index'] = 0
                 st.session_state['add_drawing'] = False

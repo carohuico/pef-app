@@ -1,4 +1,6 @@
+from services.usuarios import usuarios
 from services.grupos import grupos
+from services.indicadores_ajustes import indicadores
 import streamlit as st
 from pathlib import Path
 import pandas as pd
@@ -27,8 +29,6 @@ def ajustes():
     with tab1:
         grupos()
     with tab2:
-        st.header("Usuarios")
-        st.image("https://static.streamlit.io/examples/dog.jpg", width=200)
+        usuarios()  
     with tab3:
-        st.header("Indicadores")
-        st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+        indicadores()

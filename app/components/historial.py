@@ -7,6 +7,72 @@ from services.db import fetch_df, get_engine
 from services.queries.q_historial import LISTADO_EVALUADOS_SQL, ELIMINAR_EVALUADOS
 from sqlalchemy import text
 
+
+@st.dialog(":material/warning: Confirmar Eliminación")
+def confirmar_eliminacion_historial(selected_rows_df):
+    """Dialogo para confirmar eliminación de registros en historial.
+
+    selected_rows_df: DataFrame que contiene al menos la columna 'id_evaluado'.
+    """
+    # Mensaje contextual según cantidad seleccionada
+    try:
+        n = len(selected_rows_df)
+    except Exception:
+        n = 0
+
+    if n == 1:
+        try:
+            nombre = selected_rows_df.iloc[0].get('Nombre', '')
+            apellido = selected_rows_df.iloc[0].get('Apellido', '')
+            st.warning(f"¿Estás seguro de que deseas eliminar al evaluado **{nombre} {apellido}**?")
+        except Exception:
+            st.warning("¿Estás seguro de que deseas eliminar este evaluado?")
+    else:
+        st.warning(f"¿Estás seguro de que deseas eliminar **{n} evaluado(s)**?")
+
+    st.write("Esta acción no se puede deshacer.")
+
+    col_yes, col_no = st.columns(2)
+    with col_yes:
+        label = ":material/check: Sí, eliminar"
+        if st.button(label, use_container_width=True, type="primary", key="hist_confirmar_eliminar"):
+            try:
+                ids = []
+                for v in selected_rows_df['id_evaluado'].tolist():
+                    try:
+                        ids.append(int(v))
+                    except Exception:
+                        continue
+
+                if not ids:
+                    st.warning('No se pudieron resolver los ids seleccionados.')
+                else:
+                    ids_csv = ','.join(str(x) for x in ids)
+                    try:
+                        with get_engine().begin() as conn:
+                            res = conn.execute(text(ELIMINAR_EVALUADOS), {"ids_csv": ids_csv})
+                            # Intentar inferir cuántas filas se borraron
+                            try:
+                                deleted_rows = res.fetchall()
+                                rows_deleted = len(deleted_rows)
+                            except Exception:
+                                rows_deleted = res.rowcount if hasattr(res, 'rowcount') and res.rowcount is not None else 0
+                        st.success(f"Se eliminaron {rows_deleted} evaluado(s).")
+                        # Refrescar datos y selección
+                        st.session_state['filtered_historial_data'] = pd.DataFrame(get_historial_data())
+                        st.session_state['historial_selection'] = []
+                    except Exception as e:
+                        st.error(f"Error al eliminar evaluados: {e}")
+            except Exception as e:
+                st.error(f":material/error: Error al procesar eliminación: {e}")
+            st.rerun()
+
+    with col_no:
+        label = ":material/cancel: Cancelar"
+        if st.button(label, use_container_width=True, key="hist_cancelar_eliminar"):
+            st.rerun()
+
+
 def styled_search_bar():
     st.markdown("""
         <style>
@@ -131,7 +197,7 @@ def historial():
         with col1:
             button_label = ":material/delete: Eliminar"
             if st.button(button_label, use_container_width=True):
-                # tomar el id de los evaluados seleccionados y eliminarlos
+                # tomar el id de los evaluados seleccionados y pedir confirmación
                 sel = st.session_state.get('historial_selection', [])
                 if sel:
                     df_current = st.session_state.get('filtered_historial_data')
@@ -139,25 +205,20 @@ def historial():
                         df_current = pd.DataFrame(get_historial_data())
 
                     try:
-                        selected_ids = df_current.iloc[sel]['id_evaluado'].tolist()
+                        # construir dataframe con las filas seleccionadas (si es multi-row viene como índices)
+                        try:
+                            selected_rows_df = df_current.iloc[sel]
+                        except Exception:
+                            # fallback: intentar con loc
+                            selected_rows_df = df_current.loc[sel]
                     except Exception:
-                        selected_ids = []
+                        selected_rows_df = pd.DataFrame()
 
-                    if not selected_ids:
+                    if selected_rows_df.empty:
                         st.warning('No se pudieron resolver los ids seleccionados.')
                     else:
-                        ids_csv = ','.join(str(int(x)) for x in selected_ids if x != '')
-                        try:
-                            with get_engine().begin() as conn:
-                                res = conn.execute(text(ELIMINAR_EVALUADOS), {"ids_csv": ids_csv})
-                                deleted_rows = res.fetchall()
-                                rows_deleted = len(deleted_rows)
-                            st.success(f"Se eliminaron {rows_deleted} evaluado(s).")
-                            st.session_state['filtered_historial_data'] = pd.DataFrame(get_historial_data())
-                            st.session_state['historial_selection'] = []
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Error al eliminar evaluados: {e}")
+                        # Abrir diálogo de confirmación; la función dialog ejecutará la eliminación si confirma
+                        confirmar_eliminacion_historial(selected_rows_df)
         with col2:
             button_label = ":material/filter_list: Filtros"
             st.button(button_label, use_container_width=True)

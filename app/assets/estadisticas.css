@@ -3,7 +3,7 @@
    ======================================== */
 
 /*boton de filtrar*/
-[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *) {
+[data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
     background: #ffffff;
 	border: 1px solid #000000 !important;
 	color: #000000;

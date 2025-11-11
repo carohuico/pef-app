@@ -3,8 +3,28 @@
     width: 100vh;
     height: 100%;
 }
-
+/*DIALOG*/
 [data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *) {
+    width: 100% !important;   
+    font-size: 2.5rem !important;
+    height: auto !important;
+    margin-top: 10px !important;
+    margin-bottom: 20px;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):hover {
+    width: 100% !important;   
+    font-size: 2.5rem !important;
+    height: auto !important;
+    margin-top: 10px !important;
+    margin-bottom: 20px;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
     width: 100% !important;   
     font-size: 2.5rem !important;
     height: auto !important;
@@ -14,7 +34,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
-[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):hover {
+[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):hover:not([data-testid="stDialog"] *) {
     width: 100% !important;   
     font-size: 2.5rem !important;
     height: auto !important;

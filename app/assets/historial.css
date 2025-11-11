@@ -1,43 +1,9 @@
-[data-testid="stTextInput"] label  {
-    margin-bottom: 0px !important;
+.page-header {
+	font-size: 1.5rem;
+	font-weight: 700;
+	margin: 0;
+	display: inline-block;
+	transform: translateY(-36px);
+	z-index: 25;
 }
 
-
-[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *) {
-    width: 100% !important;   
-    font-size: 2.5rem !important;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-}
-/* Botón secundario deshabilitado (excluye sidebar) */
-[data-testid^="stBaseButton-secondary"]:disabled:not([data-testid="stSidebar"] *) {
-    background: #ffffff;
-	border: 1px solid #000000 !important;
-	color: #000000;
-	box-shadow: 0 3px 6px rgba(0,0,0,0.06);
-	margin-top: 1.5rem;
-	width: 100px;
-}
-
-.warning {
-    position: fixed;
-    top: 3rem;
-    right: 1rem;
-    z-index: 1000;
-    color: rgba(133, 100, 4, 0.9);
-    background-color: rgba(255, 255, 255, 0.3) !important;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    background-color: #fff3cd;
-    border: 1px solid #ffeeba;
-    padding: 1rem;
-    border-radius: 4px;
-    margin-top: 10px;
-    font-size: 14px;
-    animation: slideIn 0.5s ease-out;
-}
-
-
-.stCheckbox, .stCheckbox > label, .stCheckbox input { display:flex !important; align-items:center !important; justify-content:center !important; margin: 0 !important; padding: 0 !important; height: 18px !important; }

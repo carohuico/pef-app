@@ -14,3 +14,16 @@ FROM dbo.Prueba p
 JOIN dbo.Evaluado e ON p.id_evaluado = e.id_evaluado
 ORDER BY p.id_prueba DESC;
 """
+
+#id y nombres de los evaluados existentes
+GET_EVALUADOS_EXISTENTES = """
+-- =====================================================
+-- CONSULTA: GET_EVALUADOS_EXISTENTES
+-- Descripción: Obtiene los id y nombres de los evaluados existentes
+-- Devuelve: id_evaluado, nombre_completo
+-- =====================================================
+SELECT 
+    id_evaluado,
+    CONCAT(nombre, ' ', apellido) AS nombre_completo
+FROM dbo.Evaluado;
+"""

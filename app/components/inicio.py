@@ -1,7 +1,7 @@
 import sys, os
 from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from services.queries.q_inicio import GET_RECIENTES
+from services.queries.q_inicio import GET_RECIENTES, GET_EVALUADOS_EXISTENTES
 from services.db import fetch_df
 import streamlit as st
 
@@ -24,6 +24,49 @@ def inicio():
         st.markdown("""
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
         """, unsafe_allow_html=True)
+    
+    # ---------- DIÁLOGO SELECCIÓN EVALUADO ----------
+    @st.dialog("Nueva evaluación")
+    def dialog_seleccionar_evaluado():
+        st.markdown("¿A qué evaluado deseas agregar el dibujo?")
+        
+        try:
+            df_evaluados = fetch_df(GET_EVALUADOS_EXISTENTES)
+            if df_evaluados.empty:
+                evaluado_options = ["No hay evaluados registrados"]
+                ids_evaluados = []
+            else:
+                evaluado_options = df_evaluados['nombre_completo'].tolist()
+                ids_evaluados = df_evaluados['id_evaluado'].tolist()
+        except Exception:
+            evaluado_options = ["Error al cargar evaluados"]
+            ids_evaluados = []
+        
+        selected_evaluado = st.selectbox(
+            "Selecciona un evaluado",
+            evaluado_options,
+            label_visibility="collapsed"
+        )
+        
+        label = ":material/add: Crear nuevo evaluado"
+        if st.button(label, type="secondary", use_container_width=True):
+            st.session_state["active_view"] = "registrar"
+            st.session_state["current_step"] = 1
+            st.session_state["already_registered"] = False
+            st.rerun()
+        
+        if st.button("Seleccionar", type="primary", use_container_width=True):
+            if selected_evaluado not in ["No hay evaluados registrados", "Error al cargar evaluados"]:
+                # Obtener el id del evaluado seleccionado
+                idx = evaluado_options.index(selected_evaluado)
+                id_evaluado = ids_evaluados[idx]
+                
+                # Guardar el id en session_state y ir al paso 2
+                st.session_state["id_evaluado"] = id_evaluado
+                st.session_state["already_registered"] = True
+                st.session_state["active_view"] = "registrar"
+                st.session_state["current_step"] = 2
+                st.rerun()
         
     # ---------- LAYOUT ----------
     col1, col2 = st.columns([2, 1])
@@ -83,8 +126,7 @@ def inicio():
         button_label = ":material/add_2: Nueva evaluación"
 
         if st.button(button_label, key="new_eval", type="primary"):
-            st.session_state["active_view"] = "registrar"
-            st.rerun()
+            dialog_seleccionar_evaluado()
         
         st.markdown("""<h5>Recientes</h5>""", unsafe_allow_html=True)
 

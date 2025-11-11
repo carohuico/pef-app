@@ -314,12 +314,41 @@ def cargar_imagen_component():
 
             if st.button(back_label, key="nav_back", type="secondary"):
                 if step > 1:
-                    st.session_state["current_step"] = max(1, step - 1)
-                    st.rerun()
+                    # Si estamos en paso 2 y el evaluado ya está registrado, volver al inicio
+                    if step == 2 and st.session_state.get("already_registered", False):
+                        st.session_state["active_view"] = "inicio"
+                        st.session_state["current_step"] = 1
+                        st.session_state["already_registered"] = False
+                        # Limpiar variables de sesión
+                        st.session_state["form_nombre"] = ""
+                        st.session_state["form_apellido"] = ""
+                        st.session_state["form_fecha_nacimiento"] = None
+                        st.session_state["form_sexo"] = ""
+                        st.session_state["form_estado_civil"] = ""
+                        st.session_state["form_escolaridad"] = ""
+                        st.session_state["form_ocupacion"] = ""
+                        st.session_state["form_grupo"] = ""
+                        st.session_state["uploaded_file"] = None
+                        st.rerun()
+                    else:
+                        # Comportamiento normal: retroceder un paso
+                        st.session_state["current_step"] = max(1, step - 1)
+                        st.rerun()
                 else:
                     # Cancel -> return to the app's inicio/main view
                     st.session_state["active_view"] = "inicio"
                     st.session_state["current_step"] = 1
+                    st.session_state["already_registered"] = False
+                    # Limpiar variables de sesión
+                    st.session_state["form_nombre"] = ""
+                    st.session_state["form_apellido"] = ""
+                    st.session_state["form_fecha_nacimiento"] = None
+                    st.session_state["form_sexo"] = ""
+                    st.session_state["form_estado_civil"] = ""
+                    st.session_state["form_escolaridad"] = ""
+                    st.session_state["form_ocupacion"] = ""
+                    st.session_state["form_grupo"] = ""
+                    st.session_state["uploaded_file"] = None
                     st.rerun()
         with col_next:
             next_disabled = step > 4
@@ -410,7 +439,8 @@ def cargar_imagen_component():
                     elif step == 3:
                         st.session_state["current_step"] = min(4, step + 1)
                         st.rerun()
-                    elif step == 4:
+                    elif step == 4: 
+                        if not st.session_state.get("already_registered", False):
                             nombre = st.session_state.get("form_nombre", "")
                             apellido = st.session_state.get("form_apellido", "")
                             fecha_nacimiento = st.session_state.get("fecha_nacimiento_widget", st.session_state.get("form_fecha_nacimiento", ""))
@@ -419,6 +449,8 @@ def cargar_imagen_component():
                             escolaridad = st.session_state.get("form_escolaridad", "")
                             ocupacion = st.session_state.get("form_ocupacion", "")
                             grupo = st.session_state.get("form_grupo", "")
+                            #!arreglar boton de atrás lleva al inicio
+                            
 
                             params = {
                                 "nombre": nombre,
@@ -441,7 +473,6 @@ def cargar_imagen_component():
                                             res_g = conn.execute(text("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = :grupo"), {"grupo": grupo})
                                             row_g = res_g.fetchone()
                                             if row_g is not None:
-                                                # row_g may be a RowMapping or tuple
                                                 id_grupo = row_g[0] if len(row_g) > 0 else None
                                         except Exception:
                                             id_grupo = None
@@ -451,117 +482,107 @@ def cargar_imagen_component():
                                     res = conn.execute(text(CREAR_EVALUADO), params)
                                     row = res.fetchone()
                                     if row is not None:
-                                        # row could be a mapping
                                         try:
                                             st.session_state['id_evaluado'] = int(row['id_evaluado'])
                                         except Exception:
-                                            # fallback if row is tuple
                                             st.session_state['id_evaluado'] = int(row[0])
                                 st.session_state['created_ok'] = True
                             except Exception as e:
                                 st.error(f"Error al crear evaluado en la base de datos: {e}")
-                                # No avanzar de paso si falla la inserción
                                 return
-                            
-                            """
-                                subir resultados de la prueba
-                                id_prueba
-                                id_evaluado
-                                nombre_archivo
-                                ruta_imagen
-                                formato
-                                fecha
-                            """
-                            try:
-                                id_evaluado = st.session_state.get('id_evaluado')
-                                if id_evaluado is not None:
-                                    nombre_archivo = st.session_state["uploaded_file"].name
-                                    ruta_imagen = str(Path(STD_DIR) / nombre_archivo)
-                                    formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
-                                    fecha_actual = datetime.datetime.now()
+                        else:
+                            if 'id_evaluado' not in st.session_state or st.session_state['id_evaluado'] is None:
+                                st.error("Error: No se encontró el ID del evaluado seleccionado")
+                                return
+                        
+                        # CONTINUAR CON LA PRUEBA (esto aplica tanto para nuevos como existentes)
+                        try:
+                            engine = get_engine()
+                            id_evaluado = st.session_state.get('id_evaluado')
+                            if id_evaluado is not None:
+                                nombre_archivo = st.session_state["uploaded_file"].name
+                                ruta_imagen = str(Path(STD_DIR) / nombre_archivo)
+                                formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
+                                fecha_actual = datetime.datetime.now()
 
-                                    with engine.begin() as conn:
-                                        id_prueba = conn.execute(
-                                            text(POST_PRUEBA),
-                                            {
-                                                "id_evaluado": id_evaluado,
-                                                "nombre_archivo": nombre_archivo,
-                                                "ruta_imagen": ruta_imagen,
-                                                "formato": formato,
-                                                "fecha": fecha_actual
-                                            }
-                                        ).fetchone()["id_prueba"]
-                            except Exception as e:
-                                st.error(f"Error al registrar la prueba en la base de datos: {e}")
-                                return
-                            
-                            """
-                                subir a la bd los resultados de la prueba
-                                INSERT INTO dbo.Resultado (id_prueba, id_indicador, x_min, y_min, x_max, y_max, confianza)
-                            """
-                            try:
                                 with engine.begin() as conn:
-                                    indicadores = st.session_state.get("indicadores", [])
-                                    # Open the standardized image to compute normalized coordinates
-                                    try:
-                                        img_for_norm = Image.open(ruta_imagen)
-                                        img_w, img_h = img_for_norm.size
-                                    except Exception:
-                                        img_w, img_h = None, None
+                                    id_prueba = conn.execute(
+                                        text(POST_PRUEBA),
+                                        {
+                                            "id_evaluado": id_evaluado,
+                                            "nombre_archivo": nombre_archivo,
+                                            "ruta_imagen": ruta_imagen,
+                                            "formato": formato,
+                                            "fecha": fecha_actual
+                                        }
+                                    ).fetchone()["id_prueba"]
+                        except Exception as e:
+                            st.error(f"Error al registrar la prueba en la base de datos: {e}")
+                            return
+                        
+                        # SUBIR RESULTADOS
+                        try:
+                            with engine.begin() as conn:
+                                indicadores = st.session_state.get("indicadores", [])
+                                try:
+                                    img_for_norm = Image.open(ruta_imagen)
+                                    img_w, img_h = img_for_norm.size
+                                except Exception:
+                                    img_w, img_h = None, None
 
-                                    for ind in indicadores:
-                                        # indicadores from simular_resultado use key 'id_indicador'
-                                        iid = ind.get("id_indicador") or ind.get("id")
-                                        x_min = float(ind.get("x_min", 0))
-                                        x_max = float(ind.get("x_max", 0))
-                                        y_min = float(ind.get("y_min", 0))
-                                        y_max = float(ind.get("y_max", 0))
-                                        confianza = float(ind.get("confianza", 0.0))
+                                for ind in indicadores:
+                                    iid = ind.get("id_indicador") or ind.get("id")
+                                    x_min = float(ind.get("x_min", 0))
+                                    x_max = float(ind.get("x_max", 0))
+                                    y_min = float(ind.get("y_min", 0))
+                                    y_max = float(ind.get("y_max", 0))
+                                    confianza = float(ind.get("confianza", 0.0))
 
-                                        # If we have image dimensions, convert to normalized coordinates (x_min, y_min, width, height)
-                                        if img_w and img_h and img_w > 0 and img_h > 0:
-                                            x_min_norm = x_min / img_w
-                                            y_min_norm = y_min / img_h
-                                            w_norm = (x_max - x_min) / img_w
-                                            h_norm = (y_max - y_min) / img_h
-                                        else:
-                                            # fallback: send raw pixel values
-                                            x_min_norm = x_min
-                                            y_min_norm = y_min
-                                            w_norm = (x_max - x_min)
-                                            h_norm = (y_max - y_min)
+                                    if img_w and img_h and img_w > 0 and img_h > 0:
+                                        x_min_norm = x_min / img_w
+                                        y_min_norm = y_min / img_h
+                                        w_norm = (x_max - x_min) / img_w
+                                        h_norm = (y_max - y_min) / img_h
+                                    else:
+                                        x_min_norm = x_min
+                                        y_min_norm = y_min
+                                        w_norm = (x_max - x_min)
+                                        h_norm = (y_max - y_min)
 
-                                        conn.execute(
-                                            text(POST_RESULTADO),
-                                            {
-                                                "id_prueba": id_prueba,
-                                                "id_indicador": iid,
-                                                "x_min": x_min_norm,
-                                                "y_min": y_min_norm,
-                                                "x_max": w_norm,
-                                                "y_max": h_norm,
-                                                "confianza": confianza
-                                            }
-                                        )
-                            except Exception as e:
-                                st.error(f"Error al registrar los resultados en la base de datos: {e}")
-                                return
-                            st.session_state["active_view"] = "inicio"
-                            st.session_state["current_step"] = 1
-                            
-                            #limpiar variables de sesión relacionadas con el formulario
-                            st.session_state["form_nombre"] = ""
-                            st.session_state["form_apellido"] = ""
-                            st.session_state["form_fecha_nacimiento"] = None
-                            st.session_state["form_sexo"] = ""
-                            st.session_state["form_estado_civil"] = ""
-                            st.session_state["form_escolaridad"] = ""
-                            st.session_state["form_ocupacion"] = ""
-                            st.session_state["form_grupo"] = ""
-                            st.session_state["uploaded_file"] = None
-                            st.session_state["indicadores"] = None
-                            
-                            st.rerun()
+                                    conn.execute(
+                                        text(POST_RESULTADO),
+                                        {
+                                            "id_prueba": id_prueba,
+                                            "id_indicador": iid,
+                                            "x_min": x_min_norm,
+                                            "y_min": y_min_norm,
+                                            "x_max": w_norm,
+                                            "y_max": h_norm,
+                                            "confianza": confianza
+                                        }
+                                    )
+                        except Exception as e:
+                            st.error(f"Error al registrar los resultados en la base de datos: {e}")
+                            return
+                        
+                        # LIMPIAR Y VOLVER A INICIO
+                        st.session_state["active_view"] = "inicio"
+                        st.session_state["current_step"] = 1
+                        st.session_state["already_registered"] = False
+                        
+                        # Limpiar variables de sesión relacionadas con el formulario
+                        st.session_state["form_nombre"] = ""
+                        st.session_state["form_apellido"] = ""
+                        st.session_state["form_fecha_nacimiento"] = None
+                        st.session_state["form_sexo"] = ""
+                        st.session_state["form_estado_civil"] = ""
+                        st.session_state["form_escolaridad"] = ""
+                        st.session_state["form_ocupacion"] = ""
+                        st.session_state["form_grupo"] = ""
+                        st.session_state["uploaded_file"] = None
+                        st.session_state["indicadores"] = None
+                        
+                        st.rerun()
                         
                     else:
                         st.session_state["current_step"] = min(4, step + 1)

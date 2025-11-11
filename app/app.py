@@ -26,7 +26,7 @@ with open(_css_general, encoding="utf-8") as f:
 st.set_page_config(page_title="Persona Bajo la Lluvia", layout="wide")
 
 if "active_view" not in st.session_state:
-    st.session_state["active_view"] = "ajustes"
+    st.session_state["active_view"] = "inicio"
 
 sidebar_component()
 

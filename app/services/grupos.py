@@ -33,7 +33,7 @@ def grupos():
     if grupos_principales.empty:
         st.info("No hay grupos registrados.")
         button_label = ":material/add: Crear nuevo grupo"
-        if st.button(button_label, type="primary"):
+        if st.button(button_label, type="primary", key="grupos_crear_empty"):
             mostrar_dialogo_crear_grupo(municipios_df['nombre'].tolist(), municipios_dict)
         return
     
@@ -76,13 +76,13 @@ def grupos():
 
     with col2:
         button_label = ":material/edit: Editar"
-        editar_btn = st.button(button_label, type="secondary", use_container_width=True)
+        editar_btn = st.button(button_label, type="secondary", use_container_width=True, key="grupos_btn_editar_top")
     with col3:
         button_label = ":material/delete: Eliminar"
-        eliminar_btn = st.button(button_label, type="secondary", use_container_width=True)
+        eliminar_btn = st.button(button_label, type="secondary", use_container_width=True, key="grupos_btn_eliminar_top")
     with col4:
         button_label = ":material/add: Crear"
-        crear_btn = st.button(button_label, type="primary", use_container_width=True)
+        crear_btn = st.button(button_label, type="primary", use_container_width=True, key="grupos_btn_crear_top")
         st.markdown("<br>", unsafe_allow_html=True)
 
     # Aplicar búsqueda

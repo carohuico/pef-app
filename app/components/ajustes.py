@@ -1,3 +1,4 @@
+from components.evaluados import evaluados
 from services.usuarios import usuarios
 from services.grupos import grupos
 from services.indicadores_ajustes import indicadores
@@ -24,11 +25,14 @@ def ajustes():
 
     st.markdown('<div class="page-header">Ajustes</div>', unsafe_allow_html=True)
 
-    tab1, tab2, tab3 = st.tabs(["Grupos", "Usuarios", "Indicadores"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Evaluados", "Grupos", "Usuarios", "Indicadores"])
 
     with tab1:
-        grupos()
+        evaluados()
     with tab2:
-        usuarios()  
+        grupos()
     with tab3:
+        usuarios()  
+    with tab4:
         indicadores()
+    

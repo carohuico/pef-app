@@ -1,4 +1,4 @@
-from services.queries.q_individual import GET_PRUEBAS_POR_EVALUADO
+from services.queries.q_individual import GET_PRUEBAS_POR_EVALUADO, GET_RESULTADOS_POR_PRUEBA
 from services.agregar_dibujo import agregar_dibujo
 from services.db import fetch_df
 import pandas as pd
@@ -174,6 +174,7 @@ def individual(id_evaluado: str = None):
 
     current_prueba = expediente[current_index]
     fecha = current_prueba.get("fecha", "N/A")
+    resultados = current_prueba.get("resultados", [])
     
     images_data = []
     fechas_data = []
@@ -185,7 +186,6 @@ def individual(id_evaluado: str = None):
         
         # porque las imágenes están en components/uploads/
         img_path = (Path(__file__).parent / img_rel_clean).resolve()
-        
         b64 = encode_image_to_base64(str(img_path))
         if b64:
             mime = 'jpeg' if prueba.get('formato', '').lower() in ('jpg', 'jpeg') else prueba.get('formato', 'png')
@@ -262,7 +262,9 @@ def individual(id_evaluado: str = None):
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                 margin-bottom: 0;
                 width: 100%;
-                height: 300px;
+                height: 60vh;
+                min-height: 300px;
+                max-height: 500px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -282,16 +284,17 @@ def individual(id_evaluado: str = None):
             /* Card de información demográfica - Efecto Glass */
             .info-card {{
                 position: absolute;
-                top: 20px;
-                left: 20px;
+                top: 15px;
+                left: 15px;
                 background: rgba(70, 70, 70, 0.45);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
                 border-radius: 12px;
-                padding: 8px 20px;
+                padding: 8px 16px;
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
                 border: 1px solid rgba(255, 255, 255, 0.15);
-                min-width: 200px;
+                min-width: 180px;
+                max-width: 250px;
                 z-index: 9999;
                 transition: all 0.3s ease;
                 cursor: pointer;
@@ -307,8 +310,9 @@ def individual(id_evaluado: str = None):
             /* Fecha - Efecto Glass */
             .date-card {{
                 position: absolute;
-                top: 20px;
-                right: 20px;
+                top: 15px;
+                left: 50%;
+                transform: translateX(-50%);
                 background: rgba(70, 70, 70, 0.45);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
@@ -326,10 +330,10 @@ def individual(id_evaluado: str = None):
             /* Botones de acción - Efecto Glass */
             .action-buttons {{
                 position: absolute;
-                bottom: 20px;
-                right: 20px;
+                bottom: 15px;
+                right: 15px;
                 display: flex;
-                gap: 12px;
+                gap: 10px;
                 z-index: 9999;
             }}
             
@@ -337,25 +341,24 @@ def individual(id_evaluado: str = None):
                 background: rgba(70, 70, 70, 0.45);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
-                border-radius: 12px;
-                padding: 12px;
+                border-radius: 10px;
+                padding: 10px;
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
                 border: 1px solid rgba(255, 255, 255, 0.15);
-                width: 48px;
-                height: 48px;
+                width: 42px;
+                height: 42px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
                 transition: all 0.3s ease;
                 color: #ffffff;
-                font-size: 20px;
+                font-size: 18px;
             }}
 
-            /* Make inline SVG icons a bit larger, white and with shadow to match header/date */
             .action-btn svg {{
-                width: 20px;
-                height: 20px;
+                width: 18px;
+                height: 18px;
                 display: block;
                 filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45));
             }}
@@ -378,13 +381,13 @@ def individual(id_evaluado: str = None):
                 justify-content: space-between;
                 font-weight: 600;
                 color: #ffffff;
-                font-size: 14px;
+                font-size: 13px;
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             }}
             
             .info-arrow {{
                 transition: transform 0.3s ease;
-                font-size: 12px;
+                font-size: 11px;
                 color: #ffffff;
             }}
             
@@ -393,10 +396,10 @@ def individual(id_evaluado: str = None):
             }}
             
             .info-details {{
-                font-size: 13px;
+                font-size: 12px;
                 line-height: 1.8;
-                margin-top: 12px;
-                padding-top: 12px;
+                margin-top: 10px;
+                padding-top: 10px;
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
                 max-height: 0;
                 overflow: hidden;
@@ -415,7 +418,7 @@ def individual(id_evaluado: str = None):
             }}
             
             .info-row {{
-                margin-bottom: 6px;
+                margin-bottom: 5px;
             }}
             
             .info-label {{
@@ -423,59 +426,19 @@ def individual(id_evaluado: str = None):
                 color: #ffffff;
             }}
             
-            /* Botones de navegación sobre la imagen */
-            .nav-button {{
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                z-index: 10;
-                background: rgba(255, 255, 255, 0.9);
-                backdrop-filter: blur(10px);
-                border: 2px solid rgba(0, 0, 0, 0.1);
-                color: #333;
-                width: 50px;
-                height: 50px;
-                border-radius: 50%;
-                cursor: pointer;
-                font-size: 24px;
-                transition: all 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }}
-            
-            .nav-button:hover:not(:disabled) {{
-                background: white;
-                border-color: #FFC107;
-                color: #FFC107;
-                transform: translateY(-50%) scale(1.1);
-            }}
-            
-            .nav-button:disabled {{
-                opacity: 0.3;
-                cursor: not-allowed;
-            }}
-            
-            .nav-button.prev {{
-                left: 20px;
-            }}
-            
-            .nav-button.next {{
-                right: 20px;
-            }}
-            
             /* Carrusel */
             .carousel-container {{
                 background: white;
                 border-radius: 12px;
-                padding: 20px;
+                padding: 15px;
                 width: 100%;
+                margin-top: 15px;
             }}
             
             .carousel-wrapper {{
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                gap: 10px;
                 width: 100%;
             }}
             
@@ -483,15 +446,15 @@ def individual(id_evaluado: str = None):
                 background: white;
                 border: 2px solid #e0e0e0;
                 border-radius: 8px;
-                width: 40px;
-                height: 40px;
+                width: 36px;
+                height: 36px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
                 transition: all 0.2s;
                 flex-shrink: 0;
-                font-size: 18px;
+                font-size: 16px;
                 color: #333;
             }}
             
@@ -507,7 +470,7 @@ def individual(id_evaluado: str = None):
             
             .carousel-items {{
                 display: flex;
-                gap: 12px;
+                gap: 10px;
                 overflow-x: auto;
                 scroll-behavior: smooth;
                 padding: 4px;
@@ -531,8 +494,8 @@ def individual(id_evaluado: str = None):
             .carousel-item {{
                 position: relative;
                 flex-shrink: 0;
-                width: 120px;
-                height: 120px;
+                width: 100px;
+                height: 100px;
                 border-radius: 8px;
                 overflow: hidden;
                 cursor: pointer;
@@ -563,10 +526,52 @@ def individual(id_evaluado: str = None):
                 right: 4px;
                 background: rgba(0, 0, 0, 0.7);
                 color: white;
-                padding: 2px 8px;
+                padding: 2px 6px;
                 border-radius: 4px;
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: 600;
+            }}
+            
+            /* Responsividad */
+            @media (max-width: 768px) {{
+                .main-image-container {{
+                    height: 50vh;
+                }}
+                
+                .info-card {{
+                    top: 10px;
+                    left: 10px;
+                    padding: 6px 12px;
+                    min-width: 150px;
+                }}
+                
+                .date-card {{
+                    top: 10px;
+                    padding: 6px 12px;
+                    font-size: 12px;
+                }}
+                
+                .action-buttons {{
+                    bottom: 10px;
+                    right: 10px;
+                    gap: 8px;
+                }}
+                
+                .action-btn {{
+                    width: 38px;
+                    height: 38px;
+                    padding: 8px;
+                }}
+                
+                .action-btn svg {{
+                    width: 16px;
+                    height: 16px;
+                }}
+                
+                .carousel-item {{
+                    width: 80px;
+                    height: 80px;
+                }}
             }}
         </style>
     </head>
@@ -671,10 +676,10 @@ def individual(id_evaluado: str = None):
                     document.getElementById('prevBtn').disabled = (index === 0);
                     document.getElementById('nextBtn').disabled = (index === totalImages - 1);
                     
+                    // Notificar a Streamlit que cambió el índice para actualizar los resultados
                     window.parent.postMessage({{
                         type: 'streamlit:setComponentValue',
-                        key: 'current_image_index',
-                        value: index
+                        value: {{ action: 'image_changed', index: index }}
                     }}, '*');
                 }}, 150);
             }}
@@ -730,10 +735,131 @@ def individual(id_evaluado: str = None):
             agregar_dibujo(info_obj)
             st.session_state['add_drawing'] = True
 
-    st.components.v1.html(html_content, height=500, width=800, scrolling=False)
+    # ---------- LAYOUT 50/50: IMAGEN Y RESULTADOS ----------
+    col_imagen, col_resultados = st.columns([1, 1], gap="medium")
+    
+    with col_imagen:
+        # Renderizar el HTML con el carrusel y la imagen
+        component_key = f"individual_carousel_{id_evaluado or 'none'}"
+        component_value = st.components.v1.html(html_content, height=580, scrolling=False)
+
+        # Detectar cambios en el índice desde el componente HTML
+        # Usar `is not None` porque `0` es un valor válido (primer índice) y es falsy
+        if component_value is not None:
+            # Puede llegar un dict { action, index } o un número (index)
+            if isinstance(component_value, dict):
+                action = component_value.get('action')
+                if action in ('image_changed', 'image_select'):
+                    try:
+                        new_index = int(component_value.get('index', current_index))
+                    except Exception:
+                        new_index = current_index
+                    if new_index != st.session_state.current_image_index:
+                        st.session_state.current_image_index = new_index
+                        st.rerun()
+                elif action == 'add_drawing':
+                    # activar modal/flag para agregar dibujo
+                    st.session_state['add_drawing'] = True
+                    try:
+                        idx = int(component_value.get('index', st.session_state.current_image_index))
+                    except Exception:
+                        idx = st.session_state.current_image_index
+                    if idx != st.session_state.current_image_index:
+                        st.session_state.current_image_index = idx
+                    st.rerun()
+            else:
+                # Si viene un número simple (por compatibilidad), usarlo como índice
+                try:
+                    new_index = int(component_value)
+                    if new_index != st.session_state.current_image_index:
+                        st.session_state.current_image_index = new_index
+                        st.rerun()
+                except Exception:
+                    # ignore non-integer payloads
+                    pass
+    
+    # Mostrar la fecha de la prueba seleccionada (fuera del HTML) para asegurar que
+    # la UI de Streamlit refleje el cambio cuando se actualice el índice.
+    try:
+        idx_display = st.session_state.get('current_image_index', current_index)
+        if expediente and 0 <= idx_display < len(expediente):
+            fecha_display = expediente[idx_display].get('fecha', 'N/A')
+        else:
+            fecha_display = 'N/A'
+    except Exception:
+        fecha_display = 'N/A'
+
+    with col_resultados:
+        st.markdown(f"**Fecha seleccionada:** {fecha_display}")
+        # ---------- TABLA DE RESULTADOS POR PRUEBA ----------
+        try:
+            id_prueba = current_prueba.get('id_prueba')
+            if id_prueba is not None:
+                try:
+                    # cada que se cambia la imagen, se cargan los resultados de la prueba actual
+                    df_resultados = fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": id_prueba})
+                except Exception:
+                    df_resultados = None
+
+                if df_resultados is None or df_resultados.empty:
+                    st.info("No hay resultados asociados a esta prueba.")
+                else:
+                    # Preparar dataframe para mostrar solo: nombre_indicador, significado, confianza
+                    try:
+                        df_show = df_resultados.copy()
+                        
+                        # Normalizar confianza
+                        if 'confianza' in df_show.columns:
+                            df_show['confianza'] = pd.to_numeric(df_show['confianza'], errors='coerce').round(3)
+                        
+                        # Seleccionar solo las columnas deseadas
+                        cols_display = []
+                        if 'nombre_indicador' in df_show.columns:
+                            cols_display.append('nombre_indicador')
+                        if 'significado' in df_show.columns:
+                            cols_display.append('significado')
+                        if 'confianza' in df_show.columns:
+                            cols_display.append('confianza')
+                        
+                        if cols_display:
+                            st.markdown("### Resultados por prueba")
+                            # Configurar las columnas para mejor visualización
+                            column_config = {}
+                            if 'nombre_indicador' in cols_display:
+                                column_config['nombre_indicador'] = st.column_config.TextColumn(
+                                    "Indicador",
+                                    width="small"
+                                )
+                            if 'significado' in cols_display:
+                                column_config['significado'] = st.column_config.TextColumn(
+                                    "Significado",
+                                    width="small"
+                                )
+                            if 'confianza' in cols_display:
+                                column_config['confianza'] = st.column_config.NumberColumn(
+                                    "Confianza",
+                                    format="%.3f",
+                                    width="small"
+                                )
+                            
+                            st.dataframe(
+                                df_show[cols_display].reset_index(drop=True), 
+                                use_container_width=True, 
+                                height=350,
+                                column_config=column_config,
+                                hide_index=True
+                            )
+                        else:
+                            st.warning("No se encontraron las columnas esperadas en los resultados.")
+                    except Exception as e:
+                        st.error(f"Error preparando la tabla de resultados: {e}")
+            else:
+                st.info("Selecciona una prueba para ver sus resultados.")
+        except Exception as e:
+            st.error(f"Error al cargar los resultados: {e}")
 
     new_index = st.session_state.get('current_image_index', current_index)
     if new_index != current_index:
         st.session_state.current_image_index = new_index
+        
         st.rerun()
-    

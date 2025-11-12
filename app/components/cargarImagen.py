@@ -567,6 +567,7 @@ def cargar_imagen_component():
                             return
                         
                         # LIMPIAR Y VOLVER A INICIO
+                        st.session_state['created_ok'] = True
                         st.session_state["active_view"] = "inicio"
                         st.session_state["current_step"] = 1
                         st.session_state["already_registered"] = False

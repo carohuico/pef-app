@@ -1,36 +1,71 @@
+from services.db import fetch_df
 import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 import base64
 
-def exportar_datos(selected_rows: pd.DataFrame, file_type: str, filename: str):
-    if file_type == "csv":
-        """Exporta los datos del DataFrame a un archivo CSV descargable."""
-        csv = selected_rows.to_csv(index=False).encode('utf-8-sig')
-        st.download_button(
-            label="Descargar datos como CSV",
-            data=csv,
-            file_name=filename,
-            mime='text/csv; charset=utf-8-sig',
-        )
-    elif file_type == "pdf":
-        """Exporta los datos del DataFrame a un archivo PDF descargable."""
-        #TODO: Implementar exportación a PDF
-        pass
-    
-def render_export_popover(selected_rows: pd.DataFrame):
-    # Prepare CSV data as base64 so the injected HTML can provide a download link
+   
+def render_export_popover(info_evaluado=None, indicadores=None):
+    # Normalizar inputs a pandas.DataFrame antes de concatenar
+    def to_dataframe(obj):
+        if obj is None:
+            return pd.DataFrame()
+        if isinstance(obj, pd.DataFrame):
+            return obj.reset_index(drop=True)
+        if isinstance(obj, pd.Series):
+            return obj.to_frame().T.reset_index(drop=True)
+        if isinstance(obj, dict):
+            return pd.DataFrame([obj])
+        if isinstance(obj, list):
+            if len(obj) == 0:
+                return pd.DataFrame()
+        return pd.DataFrame(obj)
+
+    df_info = to_dataframe(info_evaluado)
+
+    # Obtener nombres de indicadores desde la BD
+    indicadores_nombres = fetch_df("SELECT nombre FROM dbo.Indicador ORDER BY id_indicador ASC")['nombre'].tolist()
+
+    # Detectados en esta prueba (param 'indicadores' puede ser lista de dicts)
+    detected_names = set()
+    if isinstance(indicadores, list):
+        for ind in indicadores:
+            if isinstance(ind, dict):
+                nombre = ind.get('nombre') or ind.get('Indicador') or ind.get('indicador')
+                if nombre:
+                    detected_names.add(str(nombre))
+
+    # Construir fila base con la información del evaluado (si existe)
+    base = {}
+    if not df_info.empty:
+        base.update(df_info.iloc[0].to_dict())
+
+    # Añadir columnas de indicadores (1/0 según presencia)
+    for name in indicadores_nombres:
+        base[name] = 1 if name in detected_names else 0
+
+    # Si no hay info ni indicadores, selected_rows será vacío
+    if base:
+        selected_rows = pd.DataFrame([base])
+    else:
+        selected_rows = pd.DataFrame()
+
+    # Prepare CSV data
     csv_bytes = selected_rows.to_csv(index=False).encode("utf-8-sig")
-    csv_b64 = base64.b64encode(csv_bytes).decode("utf-8")
+    csv_b64 = base64.b64encode(csv_bytes).decode("utf-8-sig")
     csv_href = f"data:text/csv;charset=utf-8-sig;base64,{csv_b64}"
     filename = "historial_export.csv"
-    
-    # Lista de opciones/indicadores para el dropdown (simulación de columnas del DF principal)
+
+    # Lista de opciones/indicadores para el dropdown
     column_options = selected_rows.columns.tolist() if not selected_rows.empty else [
-        "ID_Registro", "Nombre", "Apellido", "Edad", "Sexo", "Estado civil", 
-        "Escolaridad", "Ocupación", "Grupo", "Ver más"
+        "Fecha", "Nombre", "Apellido", "Edad", "Sexo", "Estado civil", 
+        "Escolaridad", "Ocupación", "Grupo", "Fecha de evaluación"
     ]
-    
+    # asegúrate de incluir los nombres de indicadores (si no están ya)
+    for n in indicadores_nombres:
+        if n not in column_options:
+            column_options.append(n)
+
     # === GENERAR HTML DE CHECKBOXES ===
     checkboxes_html = ""
     for i, col in enumerate(column_options):
@@ -44,7 +79,7 @@ def render_export_popover(selected_rows: pd.DataFrame):
         </label>
         """
     
-    # Convertir los datos del DataFrame a JSON para uso en JavaScript
+    # Convertir los datos del DataFrame a JSON
     import json
     df_json = selected_rows.to_json(orient='records')
     
@@ -97,8 +132,8 @@ def render_export_popover(selected_rows: pd.DataFrame):
           }}
           .column-checkbox {{
               margin-right: 10px !important;
-              width: 18px !important;
-              height: 18px !important;
+              width: 14px !important;
+              height: 14px !important;
               cursor: pointer !important;
               accent-color: #111 !important;
           }}
@@ -108,14 +143,14 @@ def render_export_popover(selected_rows: pd.DataFrame):
           }}
           .select-title {{
               font-family: 'Poppins', sans-serif !important;
-              font-size: 16px !important;
-              font-weight: 600 !important;
+              font-size: 12px !important;
+              font-weight: 400 !important;
               margin-top: 20px !important;
               margin-bottom: 12px !important;
               color: #333 !important;
           }}
           .checkboxes-container {{
-              max-height: 300px !important;
+              max-height: 250px !important;
               overflow-y: auto !important;
               border: 1px solid #dee2e6 !important;
               border-radius: 6px !important;
@@ -253,8 +288,8 @@ def render_export_popover(selected_rows: pd.DataFrame):
         const title = parent.document.createElement('h3');
         title.innerText = 'Exportar Datos';
         title.style.marginTop = '0';
-        title.style.marginBottom = '24px';
-        title.style.fontSize = '24px';
+        title.style.marginBottom = '12px';
+        title.style.fontSize = '16px';
         title.style.fontWeight = '700';
         modal.appendChild(title);
 
@@ -262,6 +297,7 @@ def render_export_popover(selected_rows: pd.DataFrame):
         const indicadoresTitle = parent.document.createElement('div');
         indicadoresTitle.className = 'select-title';
         indicadoresTitle.innerText = 'Selecciona las columnas a exportar:';
+        indicadoresTitle.style.fontSize = '8px';
         modal.appendChild(indicadoresTitle);
         
         // Botón seleccionar/deseleccionar todos
@@ -278,8 +314,8 @@ def render_export_popover(selected_rows: pd.DataFrame):
         selectAllCheckbox.id = 'select-all-checkbox';
         selectAllCheckbox.checked = true;
         selectAllCheckbox.style.marginRight = '10px';
-        selectAllCheckbox.style.width = '18px';
-        selectAllCheckbox.style.height = '18px';
+        selectAllCheckbox.style.width = '14px';
+        selectAllCheckbox.style.height = '14px';
         selectAllCheckbox.style.cursor = 'pointer';
         selectAllCheckbox.style.accentColor = '#111';
         
@@ -314,10 +350,6 @@ def render_export_popover(selected_rows: pd.DataFrame):
           }});
         }});
 
-        // Separador
-        const separator = parent.document.createElement('div');
-        separator.className = 'separator';
-        modal.appendChild(separator);
 
         // Almacenar los datos del DataFrame
         const fullData = {df_json};
@@ -379,7 +411,7 @@ def render_export_popover(selected_rows: pd.DataFrame):
           }});
           
           // Crear el enlace de descarga
-          const blob = new Blob([csv], {{ type: 'text/csv;charset=utf-8;' }});
+          const blob = new Blob([csv], {{ type: 'text/csv;charset=utf-8-sig;' }});
           const url = URL.createObjectURL(blob);
           const downloadLink = parent.document.createElement('a');
           downloadLink.href = url;
@@ -389,7 +421,7 @@ def render_export_popover(selected_rows: pd.DataFrame):
         }};
         buttonsContainer.appendChild(csvBtn);
 
-        // Botón PDF con icono
+        // Botón PDF (resto del código igual)
         const pdfBtn = parent.document.createElement('button');
         pdfBtn.className = 'export-button';
         pdfBtn.innerHTML = `
@@ -413,8 +445,40 @@ def render_export_popover(selected_rows: pd.DataFrame):
               alert('Por favor, selecciona al menos una columna para exportar.');
               return;
             }}
-            
-            // Filtrar datos solo con las columnas seleccionadas
+
+            // Guard: evitar generar PDFs muy grandes que puedan provocar desbordamiento de pila en el navegador
+            const MAX_PDF_COLUMNS = 22;
+            if (selectedColumns.length > MAX_PDF_COLUMNS) {{
+              alert(`Has seleccionado ${{selectedColumns.length}} columnas. Para evitar errores al generar el PDF, por favor selecciona como máximo ${{MAX_PDF_COLUMNS}} columnas o descarga CSV.`);
+              // Forzar descarga CSV como fallback
+              (function(){{
+                let csv = selectedColumns.join(',') + '\\n';
+                const filteredData = fullData.map(row => {{
+                  const filteredRow = {{}};
+                  selectedColumns.forEach(col => {{ if (row.hasOwnProperty(col)) filteredRow[col] = row[col]; }});
+                  return filteredRow;
+                }});
+                filteredData.forEach(row => {{
+                  const values = selectedColumns.map(col => {{
+                    let val = row[col];
+                    if (val === null || val === undefined) val = '';
+                    val = String(val).replace(/"/g, '""');
+                    if (val.includes(',') || val.includes('\\n') || val.includes('"')) val = '"' + val + '"';
+                    return val;
+                  }});
+                  csv += values.join(',') + '\\n';
+                }});
+                const blob = new Blob([csv], {{ type: 'text/csv;charset=utf-8;' }});
+                const url = URL.createObjectURL(blob);
+                const downloadLink = parent.document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = '{filename}';
+                downloadLink.click();
+                URL.revokeObjectURL(url);
+              }})();
+              return;
+            }}
+
             const filteredData = fullData.map(row => {{
               const filteredRow = {{}};
               selectedColumns.forEach(col => {{
@@ -425,13 +489,11 @@ def render_export_popover(selected_rows: pd.DataFrame):
               return filteredRow;
             }});
             
-            // Verificar que jsPDF esté disponible
             if (typeof parent.window.jspdf === 'undefined') {{
               alert('Error: La librería PDF no está cargada. Por favor, recarga la página e intenta de nuevo.');
               return;
             }}
             
-            // Crear PDF con jsPDF
             const {{ jsPDF }} = parent.window.jspdf;
             const doc = new jsPDF({{
               orientation: selectedColumns.length > 6 ? 'landscape' : 'portrait',
@@ -439,39 +501,33 @@ def render_export_popover(selected_rows: pd.DataFrame):
               format: 'a4'
             }});
             
-            const primaryColor = '#111'; // Azul médico
-            const headerBg = '#ECF0F1'; // Gris claro
+            const primaryColor = [17, 17, 17];
+            const headerBg = [236, 240, 241];
 
             doc.setFillColor(...primaryColor);
             doc.rect(0, 0, doc.internal.pageSize.width, 35, 'F');
             
-            // Título
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
             doc.text('EXPORTACIÓN DE EXPEDIENTES', doc.internal.pageSize.width / 2, 15, {{ align: 'center' }});
             
-            // Subtítulo
             doc.setFontSize(11);
             doc.setFont(undefined, 'normal');
             doc.text('Historial Clínico', doc.internal.pageSize.width / 2, 23, {{ align: 'center' }});
             
-            // Fecha y hora
             doc.setFontSize(9);
             doc.text('Fecha de generación: {current_date}', doc.internal.pageSize.width / 2, 30, {{ align: 'center' }});
             
-            // Información adicional
             doc.setTextColor(0, 0, 0);
             doc.setFontSize(10);
             doc.text(`Total de registros: ${{filteredData.length}}`, 14, 45);
             doc.text(`Columnas exportadas: ${{selectedColumns.length}}`, 14, 52);
             
-            // Línea separadora
             doc.setDrawColor(...primaryColor);
             doc.setLineWidth(0.5);
             doc.line(14, 56, doc.internal.pageSize.width - 14, 56);
             
-            // Preparar datos para la tabla
             const tableData = filteredData.map(row => 
               selectedColumns.map(col => {{
                 let val = row[col];
@@ -480,7 +536,6 @@ def render_export_popover(selected_rows: pd.DataFrame):
               }})
             );
             
-            // Generar tabla con autoTable
             doc.autoTable({{
               head: [selectedColumns],
               body: tableData,
@@ -510,7 +565,6 @@ def render_export_popover(selected_rows: pd.DataFrame):
               }},
               margin: {{ top: 62, left: 14, right: 14, bottom: 20 }},
               didDrawPage: function(data) {{
-                // Pie de página en cada página
                 const pageCount = doc.internal.getNumberOfPages();
                 const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
                 
@@ -523,7 +577,6 @@ def render_export_popover(selected_rows: pd.DataFrame):
                   {{ align: 'center' }}
                 );
                 
-                // Nota al pie
                 doc.setFontSize(7);
                 doc.text(
                   'Documento confidencial - Uso exclusivo para fines clínicos',
@@ -534,7 +587,6 @@ def render_export_popover(selected_rows: pd.DataFrame):
               }}
             }});
             
-            // Descargar el PDF
             doc.save('expediente.pdf');
           }} catch (error) {{
             console.error('Error generando PDF:', error);

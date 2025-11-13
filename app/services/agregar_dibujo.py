@@ -7,7 +7,6 @@ import pandas as pd
 from sqlalchemy import text
 
 from config.settings import TEMP_DIR, STD_DIR
-from services.exportar import exportar_datos
 from services.image_preprocess import estandarizar_imagen
 from services.indicadores import simular_resultado
 from services.db import get_engine
@@ -102,11 +101,10 @@ def agregar_dibujo(info_obj):
         # PASO 2: Mostrar resultados
         if st.session_state.get("agregar_uploaded_file") is not None:
             filename = st.session_state["agregar_uploaded_file"].name
-            txt_filename = os.path.splitext(filename)[0] + ".txt"
             
             # Obtener indicadores
             with st.spinner("Analizando imagen..."):
-                indicadores = simular_resultado(txt_filename)
+                indicadores = simular_resultado(filename)
                 st.session_state["agregar_indicadores"] = indicadores
 
             col1, col2 = st.columns([1, 2])
@@ -152,13 +150,28 @@ def agregar_dibujo(info_obj):
                     df = pd.DataFrame(rows)
                     if 'Confianza' in df.columns:
                         df['Confianza'] = df['Confianza'].round(2)
-                    
-                    st.dataframe(df, use_container_width=True, hide_index=True)
+
+                    # Mostrar DataFrame en modo sólo lectura usando data_editor
+                    # y configurar el ancho de columnas solicitadas a "small".
+                    try:
+                        st.data_editor(
+                            df,
+                            use_container_width=True,
+                            hide_index=True,
+                            key="agregar_indicadores_table",
+                            height=200,
+                            column_config={
+                                "Indicador": st.column_config.TextColumn("Indicador", width="small"),
+                                "Descripción": st.column_config.TextColumn("Descripción", width="small"),
+                                "Confianza": st.column_config.NumberColumn("Confianza", width="small"),
+                            },
+                            disabled=["Indicador", "Descripción", "Confianza"],
+                        )
+                    except Exception:
+                        # Fallback: si data_editor no está disponible, usar st.dataframe simple
+                        st.dataframe(df, use_container_width=True, hide_index=True)
 
     elif step == 3:
-        # PASO 3: Confirmación
-        #dar opcion de exportar indicadores como csv o json
-        st.success("### ✓ Todo listo para guardar")
         df = pd.DataFrame([{
             "Nombre": info_obj.get("Nombre", "Desconocido"),
             "Apellido": info_obj.get("Apellido", "Desconocido"),
@@ -179,6 +192,7 @@ def agregar_dibujo(info_obj):
                 file_name="prueba_evaluado.csv",
                 mime='text/csv; charset=utf-8-sig',
                 use_container_width=True,
+                type="tertiary",
             )
         with col2:
             st.download_button(
@@ -187,6 +201,7 @@ def agregar_dibujo(info_obj):
                 file_name="prueba_evaluado.json",
                 mime='application/json; charset=utf-8',
                 use_container_width=True,
+                type="tertiary",
             )
 
     # ---------- NAVEGACIÓN ----------
@@ -196,25 +211,29 @@ def agregar_dibujo(info_obj):
     with col_back:
         if step > 1:
             button_label = ":material/arrow_back: Atrás"
-            if st.button(button_label, use_container_width=True):
+            if st.button(button_label, use_container_width=True, key="agregar_back"):
+                # Sólo retroceder un paso (no cerrar el modal)
                 st.session_state["agregar_step"] = max(1, step - 1)
                 st.rerun()
         else:
-            if st.button("Cancelar", use_container_width=True):
+            if st.button("Cancelar", use_container_width=True, key="agregar_cancel"):
                 # Limpiar y cerrar
                 st.session_state["agregar_step"] = 1
                 st.session_state["agregar_uploaded_file"] = None
                 st.session_state["agregar_indicadores"] = None
                 st.session_state['add_drawing'] = False
+                # Limpiar la solicitud de apertura del diálogo
+                st.session_state['_agregar_dialog_open_requested'] = False
                 st.rerun()
     
     with col_next:
         # PASO 1 -> PASO 2
         if step == 1:
             button_label = "Siguiente :material/arrow_forward:"
-            if st.button(button_label, type="primary", use_container_width=True, disabled=(st.session_state["agregar_uploaded_file"] is None)):
+            if st.button(button_label, type="primary", use_container_width=True, disabled=(st.session_state["agregar_uploaded_file"] is None), key="agregar_next_step1"):
                 if st.session_state["agregar_uploaded_file"] is None:
-                    st.error("⚠️ Por favor, sube una imagen para continuar")
+                    label = ":material/warning: Por favor, sube una imagen para continuar"
+                    st.error(label)
                 else:
                     # Procesar imagen
                     with st.spinner("Procesando imagen..."):
@@ -231,13 +250,14 @@ def agregar_dibujo(info_obj):
         
         # PASO 2 -> PASO 3
         elif step == 2:
-            if st.button("Siguiente →", type="primary", use_container_width=True):
+            button_label = "Siguiente :material/arrow_forward:"
+            if st.button(button_label, type="primary", use_container_width=True, key="agregar_next_step2"):
                 st.session_state["agregar_step"] = 3
                 st.rerun(scope="fragment")
         
         # PASO 3: GUARDAR
         elif step == 3:
-            if st.button("Guardar prueba", type="primary", use_container_width=True):
+            if st.button("Guardar prueba", type="primary", use_container_width=True, key="agregar_save"):
                 with st.spinner("Guardando..."):
                     try:
                         engine = get_engine()
@@ -307,6 +327,8 @@ def agregar_dibujo(info_obj):
                         st.session_state["agregar_uploaded_file"] = None
                         st.session_state["agregar_indicadores"] = None
                         st.session_state['add_drawing'] = False
+                        # Limpiar la solicitud de apertura del diálogo
+                        st.session_state['_agregar_dialog_open_requested'] = False
                         
                         st.balloons()
                         st.rerun()

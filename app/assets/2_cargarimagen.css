@@ -69,3 +69,17 @@ h5{
     margin-top: 1rem !important; 
 }
 
+
+[data-testid="stButton"] div { 
+    width: 100vh;
+    height: 100%;
+}
+/*DIALOG*/
+[data-testid^="stBaseButton-tertiary"]:not([data-testid="stSidebar"] *) {
+    width: 100% !important;   
+	text-decoration: underline !important;
+    font-size: 2.5rem !important;
+    height: auto !important;
+    margin-top: 20px !important;
+}
+

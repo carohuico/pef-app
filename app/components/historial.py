@@ -6,7 +6,6 @@ from services.db import fetch_df, get_engine
 from services.queries.q_historial import LISTADO_HISTORIAL_SQL, ELIMINAR_PRUEBAS
 from services.queries.q_registro import GET_GRUPOS
 from sqlalchemy import text
-from services.exportar import exportar_datos
 import datetime
 
 
@@ -264,9 +263,7 @@ def historial():
     with col_exportar:
         button_label = ":material/file_download: Exportar"
         exportar_btn = st.button(button_label, use_container_width=True, type="secondary", key="historial_btn_exportar_top")
-        if exportar_btn:
-            #! exportar solo las seleccionadas
-            exportar_datos(df, file_type='csv', filename='historial_evaluaciones.csv')
+        pass
 
     with col_vermas:
         # Botón "Ver más" junto a Exportar
@@ -313,7 +310,7 @@ def historial():
         if len(seleccionados) == 0:
             st.warning(":material/warning: Selecciona al menos una evaluación para exportar")
         else:
-            st.info("Funcionalidad de exportación en desarrollo")
+            st.info("Funcionalidad de exportación en desarrollo") #!aqui me quede
 
     if ver_mas_btn:
         if len(seleccionados) != 1:

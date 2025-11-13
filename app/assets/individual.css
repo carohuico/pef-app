@@ -59,6 +59,13 @@
     padding: 8px 16px !important;
 }
 
+[data-testid="stElementContainer"]:not(:has(.page-header)):not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):not([data-testid="stButton"] *){
+	display: flex !important;
+	justify-content: flex-end !important;
+	align-items: center !important;
+	width: 200vh;
+}
+
 /* Estilos para el título de la página */
 .page-header {
     font-size: 1.5rem;
@@ -67,6 +74,7 @@
 	display: inline-block;
 	transform: translateY(-36px);
 	z-index: 25;
+	width: fit-content !important;
 }
 
 /*drag and drop*/
@@ -117,3 +125,22 @@
     align-items: center;	
     justify-content: center;
 }	
+
+
+[data-testid="stBaseButton-tertiary"]:not([data-testid="stSidebar"] *) {
+	background: #FFFFFF;
+	color: #000000;
+	border: 1px solid #111111;
+	margin-top: 1rem;
+	padding: 8px 18px;
+	display: inline-block;
+}
+
+[data-testid="stBaseButton-tertiary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
+	color: #000000;
+	width: 5px;
+	transform: translateY(-36px);
+	margin: 0;
+	display: inline-block;
+	border: none !important;
+}

@@ -2,6 +2,7 @@ import sys, os
 import pandas as pd
 from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from services.exportar import render_export_popover
 import bootstrap
 from streamlit_js_eval import streamlit_js_eval
 
@@ -73,7 +74,6 @@ def cargar_imagen_component():
             {"label": "Registrar"},
             {"label": "Subir dibujo"},
             {"label": "Resultados"},
-            {"label": "Exportar"},
         ]
         stepper_html = '<div class="stepper">'
         for idx, s in enumerate(steps, start=1):
@@ -286,14 +286,27 @@ def cargar_imagen_component():
                         df = pd.DataFrame(rows)
                         if 'Confianza' in df.columns:
                             df['Confianza'] = df['Confianza'].round(2)
-                        def style_dataframe(df):
-                            return df.style.set_properties(**{'border-radius': '10px', 'border': '1px solid #ddd', 'margin-left': '20px',
-                                          'text-align': 'center', 'background-color': "#ffffff", 'color': "#000000", 'height': '40px', 'font-family': 'Poppins'})
-                        styled_df = style_dataframe(df)
-                        st.dataframe(styled_df, use_container_width=True)
-                        
-        def exportar_component():
-            st.markdown("""Vista de exportación de resultados en proceso...""")
+                        # Intentar mostrar con data_editor y configurar ancho de columnas.
+                        try:
+                            st.data_editor(
+                                df,
+                                use_container_width=True,
+                                hide_index=True,
+                                key="cargar_indicadores_table",
+                                column_config={
+                                    "Indicador": st.column_config.TextColumn("Indicador", width="small"),
+                                    "Descripción": st.column_config.TextColumn("Descripción", width="medium"),
+                                    "Confianza": st.column_config.NumberColumn("Confianza", width="small"),
+                                },
+                                disabled=["Indicador", "Descripción", "Confianza"],
+                            )
+                        except Exception:
+                            # Fallback simple cuando data_editor no está disponible
+                            def style_dataframe(df):
+                                return df.style.set_properties(**{'border-radius': '10px', 'border': '1px solid #ddd', 'margin-left': '20px',
+                                              'text-align': 'center', 'background-color': "#ffffff", 'color': "#000000", 'height': '40px', 'font-family': 'Poppins'})
+                            styled_df = style_dataframe(df)
+                            st.dataframe(styled_df, use_container_width=True)
 
         # ---------- LÓGICA DE PASOS ----------
         if step == 1 and st.session_state["already_registered"] == False:
@@ -304,12 +317,11 @@ def cargar_imagen_component():
             uploader_component()
         elif step == 3:
             resultados_component()
-        elif step == 4:
-            exportar_component()
+
         
 
         st.markdown('<div class="spacer"></div>', unsafe_allow_html=True)
-        col_back, col_next = st.columns([1, 1])
+        col_back, col_exp, col_next = st.columns([1, 1, 1])
         with col_back:
             back_label = "Atrás" if step > 1 else "Cancelar"
 
@@ -351,9 +363,58 @@ def cargar_imagen_component():
                     st.session_state["form_grupo"] = ""
                     st.session_state["uploaded_file"] = None
                     st.rerun()
+        if step == 3:
+            with col_exp:
+                info_evaluado = {}
+                button_label = ":material/download: Exportar resultados"
+                if st.button(button_label, key="export_results", type="tertiary"):
+                    #mandar info del evaluado e indicadores
+                    if not st.session_state.get("already_registered", False):
+                        info_evaluado = {
+                            "nombre": st.session_state.get("form_nombre", ""),
+                            "apellido": st.session_state.get("form_apellido", ""),
+                            "fecha_nacimiento": st.session_state.get("form_fecha_nacimiento_widget", ""),
+                            "sexo": st.session_state.get("sexo", ""),
+                            "estado_civil": st.session_state.get("estado_civil", ""),
+                            "escolaridad": st.session_state.get("escolaridad", ""),
+                            "ocupacion": st.session_state.get("ocupacion", ""),
+                            "grupo": st.session_state.get("form_grupo", ""),
+                        }
+                        render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
+                    else:
+                        # Use the same session key used when creating the evaluado
+                        id_evaluado = st.session_state.get("id_evaluado", None)
+                        if id_evaluado is None:
+                            st.error("No se encontró el ID del evaluado en la sesión.")
+                            return
+                        # Query uses the column created by CREAR_EVALUADO (id_evaluado)
+                        df_evaluado = fetch_df(
+                            "SELECT nombre, apellido, fecha_nacimiento, sexo, estado_civil, escolaridad, ocupacion, id_grupo FROM Evaluado WHERE id_evaluado = :id",
+                            {"id": id_evaluado},
+                        )
+                        info_evaluado = {
+                            "nombre": df_evaluado.at[0, "nombre"] if not df_evaluado.empty else "",
+                            "apellido": df_evaluado.at[0, "apellido"] if not df_evaluado.empty else "",
+                            "fecha_nacimiento": df_evaluado.at[0, "fecha_nacimiento"] if not df_evaluado.empty else "",
+                            "sexo": df_evaluado.at[0, "sexo"] if not df_evaluado.empty else "",
+                            "estado_civil": df_evaluado.at[0, "estado_civil"] if not df_evaluado.empty else "",
+                            "escolaridad": df_evaluado.at[0, "escolaridad"] if not df_evaluado.empty else "",
+                            "ocupacion": df_evaluado.at[0, "ocupacion"] if not df_evaluado.empty else "",
+                            "grupo": (
+                                (
+                                    fetch_df(
+                                        "SELECT nombre FROM Grupo WHERE id_grupo = :id",
+                                        {"id": int(df_evaluado.at[0, "id_grupo"])}
+                                    ).at[0, "nombre"]
+                                    if not pd.isna(df_evaluado.at[0, "id_grupo"]) else ""
+                                ) if not df_evaluado.empty else ""
+                            )
+                        }
+                        render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
+                        
         with col_next:
-            next_disabled = step > 4
-            next_label = "Siguiente" if step < 4 else "Finalizar"
+            next_disabled = step > 3
+            next_label = "Siguiente" if step < 3 else "Finalizar"
             if st.button(next_label, disabled=next_disabled, key="nav_next", type="primary"):
                 if not next_disabled:
                     if step == 1:
@@ -416,7 +477,7 @@ def cargar_imagen_component():
                             st.session_state["form_ocupacion"] = ocupacion_value
                             st.session_state["form_grupo"] = grupo_value
 
-                            st.session_state["current_step"] = min(4, step + 1)
+                            st.session_state["current_step"] = min(3, step + 1)
                             st.rerun()
                     elif step == 2:
                         if st.session_state["uploaded_file"] is None:
@@ -435,12 +496,10 @@ def cargar_imagen_component():
                             std_path = Path(STD_DIR) / nombre
                             imagen.save(temp_path)
                             estandarizar_imagen(imagen, std_path)
-                            st.session_state["current_step"] = min(4, step + 1)
+                            st.session_state["current_step"] = min(3, step + 1)
                             st.rerun()
                     elif step == 3:
-                        st.session_state["current_step"] = min(4, step + 1)
-                        st.rerun()
-                    elif step == 4: 
+                        # Finalizar: registrar evaluado (si aplica), crear prueba y subir resultados
                         if not st.session_state.get("already_registered", False):
                             nombre = st.session_state.get("form_nombre", "")
                             apellido = st.session_state.get("form_apellido", "")
@@ -450,8 +509,6 @@ def cargar_imagen_component():
                             escolaridad = st.session_state.get("form_escolaridad", "")
                             ocupacion = st.session_state.get("form_ocupacion", "")
                             grupo = st.session_state.get("form_grupo", "")
-                            #!arreglar boton de atrás lleva al inicio
-                            
 
                             params = {
                                 "nombre": nombre,
@@ -478,7 +535,6 @@ def cargar_imagen_component():
                                         except Exception:
                                             id_grupo = None
 
-                                    # Añadir id_grupo a los parámetros y ejecutar la inserción
                                     params["id_grupo"] = id_grupo
                                     res = conn.execute(text(CREAR_EVALUADO), params)
                                     row = res.fetchone()
@@ -495,7 +551,7 @@ def cargar_imagen_component():
                             if 'id_evaluado' not in st.session_state or st.session_state['id_evaluado'] is None:
                                 st.error("Error: No se encontró el ID del evaluado seleccionado")
                                 return
-                        
+
                         # CONTINUAR CON LA PRUEBA (esto aplica tanto para nuevos como existentes)
                         try:
                             engine = get_engine()
@@ -520,7 +576,7 @@ def cargar_imagen_component():
                         except Exception as e:
                             st.error(f"Error al registrar la prueba en la base de datos: {e}")
                             return
-                        
+
                         # SUBIR RESULTADOS
                         try:
                             with engine.begin() as conn:
@@ -565,13 +621,13 @@ def cargar_imagen_component():
                         except Exception as e:
                             st.error(f"Error al registrar los resultados en la base de datos: {e}")
                             return
-                        
+
                         # LIMPIAR Y VOLVER A INICIO
                         st.session_state['created_ok'] = True
                         st.session_state["active_view"] = "inicio"
                         st.session_state["current_step"] = 1
                         st.session_state["already_registered"] = False
-                        
+
                         # Limpiar variables de sesión relacionadas con el formulario
                         st.session_state["form_nombre"] = ""
                         st.session_state["form_apellido"] = ""
@@ -583,11 +639,7 @@ def cargar_imagen_component():
                         st.session_state["form_grupo"] = ""
                         st.session_state["uploaded_file"] = None
                         st.session_state["indicadores"] = None
-                        
-                        st.rerun()
-                        
-                    else:
-                        st.session_state["current_step"] = min(4, step + 1)
+
                         st.rerun()
 
 

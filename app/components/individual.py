@@ -75,7 +75,7 @@ def get_pruebas_data(id: str):
         if df is None or df.empty:
             return []
 
-        expected_cols = ['id_prueba', 'nombre_archivo', 'ruta_imagen', 'formato', 'fecha']
+        expected_cols = ['id_prueba', 'nombre_archivo', 'ruta_imagen', 'formato', 'fecha', 'resultados_json']
         for c in expected_cols:
             if c not in df.columns:
                 df[c] = ''
@@ -146,9 +146,16 @@ def individual(id_evaluado: str = None):
     # Inicializar estado
     if 'current_image_index' not in st.session_state:
         st.session_state.current_image_index = 0
-    # initialize add_drawing flag (do not show modal by default)
     if 'add_drawing' not in st.session_state:
         st.session_state['add_drawing'] = False
+    # Marcadores por ejecución para controlar apertura del diálogo:
+    # - _agregar_dialog_opened: indica si ya abrimos el diálogo en esta ejecución
+    # - _agregar_dialog_open_requested: indica si el usuario solicitó abrir el diálogo
+    #   (esto evita reabrir el diálogo automáticamente al entrar a la vista si la
+    #    sesión quedó con `add_drawing=True` de una sesión anterior).
+    st.session_state['_agregar_dialog_opened'] = False
+    if '_agregar_dialog_open_requested' not in st.session_state:
+        st.session_state['_agregar_dialog_open_requested'] = False
         
     #info
     info_obj = {
@@ -174,17 +181,16 @@ def individual(id_evaluado: str = None):
 
     current_prueba = expediente[current_index]
     fecha = current_prueba.get("fecha", "N/A")
-    resultados = current_prueba.get("resultados", [])
     
+    # Preparar todos los datos del expediente
     images_data = []
     fechas_data = []
+    ids_prueba = []
+    resultados_data = []
+    
     for prueba in expediente:
         img_rel = prueba.get('ruta_imagen', '')
-        
-        # Remover el slash inicial si existe
         img_rel_clean = img_rel.lstrip('/').lstrip('\\')
-        
-        # porque las imágenes están en components/uploads/
         img_path = (Path(__file__).parent / img_rel_clean).resolve()
         b64 = encode_image_to_base64(str(img_path))
         if b64:
@@ -197,38 +203,50 @@ def individual(id_evaluado: str = None):
             images_data.append(img_rel)
         
         fechas_data.append(prueba.get('fecha', 'N/A'))
+        ids_prueba.append(prueba.get('id_prueba'))
+        
+        # Procesar resultados_json
+        resultados_json = prueba.get('resultados_json', '')
+        if resultados_json:
+            try:
+                # El JSON ya viene como string desde SQL Server
+                if isinstance(resultados_json, str):
+                    resultados_list = json.loads(resultados_json)
+                else:
+                    resultados_list = resultados_json
+                resultados_data.append(resultados_list)
+            except Exception:
+                resultados_data.append([])
+        else:
+            resultados_data.append([])
 
     imagen_actual = current_prueba.get('_data_uri', current_prueba.get('ruta_imagen'))
     
+    # Crear HTML del carrusel
     carousel_items_html = ""
-    
-    # Imágenes del carrusel
     for i, prueba in enumerate(expediente):
         active = "active" if i == current_index else ""
         img_src = prueba.get('_data_uri', prueba.get('ruta_imagen'))
         carousel_items_html += f"""
-        <div class=\"carousel-item {active}\" onclick=\"selectImage({i})\">
-            <img src=\"{img_src}\" alt=\"Prueba {i+1}\" onerror=\"this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23ddd%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3E{i+1}%3C/text%3E%3C/svg%3E'\">
-            <div class=\"carousel-item-number\">{i+1}</div>
+        <div class="carousel-item {active}" onclick="selectImage({i})">
+            <img src="{img_src}" alt="Prueba {i+1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23ddd%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3E{i+1}%3C/text%3E%3C/svg%3E'">
+            <div class="carousel-item-number">{i+1}</div>
         </div>
         """
     
-    
-        svg_download = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
+    # SVG Icons
+    svg_download = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
     </svg>'''
-        # Use a clearer "expand" icon (corners outward) to ensure visibility
-        svg_expand = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
+    
+    svg_expand = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8v-4h-4M4 16v4h4M20 16v4h-4" />
 </svg>'''
-        svg_add = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5H4.5" />
-</svg>'''
-
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
@@ -251,6 +269,29 @@ def individual(id_evaluado: str = None):
                 width: 100%;
                 min-width: 100%;
                 padding: 0;
+                display: flex;
+                flex-direction: row;
+                gap: 15px;
+                height: 100vh;
+                max-height: 700px;
+            }}
+            
+            .left-column {{
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }}
+            
+            .right-column {{
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                background: white;
+                border-radius: 12px;
             }}
             
             /* Contenedor principal de la imagen */
@@ -260,11 +301,9 @@ def individual(id_evaluado: str = None):
                 border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                margin-bottom: 0;
                 width: 100%;
-                height: 60vh;
+                height: calc(100% - 150px);
                 min-height: 300px;
-                max-height: 500px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -307,12 +346,10 @@ def individual(id_evaluado: str = None):
                 border: 1px solid rgba(255, 255, 255, 0.25);
             }}
             
-            /* Fecha - Efecto Glass */
             .date-card {{
                 position: absolute;
-                top: 15px;
-                left: 50%;
-                transform: translateX(-50%);
+                bottom: 15px;
+                left: 15px;
                 background: rgba(70, 70, 70, 0.45);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
@@ -327,7 +364,6 @@ def individual(id_evaluado: str = None):
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             }}
             
-            /* Botones de acción - Efecto Glass */
             .action-buttons {{
                 position: absolute;
                 bottom: 15px;
@@ -432,7 +468,8 @@ def individual(id_evaluado: str = None):
                 border-radius: 12px;
                 padding: 15px;
                 width: 100%;
-                margin-top: 15px;
+                height: 130px;
+                flex-shrink: 0;
             }}
             
             .carousel-wrapper {{
@@ -532,88 +569,213 @@ def individual(id_evaluado: str = None):
                 font-weight: 600;
             }}
             
-            /* Responsividad */
-            @media (max-width: 768px) {{
-                .main-image-container {{
-                    height: 50vh;
+            /* RESULTADOS */
+            .resultados-header {{
+                font-size: 16px;
+                font-weight: 600;
+                color: #444444;
+                padding-left: 10px; 
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                flex-shrink: 0;
+                background: white;
+            }}
+            
+            .resultados-container {{
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                overflow-y: auto;
+                padding: 20px;
+                flex: 1;
+                border-radius: 0 0 12px 12px;
+            }}
+            
+            .resultados-container::-webkit-scrollbar {{
+                width: 4px;
+            }}
+            
+            .resultados-container::-webkit-scrollbar-track {{
+                background: #f1f1f1;
+                border-radius: 2px;
+            }}
+            
+            .resultados-container::-webkit-scrollbar-thumb {{
+                background: #888;
+                border-radius: 2px;
+            }}
+            
+            .resultados-container::-webkit-scrollbar-thumb:hover {{
+                background: #555;
+            }}
+            
+            .resultado-card {{
+                background: white;
+                border-radius: 12px;
+                padding: 18px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: visible;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+            }}
+            
+            
+            .indicador-nombre {{
+                font-size: 14px;
+                font-weight: 600;
+                color: #444444;
+                margin-bottom: 10px;
+                line-height: 1.4;
+            }}
+            
+            .significado-texto {{
+                font-size: 12px;
+                color: #444444;
+                line-height: 1.6;
+                margin-bottom: 14px;
+                white-space: normal;
+                word-wrap: break-word;
+            }}
+            .confianza-container {{
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-top: auto;
+            }}
+            
+            .confianza-label {{
+                font-size: 12px;
+                font-weight: 600;
+                color: #444444;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                white-space: nowrap;
+            }}
+            
+            .confianza-bar-wrapper {{
+                flex: 1;
+                height: 8px;
+                background: #ecf0f1;
+                border-radius: 4px;
+                overflow: hidden;
+            }}
+            
+            .confianza-bar {{
+                height: 100%;
+                border-radius: 4px;
+                transition: width 0.6s ease;
+                background: linear-gradient(90deg, #FFE451 0%, #FFD626 100%);
+            }}
+            
+            .confianza-valor {{
+                font-size: 14px;
+                font-weight: 700;
+                color: #111111;
+                min-width: 50px;
+                text-align: right;
+                white-space: nowrap;
+            }}
+            
+            .empty-state {{
+                border-radius: 12px;
+                padding: 60px 40px;
+                text-align: center;
+                color: black;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                margin: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+            }}
+            
+            .empty-state-icon {{
+                font-size: 64px;
+                margin-bottom: 20px;
+            }}
+            
+            .empty-state-text {{
+                font-size: 20px;
+                font-weight: 600;
+                line-height: 1.4;
+            }}
+            
+            @keyframes slideIn {{
+                from {{
+                    opacity: 0;
+                    transform: translateY(20px);
                 }}
-                
-                .info-card {{
-                    top: 10px;
-                    left: 10px;
-                    padding: 6px 12px;
-                    min-width: 150px;
-                }}
-                
-                .date-card {{
-                    top: 10px;
-                    padding: 6px 12px;
-                    font-size: 12px;
-                }}
-                
-                .action-buttons {{
-                    bottom: 10px;
-                    right: 10px;
-                    gap: 8px;
-                }}
-                
-                .action-btn {{
-                    width: 38px;
-                    height: 38px;
-                    padding: 8px;
-                }}
-                
-                .action-btn svg {{
-                    width: 16px;
-                    height: 16px;
-                }}
-                
-                .carousel-item {{
-                    width: 80px;
-                    height: 80px;
+                to {{
+                    opacity: 1;
+                    transform: translateY(0);
                 }}
             }}
+            
+            .resultado-card {{
+                animation: slideIn 0.4s ease forwards;
+            }}
+            
+            
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="main-image-container">
-                <div class="info-card" id="infoCard" onclick="toggleInfo()">
-                    <div class="info-toggle">
-                        <span>Datos personales</span>
-                        <span class="info-arrow">▶</span>
+            <!-- COLUMNA IZQUIERDA: Imagen y Carrusel -->
+            <div class="left-column">
+                <div class="main-image-container">
+                    <div class="info-card" id="infoCard" onclick="toggleInfo()">
+                        <div class="info-toggle">
+                            <span>Datos personales</span>
+                            <span class="info-arrow">▶</span>
+                        </div>
+                        <div class="info-details">
+                            <div class="info-row"><span class="info-label">Edad: </span>{info_obj.get("Edad", "N/A")}</div>
+                            <div class="info-row"><span class="info-label">Sexo:</span> {info_obj.get("Sexo", "N/A")}</div>
+                            <div class="info-row"><span class="info-label">Estado civil:</span> {info_obj.get("Estado civil", "N/A")}</div>
+                            <div class="info-row"><span class="info-label">Escolaridad:</span> {info_obj.get("Escolaridad", "N/A")}</div>
+                            <div class="info-row"><span class="info-label">Ocupación:</span> {info_obj.get("Ocupación", "N/A")}</div>
+                            <div class="info-row"><span class="info-label">Grupo:</span> {info_obj.get("Grupo", "N/A")}</div>
+                        </div>
+                        
                     </div>
-                    <div class="info-details">
-                        <div class="info-row"><span class="info-label">Edad: </span>{info_obj.get("Edad", "N/A")}</div>
-                        <div class="info-row"><span class="info-label">Sexo:</span> {info_obj.get("Sexo", "N/A")}</div>
-                        <div class="info-row"><span class="info-label">Estado civil:</span> {info_obj.get("Estado civil", "N/A")}</div>
-                        <div class="info-row"><span class="info-label">Escolaridad:</span> {info_obj.get("Escolaridad", "N/A")}</div>
-                        <div class="info-row"><span class="info-label">Ocupación:</span> {info_obj.get("Ocupación", "N/A")}</div>
-                        <div class="info-row"><span class="info-label">Grupo:</span> {info_obj.get("Grupo", "N/A")}</div>
+                    <div class="date-card" id="dateCard">{fecha}</div>
+                    
+                        
+                    <div class="action-buttons">
+                        <div class="action-btn" onclick="exportImage()" title="Descargar imagen">
+                            <span id="svgDownload">{svg_download}</span>
+                        </div>
+                        <div class="action-btn" onclick="expandImage()" title="Expandir imagen">
+                            <span id="svgExpand">{svg_expand}</span>
+                        </div>
                     </div>
+                    
+                    <img id="mainImage" class="main-image" src="{imagen_actual}" alt="Imagen principal" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22500%22%3E%3Crect fill=%22%23ddd%22 width=%22800%22 height=%22500%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2224%22%3EImagen no disponible%3C/text%3E%3C/svg%3E'">
                 </div>
                 
-                <div class="date-card" id="dateCard">{fecha}</div>
-                
-                <div class="action-buttons">
-                    <div class="action-btn" onclick="exportImage()" title="Descargar imagen">
-                        <span id="svgDownload">{svg_download}</span>
-                    </div>
-                    <div class="action-btn" onclick="expandImage()" title="Expandir imagen">
-                        <span id="svgExpand">{svg_expand}</span>
+                <div class="carousel-container">
+                    <div class="carousel-wrapper">
+                        <button class="carousel-button" id="prevBtn" onclick="previousImage()">◀</button>
+                        <div class="carousel-items" id="carouselItems">
+                            {carousel_items_html}
+                        </div>
+                        <button class="carousel-button" id="nextBtn" onclick="nextImage()">▶</button>
                     </div>
                 </div>
-                
-                <img id="mainImage" class="main-image" src="{imagen_actual}" alt="Imagen principal" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22500%22%3E%3Crect fill=%22%23ddd%22 width=%22800%22 height=%22500%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2224%22%3EImagen no disponible%3C/text%3E%3C/svg%3E'">
             </div>
             
-            <div class="carousel-container">
-                <div class="carousel-wrapper">
-                    <button class="carousel-button" id="prevBtn" onclick="previousImage()">◀</button>
-                    <div class="carousel-items" id="carouselItems">
-                        {carousel_items_html}
-                    </div>
-                    <button class="carousel-button" id="nextBtn" onclick="nextImage()">▶</button>
+            <!-- COLUMNA DERECHA: Resultados -->
+            <div class="right-column">
+                <div class="resultados-header">
+                    <span>Resultados de la prueba</span>
+                </div>
+                <div class="resultados-container" id="resultadosContainer">
+                    <!-- Los resultados se cargarán dinámicamente aquí -->
                 </div>
             </div>
         </div>
@@ -622,7 +784,57 @@ def individual(id_evaluado: str = None):
             let currentIndex = {current_index};
             const images = {json.dumps(images_data)};
             const fechas = {json.dumps(fechas_data)};
+            const idsPrueba = {json.dumps(ids_prueba)};
+            const resultadosData = {json.dumps(resultados_data)};
             const totalImages = {len(expediente)};
+            
+            function escapeHtml(text) {{
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }}
+            
+            function renderResultados(index) {{
+                const container = document.getElementById('resultadosContainer');
+                const fechaBadge = document.getElementById('fechaBadge');
+                const fecha = fechas[index];
+                const resultados = resultadosData[index];
+                
+                
+                if (!resultados || resultados.length === 0) {{
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-text">No hay resultados asociados a esta prueba</div>
+                        </div>
+                    `;
+                    return;
+                }}
+                
+                let html = '';
+                resultados.forEach((resultado, idx) => {{
+                    const nombre = escapeHtml(resultado.nombre_indicador || 'Indicador');
+                    const significado = escapeHtml(resultado.significado || 'Sin descripción');
+                    const confianza = resultado.confianza || 0;
+                    const confianzaPct = Math.min(100, Math.max(0, confianza * 100));
+                    const delay = idx * 0.05;
+                    
+                    html += `
+                        <div class="resultado-card" style="animation-delay: ${{delay}}s;">
+                            <div class="indicador-nombre">${{nombre}}</div>
+                            <div class="significado-texto">${{significado}}</div>
+                            <div class="confianza-container">
+                                <span class="confianza-label">Confianza</span>
+                                <div class="confianza-bar-wrapper">
+                                    <div class="confianza-bar" style="width: ${{confianzaPct}}%;"></div>
+                                </div>
+                                <span class="confianza-valor">${{confianzaPct.toFixed(1)}}%</span>
+                            </div>
+                        </div>
+                    `;
+                }});
+                
+                container.innerHTML = html;
+            }}
             
             function toggleInfo() {{
                 const card = document.getElementById('infoCard');
@@ -644,14 +856,6 @@ def individual(id_evaluado: str = None):
                 document.body.removeChild(link);
             }}
             
-            function addDrawing() {{
-                console.log("Adding drawing...");
-                window.parent.postMessage({{
-                    type: 'streamlit:setComponentValue',
-                    value: {{ action: 'add_drawing', index: currentIndex }}
-                }}, '*');
-            }}
-            
             function updateImage(index) {{
                 const mainImage = document.getElementById('mainImage');
                 const dateCard = document.getElementById('dateCard');
@@ -661,7 +865,6 @@ def individual(id_evaluado: str = None):
                 setTimeout(() => {{
                     currentIndex = index;
                     mainImage.src = images[index];
-                    dateCard.textContent = fechas[index];
                     
                     mainImage.classList.remove('fade-out');
                     
@@ -673,14 +876,22 @@ def individual(id_evaluado: str = None):
                         }}
                     }});
                     
+                    // Actualizar resultados
+                    renderResultados(index);
+                    
+                    // Centrar el thumbnail activo
+                    try {{
+                        const carouselItems = document.getElementById('carouselItems');
+                        const activeItem = carouselItems.querySelectorAll('.carousel-item')[index];
+                        if (activeItem && typeof activeItem.scrollIntoView === 'function') {{
+                            activeItem.scrollIntoView({{ behavior: 'smooth', inline: 'center', block: 'nearest' }});
+                        }}
+                    }} catch (e) {{
+                        console.error('Error scrolling thumbnail into view', e);
+                    }}
+                    
                     document.getElementById('prevBtn').disabled = (index === 0);
                     document.getElementById('nextBtn').disabled = (index === totalImages - 1);
-                    
-                    // Notificar a Streamlit que cambió el índice para actualizar los resultados
-                    window.parent.postMessage({{
-                        type: 'streamlit:setComponentValue',
-                        value: {{ action: 'image_changed', index: index }}
-                    }}, '*');
                 }}, 150);
             }}
             
@@ -700,23 +911,39 @@ def individual(id_evaluado: str = None):
                 }}
             }}
             
+            // Inicialización
             document.getElementById('prevBtn').disabled = (currentIndex === 0);
             document.getElementById('nextBtn').disabled = (currentIndex === totalImages - 1);
+            
+            // Renderizar resultados iniciales
+            renderResultados(currentIndex);
+            
+            // Centrar thumbnail inicial
+            try {{
+                const carouselItems = document.getElementById('carouselItems');
+                if (carouselItems) {{
+                    const initial = carouselItems.querySelectorAll('.carousel-item')[currentIndex];
+                    if (initial && typeof initial.scrollIntoView === 'function') {{
+                        initial.scrollIntoView({{ behavior: 'auto', inline: 'center', block: 'nearest' }});
+                    }}
+                }}
+            }} catch (e) {{
+                console.error('Error centering initial thumbnail', e);
+            }}
         </script>
     </body>
     </html>
     """
-    # ---------- TÍTULO Y BOTÓN DE FILTROS ----------
+    
+    # ---------- TÍTULO Y BOTÓN ----------
     col1, col2 = st.columns([3, 1])
     with col1:
-        nombre=info_obj.get("Nombre", "Desconocido")
-        apellido=info_obj.get("Apellido", "Desconocido")
+        nombre = info_obj.get("Nombre", "Desconocido")
+        apellido = info_obj.get("Apellido", "Desconocido")
         boton_regresar, col_nombre = st.columns([1, 8])
         with boton_regresar:
-            #boton de regresar
             button_label = ":material/arrow_back:"
-            if st.button(button_label, use_container_width=True, type="secondary"):
-                #regresar a ajustes si vengo de ajustes
+            if st.button(button_label, use_container_width=True, type="tertiary"):
                 if 'from_ajustes' in st.session_state and st.session_state['from_ajustes']:
                     st.session_state['from_ajustes'] = False
                     st.session_state['active_view'] = 'ajustes'
@@ -731,135 +958,23 @@ def individual(id_evaluado: str = None):
             st.markdown(f'<div class="page-header">{nombre} {apellido}</div>', unsafe_allow_html=True)
     with col2:
         button_label = ":material/add: Agregar dibujo"
-        if st.button(button_label, use_container_width=True, type="primary"):
-            agregar_dibujo(info_obj)
+        if st.button(button_label, use_container_width=True, type="primary", key="btn_add_drawing"):
             st.session_state['add_drawing'] = True
+            st.session_state['_agregar_dialog_open_requested'] = True
+            agregar_dibujo(info_obj)
+            st.session_state['_agregar_dialog_opened'] = True
 
-    # ---------- LAYOUT 50/50: IMAGEN Y RESULTADOS ----------
-    col_imagen, col_resultados = st.columns([1, 1], gap="medium")
-    
-    with col_imagen:
-        # Renderizar el HTML con el carrusel y la imagen
-        component_key = f"individual_carousel_{id_evaluado or 'none'}"
-        component_value = st.components.v1.html(html_content, height=580, scrolling=False)
 
-        # Detectar cambios en el índice desde el componente HTML
-        # Usar `is not None` porque `0` es un valor válido (primer índice) y es falsy
-        if component_value is not None:
-            # Puede llegar un dict { action, index } o un número (index)
-            if isinstance(component_value, dict):
-                action = component_value.get('action')
-                if action in ('image_changed', 'image_select'):
-                    try:
-                        new_index = int(component_value.get('index', current_index))
-                    except Exception:
-                        new_index = current_index
-                    if new_index != st.session_state.current_image_index:
-                        st.session_state.current_image_index = new_index
-                        st.rerun()
-                elif action == 'add_drawing':
-                    # activar modal/flag para agregar dibujo
-                    st.session_state['add_drawing'] = True
-                    try:
-                        idx = int(component_value.get('index', st.session_state.current_image_index))
-                    except Exception:
-                        idx = st.session_state.current_image_index
-                    if idx != st.session_state.current_image_index:
-                        st.session_state.current_image_index = idx
-                    st.rerun()
-            else:
-                # Si viene un número simple (por compatibilidad), usarlo como índice
-                try:
-                    new_index = int(component_value)
-                    if new_index != st.session_state.current_image_index:
-                        st.session_state.current_image_index = new_index
-                        st.rerun()
-                except Exception:
-                    # ignore non-integer payloads
-                    pass
-    
-    # Mostrar la fecha de la prueba seleccionada (fuera del HTML) para asegurar que
-    # la UI de Streamlit refleje el cambio cuando se actualice el índice.
-    try:
-        idx_display = st.session_state.get('current_image_index', current_index)
-        if expediente and 0 <= idx_display < len(expediente):
-            fecha_display = expediente[idx_display].get('fecha', 'N/A')
-        else:
-            fecha_display = 'N/A'
-    except Exception:
-        fecha_display = 'N/A'
+    # Reabrir el diálogo en reruns sólo si el usuario lo solicitó explícitamente
+    # (evita abrirlo automáticamente al entrar a la vista si `add_drawing` quedó True).
+    if (
+        st.session_state.get('add_drawing', False)
+        and st.session_state.get('_agregar_dialog_open_requested', False)
+        and not st.session_state.get('_agregar_dialog_opened', False)
+    ):
+        agregar_dibujo(info_obj)
+        st.session_state['_agregar_dialog_opened'] = True
 
-    with col_resultados:
-        st.markdown(f"**Fecha seleccionada:** {fecha_display}")
-        # ---------- TABLA DE RESULTADOS POR PRUEBA ----------
-        try:
-            id_prueba = current_prueba.get('id_prueba')
-            if id_prueba is not None:
-                try:
-                    # cada que se cambia la imagen, se cargan los resultados de la prueba actual
-                    df_resultados = fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": id_prueba})
-                except Exception:
-                    df_resultados = None
-
-                if df_resultados is None or df_resultados.empty:
-                    st.info("No hay resultados asociados a esta prueba.")
-                else:
-                    # Preparar dataframe para mostrar solo: nombre_indicador, significado, confianza
-                    try:
-                        df_show = df_resultados.copy()
-                        
-                        # Normalizar confianza
-                        if 'confianza' in df_show.columns:
-                            df_show['confianza'] = pd.to_numeric(df_show['confianza'], errors='coerce').round(3)
-                        
-                        # Seleccionar solo las columnas deseadas
-                        cols_display = []
-                        if 'nombre_indicador' in df_show.columns:
-                            cols_display.append('nombre_indicador')
-                        if 'significado' in df_show.columns:
-                            cols_display.append('significado')
-                        if 'confianza' in df_show.columns:
-                            cols_display.append('confianza')
-                        
-                        if cols_display:
-                            st.markdown("### Resultados por prueba")
-                            # Configurar las columnas para mejor visualización
-                            column_config = {}
-                            if 'nombre_indicador' in cols_display:
-                                column_config['nombre_indicador'] = st.column_config.TextColumn(
-                                    "Indicador",
-                                    width="small"
-                                )
-                            if 'significado' in cols_display:
-                                column_config['significado'] = st.column_config.TextColumn(
-                                    "Significado",
-                                    width="small"
-                                )
-                            if 'confianza' in cols_display:
-                                column_config['confianza'] = st.column_config.NumberColumn(
-                                    "Confianza",
-                                    format="%.3f",
-                                    width="small"
-                                )
-                            
-                            st.dataframe(
-                                df_show[cols_display].reset_index(drop=True), 
-                                use_container_width=True, 
-                                height=350,
-                                column_config=column_config,
-                                hide_index=True
-                            )
-                        else:
-                            st.warning("No se encontraron las columnas esperadas en los resultados.")
-                    except Exception as e:
-                        st.error(f"Error preparando la tabla de resultados: {e}")
-            else:
-                st.info("Selecciona una prueba para ver sus resultados.")
-        except Exception as e:
-            st.error(f"Error al cargar los resultados: {e}")
-
-    new_index = st.session_state.get('current_image_index', current_index)
-    if new_index != current_index:
-        st.session_state.current_image_index = new_index
-        
-        st.rerun()
+    colb1, col_main, colb2 = st.columns([.05, 6, .05])
+    with col_main:
+        st.components.v1.html(html_content, height=450, scrolling=False)

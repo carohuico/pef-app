@@ -7,6 +7,9 @@ from components.historial import historial
 from components.individual import individual
 from components.estadisticas import estadisticas
 from components.ajustes import ajustes
+from components.login import login
+import auth
+import login_page
 
 _css_general = Path(__file__).parent / 'assets' / 'general.css'
 _css_registrar = Path(__file__).parent / 'assets' / '1_registrar.css'
@@ -28,7 +31,22 @@ st.set_page_config(page_title="Persona Bajo la Lluvia", layout="wide")
 if "active_view" not in st.session_state:
     st.session_state["active_view"] = "inicio"
 
-sidebar_component()
+# Control de acceso: si no está logueado mostramos la página de login
+if not auth.is_logged_in():
+    login_page.login_page()
+    # Detener ejecución para que no se renderice la app hasta iniciar sesión
+    try:
+        st.stop()
+    except Exception:
+        # fallback: intentar st.rerun y luego stop
+        try:
+            st.rerun()
+        except Exception:
+            pass
+        st.stop()
+else:
+    # Si está autenticado, renderizamos la barra lateral y la app
+    sidebar_component()
 
 if st.session_state["active_view"] == "inicio":
     inicio()
@@ -50,4 +68,5 @@ elif st.session_state["active_view"] == "estadisticas":
     estadisticas()
 
 elif st.session_state["active_view"] == "salir":
-    st.write("Has salido de la aplicación")
+    # Cerrar sesión
+    auth.logout()

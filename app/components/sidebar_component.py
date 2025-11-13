@@ -1,5 +1,6 @@
 import streamlit as st
 from pathlib import Path
+import auth
 import unicodedata
 from base64 import b64encode
 
@@ -32,25 +33,62 @@ def sidebar_component():
     
     avatar_path = Path(__file__).parent.parent / 'assets' / 'avatar.webp'
     st.sidebar.image(avatar_path, width=100)
-    st.sidebar.markdown(
-        f"""
-            <div class="user-profile" style="margin: 0; padding: 0;">
-                <p class="username" style="margin: 0;">Nombre</p>
-                <p class="role" style="margin: 0;">Usuario</p>
-            </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Mostrar usuario logueado si existe
+    user = st.session_state.get("user")
+    if user:
+        username = user.get("name") or user.get("username") or "Usuario"
+        role = user.get("role") or "usuario"
+        st.sidebar.markdown(
+            f"""
+                <div class="user-profile" style="margin: 0; padding: 0;">
+                    <p class="username" style="margin: 0;">{username}</p>
+                    <p class="role" style="margin: 0;">{role}</p>
+                </div>
+            """,
+            unsafe_allow_html=True
+        )
+        # Nota: para cerrar sesión usa la opción "Salir" en el menú lateral.
+    else:
+        st.sidebar.markdown(
+            f"""
+                <div class="user-profile" style="margin: 0; padding: 0;">
+                    <p class="username" style="margin: 0;">Nombre</p>
+                    <p class="role" style="margin: 0;">Usuario</p>
+                </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     if "active_view" not in st.session_state:
         st.session_state["active_view"] = "inicio"
 
-    icons = [":material/home:", ":material/history:", ":material/analytics:", ":material/settings:", ":material/logout:"]
-    nav_links = ["Inicio", "Historial", "Estadísticas", "Ajustes", "Salir"]
+    # Construir menú dinámicamente según rol
+    try:
+        is_admin = auth.is_admin()
+    except Exception:
+        is_admin = False
+
+    try:
+        is_esp = auth.is_especialista()
+    except Exception:
+        is_esp = False
+
+    try:
+        is_o = auth.is_operador()
+    except Exception:
+        is_o = False
+
+    if is_admin:
+        icons = [":material/home:", ":material/history:", ":material/analytics:", ":material/settings:", ":material/logout:"]
+        nav_links = ["Inicio", "Historial", "Estadísticas", "Ajustes", "Salir"]
+    elif is_o:
+        icons = [":material/home:", ":material/logout:"]
+        nav_links = ["Inicio", "Salir"]
+    elif is_esp:
+        icons = [":material/home:", ":material/history:", ":material/settings:", ":material/logout:"]
+        nav_links = ["Inicio", "Historial", "Mis evaluados", "Salir"]
 
     def label_to_key(lbl: str) -> str:
-        # Normalize label to ASCII, lower-case, and remove spaces so it matches
-        # the keys used in session_state (e.g. 'Estadísticas' -> 'estadisticas').
         nf = unicodedata.normalize('NFKD', lbl)
         ascii_only = nf.encode('ASCII', 'ignore').decode('ASCII')
         return ascii_only.lower().replace(' ', '')
@@ -70,7 +108,7 @@ def sidebar_component():
                 st.session_state["active_view"] = "historial"
             elif label_key == "estadisticas":
                 st.session_state["active_view"] = "estadisticas"
-            elif label_key == "ajustes":
+            elif label_key == "ajustes" or label_key == "misevaluados":
                 st.session_state["active_view"] = "ajustes"
             elif label_key == "salir":
                 st.session_state["active_view"] = "salir"

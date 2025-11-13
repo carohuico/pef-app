@@ -21,8 +21,31 @@ def ajustes():
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
         """, unsafe_allow_html=True)
 
-    st.markdown('<div class="page-header">Ajustes</div>', unsafe_allow_html=True)
+    is_esp = False
+    try:
+        import auth
+        is_esp = auth.is_especialista()
+    except Exception:
+        is_esp = False
+        
+    if is_esp:
+        st.markdown('<div class="page-header">Mis evaluados</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="page-header">Ajustes</div>', unsafe_allow_html=True)
 
+    if is_esp:
+        # Obtener id del especialista
+        user = st.session_state.get('user', {})
+        uid = None
+        try:
+            uid = int(user.get('id_usuario')) if user.get('id_usuario') is not None else None
+        except Exception:
+            uid = None
+
+        evaluados(can_delete=False, user_id=uid)
+        return
+
+    # Usuario no especialista -> vista completa de ajustes
     tab1, tab2, tab3, tab4 = st.tabs(["Evaluados", "Grupos", "Usuarios", "Indicadores"])
 
     with tab1:

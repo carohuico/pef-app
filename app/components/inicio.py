@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from services.queries.q_inicio import GET_RECIENTES, GET_EVALUADOS_EXISTENTES
 from services.db import fetch_df
 import streamlit as st
+import pandas as pd
 
 def inicio():
     # ---------- CONFIGURACIÓN ----------
@@ -31,7 +32,40 @@ def inicio():
         st.markdown("¿A qué evaluado deseas agregar el dibujo?")
         
         try:
-            df_evaluados = fetch_df(GET_EVALUADOS_EXISTENTES)
+            # Si el usuario es especialista, listar solo sus evaluados
+            try:
+                import auth
+                is_esp = auth.is_especialista()
+            except Exception:
+                is_esp = False
+
+            if is_esp:
+                user = st.session_state.get("user", {})
+                id_usuario = user.get("id_usuario")
+                try:
+                    id_usuario = int(id_usuario)
+                except Exception:
+                    id_usuario = None
+
+                if id_usuario is None:
+                    df_evaluados = fetch_df(GET_EVALUADOS_EXISTENTES)
+                else:
+                    base_sql = GET_EVALUADOS_EXISTENTES
+                    # Normalizar: quitar punto y coma/trailing whitespace antes de inyectar WHERE
+                    base_stripped = base_sql.rstrip()
+                    while base_stripped.endswith(';'):
+                        base_stripped = base_stripped[:-1].rstrip()
+
+                    # Insertar filtro WHERE antes de ORDER BY si existe
+                    if "ORDER BY" in base_stripped.upper():
+                        idx = base_stripped.upper().rfind("ORDER BY")
+                        filtered_sql = base_stripped[:idx] + "\nWHERE id_usuario = :id_usuario\n" + base_stripped[idx:]
+                    else:
+                        filtered_sql = base_stripped + "\nWHERE id_usuario = :id_usuario"
+                    df_evaluados = fetch_df(filtered_sql, {"id_usuario": id_usuario})
+            else:
+                df_evaluados = fetch_df(GET_EVALUADOS_EXISTENTES)
+
             if df_evaluados.empty:
                 evaluado_options = ["No hay evaluados registrados"]
                 ids_evaluados = []
@@ -48,12 +82,43 @@ def inicio():
             label_visibility="collapsed"
         )
         
-        label = ":material/add: Crear nuevo evaluado"
-        if st.button(label, type="secondary", use_container_width=True):
-            st.session_state["active_view"] = "registrar"
-            st.session_state["current_step"] = 1
-            st.session_state["already_registered"] = False
-            st.rerun()
+        # Mostrar la opción de crear nuevo evaluado solo a admin o especialista
+        try:
+            import auth
+            can_create = auth.is_admin() or auth.is_especialista()
+        except Exception:
+            can_create = False
+
+        if can_create:
+            try:
+                import auth
+                # Admin: abrir directamente el formulario de registrar (la asignación se gestiona dentro)
+                if auth.is_admin():
+                    if st.button(":material/add: Crear nuevo evaluado", type="secondary", use_container_width=True):
+                        if 'assigned_id_usuario' in st.session_state:
+                            try:
+                                del st.session_state['assigned_id_usuario']
+                            except Exception:
+                                st.session_state['assigned_id_usuario'] = None
+                        st.session_state["active_view"] = "registrar"
+                        st.session_state["current_step"] = 1
+                        st.session_state["already_registered"] = False
+                        st.rerun()
+                else:
+                    # Especialista: crear evaluado y asignarlo a sí mismo
+                    user = st.session_state.get("user", {})
+                    uid = user.get("id_usuario")
+                    if st.button(":material/add: Crear nuevo evaluado", type="secondary", use_container_width=True):
+                        try:
+                            st.session_state['assigned_id_usuario'] = int(uid)
+                        except Exception:
+                            st.session_state['assigned_id_usuario'] = uid
+                        st.session_state["active_view"] = "registrar"
+                        st.session_state["current_step"] = 1
+                        st.session_state["already_registered"] = False
+                        st.rerun()
+            except Exception:
+                pass
         
         if st.button("Seleccionar", type="primary", use_container_width=True):
             if selected_evaluado not in ["No hay evaluados registrados", "Error al cargar evaluados"]:
@@ -61,8 +126,25 @@ def inicio():
                 idx = evaluado_options.index(selected_evaluado)
                 id_evaluado = ids_evaluados[idx]
                 
-                # Guardar el id en session_state y ir al paso 2
                 st.session_state["id_evaluado"] = id_evaluado
+                try:
+                    df_assigned = fetch_df("SELECT id_usuario FROM Evaluado WHERE id_evaluado = :id", {"id": id_evaluado})
+                    if not df_assigned.empty:
+                        try:
+                            assigned = df_assigned.at[0, "id_usuario"]
+                            try:
+                                assigned = int(assigned)
+                            except Exception:
+                                pass
+                            st.session_state['assigned_id_usuario'] = assigned
+                        except Exception:
+                            st.session_state['assigned_id_usuario'] = None
+                    else:
+                        st.session_state['assigned_id_usuario'] = None
+                except Exception:
+                    st.session_state['assigned_id_usuario'] = None
+
+                # Ir al paso 2 (evaluado ya registrado)
                 st.session_state["already_registered"] = True
                 st.session_state["active_view"] = "registrar"
                 st.session_state["current_step"] = 2
@@ -130,33 +212,74 @@ def inicio():
         
         st.markdown("""<h5>Recientes</h5>""", unsafe_allow_html=True)
 
-        recientes = fetch_df(GET_RECIENTES)
+        try:
+            import auth
+            is_esp = auth.is_especialista()
+            is_o = auth.is_operador()
+        except Exception:
+            is_esp = False
+            is_o = False
 
-        if recientes.empty:
-            st.markdown("<p>No hay evaluaciones recientes.</p>", unsafe_allow_html=True)
+        # Operadores no tienen acceso a evaluaciones recientes
+        if is_o:
+            st.markdown("<p>No tienes acceso a las evaluaciones recientes.</p>", unsafe_allow_html=True)
         else:
-            for _, r in recientes.iterrows():
-                id_prueba = r.get('id_prueba')
-                id_evaluado = r.get('id_evaluado')
-                nombre = r.get('nombre', '')
-                apellido = r.get('apellido', '')
-                fecha = r.get('fecha', '')
-
-                label = f"**{nombre} {apellido}**  \n{fecha}"
-                key = f"recent_btn_{id_prueba}"
-                
-                if st.button(label, key=key, type="secondary", use_container_width=True):
+            try:
+                if is_esp:
+                    user = st.session_state.get("user", {})
+                    id_usuario = user.get("id_usuario")
                     try:
-                        st.session_state['open_prueba_id'] = int(id_prueba)
+                        id_usuario = int(id_usuario)
                     except Exception:
-                        st.session_state['open_prueba_id'] = id_prueba
+                        id_usuario = None
+                    if id_usuario is None:
+                        recientes = pd.DataFrame()
+                    else:
+                        base_sql = GET_RECIENTES
+                        if "ORDER BY" in base_sql.upper():
+                            idx = base_sql.upper().rfind("ORDER BY")
+                            filtered_sql = base_sql[:idx] + "\nWHERE e.id_usuario = :id_usuario\n" + base_sql[idx:]
+                        else:
+                            filtered_sql = base_sql + "\nWHERE e.id_usuario = :id_usuario"
+                        recientes = fetch_df(filtered_sql, {"id_usuario": id_usuario})
+                else:
+                    recientes = fetch_df(GET_RECIENTES)
+            except Exception:
+                try:
+                    recientes = fetch_df(GET_RECIENTES)
+                except Exception:
+                    recientes = pd.DataFrame()
 
-                    st.session_state['selected_evaluation_id'] = id_evaluado
-                    # Venimos desde inicio, no desde ajustes
-                    st.session_state['from_ajustes'] = False
-                    st.session_state['active_view'] = 'individual'
-                    st.rerun()
-        
-        if st.button("Ver más >", key="view_more", type="secondary", use_container_width=True):
-            st.session_state["active_view"] = "historial"
-            st.rerun()
+            if recientes.empty:
+                st.markdown("<p>No hay evaluaciones recientes.</p>", unsafe_allow_html=True)
+            else:
+                for _, r in recientes.iterrows():
+                    id_prueba = r.get('id_prueba')
+                    id_evaluado = r.get('id_evaluado')
+                    nombre = r.get('nombre', '')
+                    apellido = r.get('apellido', '')
+                    fecha = r.get('fecha', '')
+
+                    label = f"**{nombre} {apellido}**  \n{fecha}"
+                    key = f"recent_btn_{id_prueba}"
+                    
+                    if st.button(label, key=key, type="secondary", use_container_width=True):
+                        try:
+                            st.session_state['open_prueba_id'] = int(id_prueba)
+                        except Exception:
+                            st.session_state['open_prueba_id'] = id_prueba
+
+                        st.session_state['selected_evaluation_id'] = id_evaluado
+                        # Venimos desde inicio, no desde ajustes
+                        st.session_state['from_ajustes'] = False
+                        st.session_state['active_view'] = 'individual'
+                        st.rerun()
+
+            # Mostrar 'Ver más' sólo a quienes tengan acceso al historial
+            try:
+                if not is_o:
+                    if st.button("Ver más >", key="view_more", type="secondary", use_container_width=True):
+                        st.session_state["active_view"] = "historial"
+                        st.rerun()
+            except Exception:
+                pass

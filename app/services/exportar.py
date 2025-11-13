@@ -6,88 +6,115 @@ import base64
 
    
 def render_export_popover(info_evaluado=None, indicadores=None):
-    # Normalizar inputs a pandas.DataFrame antes de concatenar
-    def to_dataframe(obj):
-        if obj is None:
-            return pd.DataFrame()
-        if isinstance(obj, pd.DataFrame):
-            return obj.reset_index(drop=True)
-        if isinstance(obj, pd.Series):
-            return obj.to_frame().T.reset_index(drop=True)
-        if isinstance(obj, dict):
-            return pd.DataFrame([obj])
-        if isinstance(obj, list):
-            if len(obj) == 0:
-                return pd.DataFrame()
-        return pd.DataFrame(obj)
+  # Normalizar inputs a pandas.DataFrame antes de concatenar
+  def to_dataframe(obj):
+    if obj is None:
+      return pd.DataFrame()
+    if isinstance(obj, pd.DataFrame):
+      return obj.reset_index(drop=True)
+    if isinstance(obj, pd.Series):
+      return obj.to_frame().T.reset_index(drop=True)
+    if isinstance(obj, dict):
+      return pd.DataFrame([obj])
+    if isinstance(obj, list):
+      if len(obj) == 0:
+        return pd.DataFrame()
+    return pd.DataFrame(obj)
 
-    df_info = to_dataframe(info_evaluado)
+  df_info = to_dataframe(info_evaluado)
 
-    # Obtener nombres de indicadores desde la BD
-    indicadores_nombres = fetch_df("SELECT nombre FROM dbo.Indicador ORDER BY id_indicador ASC")['nombre'].tolist()
+  # Obtener nombres de indicadores desde la BD
+  indicadores_nombres = fetch_df("SELECT nombre FROM dbo.Indicador ORDER BY id_indicador ASC")['nombre'].tolist()
 
-    # Detectados en esta prueba (param 'indicadores' puede ser lista de dicts)
-    detected_names = set()
-    if isinstance(indicadores, list):
-        for ind in indicadores:
-            if isinstance(ind, dict):
-                nombre = ind.get('nombre') or ind.get('Indicador') or ind.get('indicador')
-                if nombre:
-                    detected_names.add(str(nombre))
-
-    # Construir fila base con la información del evaluado (si existe)
-    base = {}
-    if not df_info.empty:
-        base.update(df_info.iloc[0].to_dict())
-
-    # Añadir columnas de indicadores (1/0 según presencia)
-    for name in indicadores_nombres:
-        base[name] = 1 if name in detected_names else 0
-
-    # Si no hay info ni indicadores, selected_rows será vacío
-    if base:
-        selected_rows = pd.DataFrame([base])
+  # Normalizar el parámetro 'indicadores' para soportar:
+  # - lista global de indicadores (aplicada a todas las filas)
+  # - lista por fila: [ [ind1, ind2], [indA, indB], ... ] o list of dicts per row
+  indicadores_per_row = []
+  if isinstance(indicadores, list):
+    # Si la longitud coincide con el número de registros en info, interpretar como per-row
+    if not df_info.empty and len(indicadores) == len(df_info):
+      indicadores_per_row = indicadores
     else:
-        selected_rows = pd.DataFrame()
+      # Sino, aplicar la misma lista de indicadores a todas las filas
+      indicadores_per_row = [indicadores] * max(1, len(df_info))
+  else:
+    indicadores_per_row = [[]] * max(1, len(df_info))
 
-    # Prepare CSV data
-    csv_bytes = selected_rows.to_csv(index=False).encode("utf-8-sig")
-    csv_b64 = base64.b64encode(csv_bytes).decode("utf-8-sig")
-    csv_href = f"data:text/csv;charset=utf-8-sig;base64,{csv_b64}"
-    filename = "historial_export.csv"
+  # Construir filas finales: por cada fila de info (o una fila vacía si no hay info), añadir columnas de indicadores
+  rows_final = []
+  if df_info.empty:
+    # No hay info del evaluado, pero aún podemos construir columnas de indicadores vacías
+    # Si no hay nada, selected_rows quedará vacío
+    rows_final = []
+  else:
+    for idx in range(len(df_info)):
+      row = df_info.iloc[idx].to_dict()
 
-    # Lista de opciones/indicadores para el dropdown
-    column_options = selected_rows.columns.tolist() if not selected_rows.empty else [
-        "Fecha", "Nombre", "Apellido", "Edad", "Sexo", "Estado civil", 
-        "Escolaridad", "Ocupación", "Grupo", "Fecha de evaluación"
-    ]
-    # asegúrate de incluir los nombres de indicadores (si no están ya)
-    for n in indicadores_nombres:
-        if n not in column_options:
-            column_options.append(n)
+      detected_names = set()
+      try:
+        inds = indicadores_per_row[idx] if idx < len(indicadores_per_row) else []
+      except Exception:
+        inds = []
 
-    # === GENERAR HTML DE CHECKBOXES ===
-    checkboxes_html = ""
-    for i, col in enumerate(column_options):
-        checkboxes_html += f"""
-        <label class="checkbox-label">
-            <input type="checkbox" 
-                   class="column-checkbox" 
-                   value="{col}" 
-                   checked>
-            <span class="checkbox-text">{col}</span>
-        </label>
-        """
+      if isinstance(inds, list):
+        for ind in inds:
+          if isinstance(ind, dict):
+            nombre = ind.get('nombre') or ind.get('Indicador') or ind.get('indicador')
+            if nombre:
+              detected_names.add(str(nombre))
+          else:
+            # Si la lista contiene strings
+            try:
+              detected_names.add(str(ind))
+            except Exception:
+              continue
+
+      # Añadir columnas de indicadores (1/0 según presencia para esta fila)
+      for name in indicadores_nombres:
+        row[name] = 1 if name in detected_names else 0
+
+      rows_final.append(row)
+
+  selected_rows = pd.DataFrame(rows_final)
+
+  # Prepare CSV data
+  csv_bytes = selected_rows.to_csv(index=False).encode("utf-8-sig")
+  csv_b64 = base64.b64encode(csv_bytes).decode("utf-8-sig")
+  csv_href = f"data:text/csv;charset=utf-8-sig;base64,{csv_b64}"
+  filename = "historial_export.csv"
+
+  # Lista de opciones/indicadores para el dropdown
+  column_options = selected_rows.columns.tolist() if not selected_rows.empty else [
+    "Fecha", "Nombre", "Apellido", "Edad", "Sexo", "Estado civil", 
+    "Escolaridad", "Ocupación", "Grupo", "Fecha de evaluación"
+  ]
+  # asegúrate de incluir los nombres de indicadores (si no están ya)
+  for n in indicadores_nombres:
+    if n not in column_options:
+      column_options.append(n)
+
+  # === GENERAR HTML DE CHECKBOXES ===
+  checkboxes_html = ""
+  for i, col in enumerate(column_options):
+    checkboxes_html += f"""
+    <label class="checkbox-label">
+      <input type="checkbox" 
+           class="column-checkbox" 
+           value="{col}" 
+           checked>
+      <span class="checkbox-text">{col}</span>
+    </label>
+    """
     
-    # Convertir los datos del DataFrame a JSON
-    import json
-    df_json = selected_rows.to_json(orient='records')
+  # Convertir los datos del DataFrame a JSON
+  import json
+  df_json = selected_rows.to_json(orient='records')
     
-    # Obtener fecha actual
-    from datetime import datetime
-    current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
-    
-    html = f"""
+  # Obtener fecha actual
+  from datetime import datetime
+  current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+  html = f"""
     <script>
     (function() {{
       if (parent.document.getElementById('st-export-modal')) return;
@@ -243,7 +270,7 @@ def render_export_popover(info_evaluado=None, indicadores=None):
         overlay.style.top = '0';
         overlay.style.width = '100vw';
         overlay.style.height = '100vh';
-        overlay.style.zIndex = '999999';
+  overlay.style.zIndex = '2147483647';
         overlay.style.display = 'flex';
         overlay.style.alignItems = 'center';
         overlay.style.justifyContent = 'center';
@@ -269,7 +296,7 @@ def render_export_popover(info_evaluado=None, indicadores=None):
         modal.style.borderRadius = '12px';
         modal.style.background = '#ffffff';
         modal.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)';
-        modal.style.zIndex = '1000000';
+        modal.style.zIndex = '2147483647';
 
         const closeBtn = parent.document.createElement('button');
         closeBtn.innerText = '×';
@@ -410,8 +437,7 @@ def render_export_popover(info_evaluado=None, indicadores=None):
             csv += values.join(',') + '\\n';
           }});
           
-          // Crear el enlace de descarga
-          const blob = new Blob([csv], {{ type: 'text/csv;charset=utf-8-sig;' }});
+          const blob = new Blob(['\uFEFF', csv], {{ type: 'text/csv;charset=utf-8;' }});
           const url = URL.createObjectURL(blob);
           const downloadLink = parent.document.createElement('a');
           downloadLink.href = url;
@@ -468,7 +494,8 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                   }});
                   csv += values.join(',') + '\\n';
                 }});
-                const blob = new Blob([csv], {{ type: 'text/csv;charset=utf-8;' }});
+                // Prepend UTF-8 BOM so Excel and other apps interpret accents correctly
+                const blob = new Blob(['\uFEFF', csv], {{ type: 'text/csv;charset=utf-8;' }});
                 const url = URL.createObjectURL(blob);
                 const downloadLink = parent.document.createElement('a');
                 downloadLink.href = url;
@@ -599,13 +626,32 @@ def render_export_popover(info_evaluado=None, indicadores=None):
         overlay.appendChild(modal);
         parent.document.body.appendChild(overlay);
 
+        // Ensure overlay stays on top: if other elements are added after it (e.g., Streamlit dialogs),
+        // re-append the overlay so it becomes the last child and remains above.
+        const topKeeper = new MutationObserver(function(mutations) {{
+          if (!parent.document.getElementById('st-export-modal')) return;
+          try {{
+            if (parent.document.body.lastElementChild !== overlay) {{
+              parent.document.body.appendChild(overlay);
+            }}
+          }} catch (e) {{ /* ignore cross-origin or timing issues */ }}
+        }});
+        topKeeper.observe(parent.document.body, {{ childList: true }});
+
+        // Small timeout re-append to handle cases where Streamlit appends dialogs right after this runs
+        setTimeout(function() {{
+          try {{ if (parent.document.getElementById('st-export-modal')) parent.document.body.appendChild(overlay); }} catch(e){{}}
+        }}, 50);
+
         closeBtn.onclick = function() {{
           overlay.remove();
           style.remove();
+          try {{ topKeeper.disconnect(); }} catch(e){{}}
         }};
         backdrop.onclick = function() {{
           overlay.remove();
           style.remove();
+          try {{ topKeeper.disconnect(); }} catch(e){{}}
         }};
 
         function onKey(e) {{
@@ -629,4 +675,4 @@ def render_export_popover(info_evaluado=None, indicadores=None):
     </script>
     """
 
-    components.html(html, height=1)
+  components.html(html, height=1)

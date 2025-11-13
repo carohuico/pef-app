@@ -11,6 +11,7 @@ from services.image_preprocess import estandarizar_imagen
 from services.indicadores import simular_resultado
 from services.db import get_engine, fetch_df
 from services.queries.q_registro import CREAR_EVALUADO, GET_GRUPOS, POST_PRUEBA, POST_RESULTADO 
+from services.queries.q_usuarios import GET_ESPECIALISTAS
 from components.bounding_boxes import imagen_bboxes
 from sqlalchemy import text
 import streamlit as st
@@ -88,7 +89,64 @@ def cargar_imagen_component():
         stepper_html += '</div>'
         st.markdown(stepper_html, unsafe_allow_html=True)
 
+        
+
         def registrar_component():
+            # --- Primera fila: Selección de especialista (si aplica) ---
+            try:
+                import auth
+                is_admin = auth.is_admin()
+                is_esp = auth.is_especialista()
+            except Exception:
+                is_admin = False
+                is_esp = False
+
+            # Obtener lista de especialistas para el selectbox
+            try:
+                df_esp = fetch_df(GET_ESPECIALISTAS)
+                esp_options = df_esp['nombre_completo'].tolist() if not df_esp.empty else []
+                esp_ids = df_esp['id_usuario'].tolist() if not df_esp.empty else []
+            except Exception:
+                esp_options = []
+                esp_ids = []
+
+            # Determinar valor por defecto (si existe assigned_id_usuario en sesión)
+            current_assigned = st.session_state.get('assigned_id_usuario', None)
+
+            if is_admin:
+                if not esp_options:
+                    st.info("No hay especialistas disponibles para asignar.")
+                else:
+                    # Calcular índice por id si existe
+                    default_index = 0
+                    if current_assigned is not None:
+                        try:
+                            default_index = esp_ids.index(int(current_assigned)) + 1
+                        except Exception:
+                            default_index = 0
+                    sel = st.selectbox("Especialista responsable", ["Selecciona un especialista"] + esp_options, index=default_index, label_visibility='visible')
+                    if sel != "Selecciona un especialista":
+                        sel_idx = esp_options.index(sel)
+                        try:
+                            st.session_state['assigned_id_usuario'] = int(esp_ids[sel_idx])
+                        except Exception:
+                            st.session_state['assigned_id_usuario'] = esp_ids[sel_idx]
+                    else:
+                        # si deselecciona, quitar el valor
+                        if 'assigned_id_usuario' in st.session_state:
+                            try:
+                                del st.session_state['assigned_id_usuario']
+                            except Exception:
+                                st.session_state['assigned_id_usuario'] = None
+            elif is_esp:
+                # Especialista: por defecto se asigna a sí mismo, pero no mostrar select editable
+                user = st.session_state.get("user", {})
+                uid = user.get("id_usuario")
+                try:
+                    st.session_state['assigned_id_usuario'] = int(uid)
+                except Exception:
+                    st.session_state['assigned_id_usuario'] = uid
+
             # Primera fila: Nombre y Apellido
             col1, col2 = st.columns(2)
             with col1:
@@ -104,6 +162,8 @@ def cargar_imagen_component():
                 apellido_value = st.text_input("Apellido del evaluado", key="apellido", placeholder="Escribe el apellido aquí", label_visibility="collapsed", value=st.session_state.get("form_apellido", ""))
                 st.session_state["form_apellido"] = apellido_value.strip()
                 st.markdown('</div>', unsafe_allow_html=True)
+
+            # ( anteriormente mostrado aquí )
 
             # Segunda fila: Fecha de nacimiento y Sexo
             col1, col2 = st.columns(2)
@@ -368,7 +428,6 @@ def cargar_imagen_component():
                 info_evaluado = {}
                 button_label = ":material/download: Exportar resultados"
                 if st.button(button_label, key="export_results", type="tertiary"):
-                    #mandar info del evaluado e indicadores
                     if not st.session_state.get("already_registered", False):
                         info_evaluado = {
                             "nombre": st.session_state.get("form_nombre", ""),
@@ -382,12 +441,10 @@ def cargar_imagen_component():
                         }
                         render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
                     else:
-                        # Use the same session key used when creating the evaluado
                         id_evaluado = st.session_state.get("id_evaluado", None)
                         if id_evaluado is None:
                             st.error("No se encontró el ID del evaluado en la sesión.")
                             return
-                        # Query uses the column created by CREAR_EVALUADO (id_evaluado)
                         df_evaluado = fetch_df(
                             "SELECT nombre, apellido, fecha_nacimiento, sexo, estado_civil, escolaridad, ocupacion, id_grupo FROM Evaluado WHERE id_evaluado = :id",
                             {"id": id_evaluado},
@@ -519,6 +576,7 @@ def cargar_imagen_component():
                                 "escolaridad": escolaridad,
                                 "ocupacion": ocupacion,
                                 "grupo": grupo if grupo else None,
+                                "id_usuario": st.session_state.get('assigned_id_usuario', None),
                             }
                             try:
                                 engine = get_engine()
@@ -536,6 +594,13 @@ def cargar_imagen_component():
                                             id_grupo = None
 
                                     params["id_grupo"] = id_grupo
+                                    # Asegurar que id_usuario sea nativo (no numpy types) o None
+                                    try:
+                                        if params.get("id_usuario") is not None:
+                                            params["id_usuario"] = int(params["id_usuario"])
+                                    except Exception:
+                                        params["id_usuario"] = None
+
                                     res = conn.execute(text(CREAR_EVALUADO), params)
                                     row = res.fetchone()
                                     if row is not None:
@@ -639,7 +704,18 @@ def cargar_imagen_component():
                         st.session_state["form_grupo"] = ""
                         st.session_state["uploaded_file"] = None
                         st.session_state["indicadores"] = None
-
+                        # Limpiar asignación temporal de especialista si existe
+                        if 'assigned_id_usuario' in st.session_state:
+                            try:
+                                del st.session_state['assigned_id_usuario']
+                            except Exception:
+                                st.session_state['assigned_id_usuario'] = None
+                        # Invalidar cache de historial para que muestre las filas nuevas
+                        if 'historial_df' in st.session_state:
+                            try:
+                                del st.session_state['historial_df']
+                            except Exception:
+                                st.session_state['historial_df'] = None
                         st.rerun()
 
 

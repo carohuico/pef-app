@@ -68,10 +68,10 @@ def agregar_usuario_dialog():
         )
     
         col_btn1, col_btn2 = st.columns([1, 1])
-        with col_btn1:
+        with col_btn2:
             label = ":material/check: Guardar"
             submitted = st.form_submit_button(label, use_container_width=True, type="primary")
-        with col_btn2:
+        with col_btn1:
             label = ":material/cancel: Cancelar"
             cancelar = st.form_submit_button(label, use_container_width=True)
         
@@ -297,13 +297,6 @@ def confirmar_eliminacion_dialog(usuarios_seleccionados):
 
 def usuarios():
     """Renderiza la vista de administración de usuarios"""
-    # Cargar CSS
-    _css_usuarios = Path(__file__).parent.parent / 'assets' / 'usuarios.css'
-    try:
-        with open(_css_usuarios, 'r', encoding='utf-8') as _f:
-            st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
-    except Exception as _e:
-        st.error(f"Error loading CSS: {_e}")
         
     # Cargar datos
     if 'usuarios_df' not in st.session_state:

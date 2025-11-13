@@ -22,7 +22,8 @@ INSERT INTO Evaluado (
     estado_civil,
     escolaridad,
     ocupacion,
-    id_grupo
+    id_grupo,
+    id_usuario
 )
 OUTPUT INSERTED.id_evaluado AS id_evaluado
 VALUES (
@@ -33,7 +34,8 @@ VALUES (
     :estado_civil,
     :escolaridad,
     :ocupacion,
-    :id_grupo
+    :id_grupo,
+    :id_usuario
 );
 """
 

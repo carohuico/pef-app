@@ -90,3 +90,12 @@ UPDATE_ULTIMO_ACCESO = """
     SET ultimo_acceso = CURRENT_TIMESTAMP
     WHERE id_usuario = :id_usuario
 """
+
+GET_ESPECIALISTAS = """
+    SELECT
+        id_usuario,
+        nombre_completo
+    FROM Usuario
+    WHERE rol = 'especialista'
+    ORDER BY nombre_completo
+"""

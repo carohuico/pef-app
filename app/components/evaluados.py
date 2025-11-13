@@ -6,6 +6,7 @@ from services.exportar import render_export_popover
 from services.db import fetch_df, get_engine
 from services.queries.q_evaluados import LISTADO_EVALUADOS_SQL, ELIMINAR_EVALUADOS
 from services.queries.q_registro import GET_GRUPOS, CREAR_EVALUADO
+from services.queries.q_usuarios import GET_ESPECIALISTAS
 from sqlalchemy import text
 import datetime
 
@@ -89,6 +90,65 @@ def dialog_crear_evaluado():
 
     with st.form("form_crear_evaluado", border=False):
         st.write("Completa la información del nuevo evaluado:")
+
+        # --- Selección/Asignación de especialista (mismo comportamiento que en cargarImagen) ---
+        try:
+            import auth
+            is_admin = auth.is_admin()
+            is_esp = auth.is_especialista()
+        except Exception:
+            is_admin = False
+            is_esp = False
+
+        # Obtener lista de especialistas
+        try:
+            df_esp = fetch_df(GET_ESPECIALISTAS)
+            esp_options = df_esp['nombre_completo'].tolist() if not df_esp.empty else []
+            esp_ids = df_esp['id_usuario'].tolist() if not df_esp.empty else []
+        except Exception:
+            esp_options = []
+            esp_ids = []
+
+        # Valor por defecto si viene en sesión
+        current_assigned = st.session_state.get('assigned_id_usuario', None)
+
+        if is_admin:
+            if not esp_options:
+                st.info("No hay especialistas disponibles para asignar.")
+                assigned_sel = None
+            else:
+                default_index = 0
+                if current_assigned is not None:
+                    try:
+                        default_index = esp_ids.index(int(current_assigned)) + 1
+                    except Exception:
+                        default_index = 0
+                sel = st.selectbox("Especialista responsable", ["Selecciona un especialista"] + esp_options, index=default_index, key="create_select_esp")
+                if sel != "Selecciona un especialista":
+                    sel_idx = esp_options.index(sel)
+                    try:
+                        assigned_sel = int(esp_ids[sel_idx])
+                    except Exception:
+                        assigned_sel = esp_ids[sel_idx]
+                    st.session_state['assigned_id_usuario'] = assigned_sel
+                else:
+                    assigned_sel = None
+                    if 'assigned_id_usuario' in st.session_state:
+                        try:
+                            del st.session_state['assigned_id_usuario']
+                        except Exception:
+                            st.session_state['assigned_id_usuario'] = None
+        elif is_esp:
+            # asignar automáticamente al especialista que está creando
+            user = st.session_state.get('user', {})
+            uid = user.get('id_usuario')
+            try:
+                st.session_state['assigned_id_usuario'] = int(uid)
+            except Exception:
+                st.session_state['assigned_id_usuario'] = uid
+            assigned_sel = st.session_state['assigned_id_usuario']
+        else:
+            assigned_sel = None
         
         # Primera fila: Nombre y Apellido
         col1, col2 = st.columns(2)
@@ -224,6 +284,31 @@ def dialog_crear_evaluado():
                 escolaridad_val = None if escolaridad == "Selecciona una opción" else escolaridad
                 ocupacion_val = None if ocupacion == "Selecciona una opción" else ocupacion
                 
+                try:
+                    import auth
+                    is_esp = auth.is_especialista()
+                except Exception:
+                    is_esp = False
+
+                current_user_id = None
+                try:
+                    current_user_id = st.session_state.get('user', {}).get('id_usuario')
+                except Exception:
+                    current_user_id = None
+
+                # Si el creador es admin, asegurar que seleccionó un especialista
+                if is_admin:
+                    assigned = st.session_state.get('assigned_id_usuario', None)
+                    if assigned is None:
+                        st.error(":material/warning: Debes seleccionar un especialista asignado al crear un evaluado.")
+                        st.stop()
+                    params_id_usuario = int(assigned)
+                elif is_esp:
+                    params_id_usuario = int(current_user_id) if current_user_id is not None else None
+                else:
+                    # para otros roles, no asignar por defecto
+                    params_id_usuario = None
+
                 params = {
                     "nombre": nombre.strip(),
                     "apellido": apellido.strip() if apellido else "",
@@ -232,7 +317,8 @@ def dialog_crear_evaluado():
                     "estado_civil": estado_civil_val,
                     "escolaridad": escolaridad_val,
                     "ocupacion": ocupacion_val,
-                    "id_grupo": id_grupo
+                    "id_grupo": id_grupo,
+                    "id_usuario": params_id_usuario
                 }
                 
                 with engine.begin() as conn:
@@ -584,10 +670,56 @@ def dialog_filtros():
             st.rerun()
 
 
-def get_historial_data() -> List[Dict]:
-    """Attempt to fetch historial data from the DB using the LISTADO_EVALUADOS_SQL."""
+def get_historial_data(user_id: int = None) -> List[Dict]:
+    """Attempt to fetch historial data from the DB using the LISTADO_EVALUADOS_SQL.
+    If user_id is provided, tries to filter the query by e.id_usuario = :id_usuario.
+    Falls back to client-side filtering if the query-based filtering fails.
+    """
     try:
-        df = fetch_df(LISTADO_EVALUADOS_SQL)
+        if user_id is None:
+            df = fetch_df(LISTADO_EVALUADOS_SQL)
+        else:
+            # Try server-side filtering first by appending WHERE on the base SQL
+            try:
+                base_sql = LISTADO_EVALUADOS_SQL.strip().rstrip(';')
+                # If query already contains a WHERE, append with AND
+                if ' where ' in base_sql.lower():
+                    qry = base_sql + " AND e.id_usuario = :id_usuario"
+                else:
+                    qry = base_sql + " WHERE e.id_usuario = :id_usuario"
+                df = fetch_df(qry, {"id_usuario": int(user_id)})
+            except Exception:
+                # fallback to fetching full table and filtering client-side
+                df = fetch_df(LISTADO_EVALUADOS_SQL)
+        if df is None:
+            raise ValueError("No rows returned from DB")
+
+        # Si se pidió filtrado por user_id, asegurarse de filtrar los resultados
+        if user_id is not None:
+            try:
+                # Si la columna id_usuario está presente en el resultado, filtramos directamente
+                if 'id_usuario' in df.columns:
+                    df = df[df['id_usuario'].astype('Int64') == int(user_id)]
+                else:
+                    # Obtener los id_evaluado asignados a ese usuario directamente desde la tabla Evaluado
+                    try:
+                        ids_df = fetch_df("SELECT id_evaluado FROM Evaluado WHERE id_usuario = :id_usuario", {"id_usuario": int(user_id)})
+                        if ids_df is None or ids_df.empty:
+                            # No hay evaluados asignados
+                            df = df.iloc[0:0]
+                        else:
+                            ids = [int(x) for x in ids_df['id_evaluado'].tolist()]
+                            if ids:
+                                df = df[df['id_evaluado'].astype('Int64').isin(ids)]
+                            else:
+                                df = df.iloc[0:0]
+                    except Exception:
+                        # En caso de fallo, devolver vacío para no exponer todos los registros
+                        df = df.iloc[0:0]
+            except Exception:
+                # En caso de cualquier error de filtrado, devolver vacío para seguridad
+                df = df.iloc[0:0]
+
         if df is None or df.empty:
             raise ValueError("No rows returned from DB")
 
@@ -609,11 +741,28 @@ def get_historial_data() -> List[Dict]:
         return []
 
 
-def evaluados():
-    """Renderiza la vista de administración de evaluados"""
+def evaluados(can_delete: bool = True, user_id: int = None):
+    """Renderiza la vista de administración de evaluados.
+
+    Parameters:
+    - can_delete: si False, ocultará la opción de eliminar (útil para especialistas).
+    - user_id: si provisto, mostrará sólo evaluados asignados a ese usuario.
+    """
+    
+    _css_evaluados = Path(__file__).parent.parent / 'assets' / 'evaluados.css'
+    
+    try:
+        with open(_css_evaluados, 'r', encoding='utf-8') as _f:
+            st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
+        
+    except Exception as _e:
+        st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+        """, unsafe_allow_html=True)
     # Cargar datos
-    if 'evaluados_df' not in st.session_state:
-        st.session_state['evaluados_df'] = pd.DataFrame(get_historial_data())
+    if 'evaluados_df' not in st.session_state or user_id is not None:
+        # if user_id provided, refresh the cache to the filtered dataset
+        st.session_state['evaluados_df'] = pd.DataFrame(get_historial_data(user_id=user_id))
     
     # Verificar si hay evaluados
     if st.session_state['evaluados_df'].empty:
@@ -636,42 +785,74 @@ def evaluados():
     columns_order = ['Seleccionar', 'Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo']
     df_display = df[[col for col in columns_order if col in df.columns]]
     
-    # Barra de búsqueda y botones
-    col_buscar, col_filtros, col_editar, col_eliminar, col_crear = st.columns([3, 1, 1, 1, 1])
-    
-    with col_buscar:
-        buscar = st.text_input(
-            "Buscar evaluado",
-            placeholder="Buscar...",
-            label_visibility="collapsed",
-            key="buscar_evaluado"
-        )
-    
-    with col_filtros:
-        button_label = ":material/filter_list: Filtros"
-        filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_filtros_top")
-    
-    with col_editar:
-        button_label = ":material/edit: Editar"
-        editar_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_editar_top")
-    
-    with col_eliminar:
-        button_label = ":material/delete: Eliminar"
-        eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_eliminar_top")
-    
-    with col_crear:
-        button_label = ":material/add: Crear"
-        crear_btn = st.button(button_label, use_container_width=True, type="primary", key="evaluados_btn_crear_top")
-    
-    st.markdown("<br/>", unsafe_allow_html=True)
-    
-    # Aplicar búsqueda si hay texto
-    if buscar:
-        mask = df_display[['Nombre', 'Apellido', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo']].apply(
-            lambda row: row.astype(str).str.contains(buscar, case=False).any(), axis=1
-        )
-        df_display = df_display[mask]
-        df = df[mask]
+    if can_delete:
+        # Barra de búsqueda y botones
+        col_buscar, col_filtros, col_editar, col_eliminar, col_crear = st.columns([3, 1, 1, 1, 1])
+        
+        with col_buscar:
+            buscar = st.text_input(
+                "Buscar evaluado",
+                placeholder="Buscar...",
+                label_visibility="collapsed",
+                key="buscar_evaluado"
+            )
+        
+        with col_filtros:
+            button_label = ":material/filter_list: Filtros"
+            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_filtros_top")
+        
+        with col_editar:
+            button_label = ":material/edit: Editar"
+            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_editar_top")
+        
+        with col_eliminar:
+            button_label = ":material/delete: Eliminar"
+            eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_eliminar_top")
+        
+        with col_crear:
+            button_label = ":material/add: Crear"
+            crear_btn = st.button(button_label, use_container_width=True, type="primary", key="evaluados_btn_crear_top")
+        
+        st.markdown("<br/>", unsafe_allow_html=True)
+        # Aplicar búsqueda si hay texto
+        if buscar:
+            mask = df_display[['Nombre', 'Apellido', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo']].apply(
+                lambda row: row.astype(str).str.contains(buscar, case=False).any(), axis=1
+            )
+            df_display = df_display[mask]
+            df = df[mask]
+    else:
+        # Barra de búsqueda y botones
+        col_buscar, col_filtros, col_editar, col_crear = st.columns([4, 1, 1, 1])
+        
+        with col_buscar:
+            buscar = st.text_input(
+                "Buscar evaluado",
+                placeholder="Buscar...",
+                label_visibility="collapsed",
+                key="buscar_evaluado"
+            )
+        
+        with col_filtros:
+            button_label = ":material/filter_list: Filtros"
+            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_filtros_top_can_delete_false")
+        
+        with col_editar:
+            button_label = ":material/edit: Editar"
+            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_editar_top_can_delete_false")
+        
+        with col_crear:
+            button_label = ":material/add: Crear"
+            crear_btn = st.button(button_label, use_container_width=True, type="primary", key="evaluados_btn_crear_top_can_delete_false")
+        
+        st.markdown("<br/>", unsafe_allow_html=True)
+        # Aplicar búsqueda si hay texto
+        if buscar:
+            mask = df_display[['Nombre', 'Apellido', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo']].apply(
+                lambda row: row.astype(str).str.contains(buscar, case=False).any(), axis=1
+            )
+            df_display = df_display[mask]
+            df = df[mask]
     
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
@@ -690,6 +871,7 @@ def evaluados():
             "Ocupación": st.column_config.TextColumn("Ocupación", width="small"),
             "Grupo": st.column_config.TextColumn("Grupo", width="small"),
         },
+        height=300,
         disabled=['Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo']
     )
     
@@ -716,7 +898,7 @@ def evaluados():
             evaluado_completo = df.loc[idx].to_dict()
             dialog_editar_evaluado(evaluado_completo)
     
-    if eliminar_btn:
+    if can_delete and eliminar_btn:
         if len(seleccionados) == 0:
             st.warning(":material/warning: Selecciona al menos un evaluado para eliminar")
         else:

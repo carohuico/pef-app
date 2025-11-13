@@ -1,23 +1,26 @@
 from services.queries.q_individual import GET_PRUEBAS_POR_EVALUADO, GET_RESULTADOS_POR_PRUEBA
 from services.agregar_dibujo import agregar_dibujo
-from services.db import fetch_df
+from services.db import fetch_df, get_engine
+from services.queries.q_historial import ELIMINAR_PRUEBAS
+from sqlalchemy import text
+from components.historial import confirmar_eliminacion_pruebas
 import pandas as pd
 import streamlit as st
 from pathlib import Path
 import base64
 import json
 
+
 def get_info(id: str):
     """Obtiene la información demográfica del evaluado"""
     try:
         if id is None:
-            return []
+            return {}
         try:
             id_int = int(id)
         except Exception:
-            return []
+            return {}
 
-        
         df = fetch_df("""
         SELECT
             e.nombre AS "Nombre",
@@ -35,7 +38,7 @@ def get_info(id: str):
         """, {"id_evaluado": id_int})
 
         if df is None or df.empty:
-            return []
+            return {}
 
         info = df.iloc[0].to_dict()
 
@@ -55,6 +58,7 @@ def get_info(id: str):
                 info['Edad'] = 'N/A'
         except Exception:
             info['Edad'] = 'N/A'
+
     except Exception as e:
         st.error(f"Error fetching evaluado info: {e}")
         info = {}
@@ -148,11 +152,6 @@ def individual(id_evaluado: str = None):
         st.session_state.current_image_index = 0
     if 'add_drawing' not in st.session_state:
         st.session_state['add_drawing'] = False
-    # Marcadores por ejecución para controlar apertura del diálogo:
-    # - _agregar_dialog_opened: indica si ya abrimos el diálogo en esta ejecución
-    # - _agregar_dialog_open_requested: indica si el usuario solicitó abrir el diálogo
-    #   (esto evita reabrir el diálogo automáticamente al entrar a la vista si la
-    #    sesión quedó con `add_drawing=True` de una sesión anterior).
     st.session_state['_agregar_dialog_opened'] = False
     if '_agregar_dialog_open_requested' not in st.session_state:
         st.session_state['_agregar_dialog_open_requested'] = False
@@ -233,11 +232,6 @@ def individual(id_evaluado: str = None):
             <div class="carousel-item-number">{i+1}</div>
         </div>
         """
-    
-    # SVG Icons
-    svg_download = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-    </svg>'''
     
     svg_expand = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8v-4h-4M4 16v4h4M20 16v4h-4" />
@@ -747,9 +741,6 @@ def individual(id_evaluado: str = None):
                     
                         
                     <div class="action-buttons">
-                        <div class="action-btn" onclick="exportImage()" title="Descargar imagen">
-                            <span id="svgDownload">{svg_download}</span>
-                        </div>
                         <div class="action-btn" onclick="expandImage()" title="Expandir imagen">
                             <span id="svgExpand">{svg_expand}</span>
                         </div>
@@ -846,16 +837,6 @@ def individual(id_evaluado: str = None):
                 window.open(mainImage.src, '_blank');
             }}
             
-            function exportImage() {{
-                const mainImage = document.getElementById('mainImage');
-                const link = document.createElement('a');
-                link.href = mainImage.src;
-                link.download = `imagen_${{currentIndex + 1}}.jpg`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }}
-            
             function updateImage(index) {{
                 const mainImage = document.getElementById('mainImage');
                 const dateCard = document.getElementById('dateCard');
@@ -936,11 +917,11 @@ def individual(id_evaluado: str = None):
     """
     
     # ---------- TÍTULO Y BOTÓN ----------
-    col1, col2 = st.columns([3, 1])
+    col1, col2, col3 = st.columns([3,1,1])
     with col1:
         nombre = info_obj.get("Nombre", "Desconocido")
         apellido = info_obj.get("Apellido", "Desconocido")
-        boton_regresar, col_nombre = st.columns([1, 8])
+        boton_regresar, col_nombre = st.columns([1, 6])
         with boton_regresar:
             button_label = ":material/arrow_back:"
             if st.button(button_label, use_container_width=True, type="tertiary"):
@@ -957,6 +938,34 @@ def individual(id_evaluado: str = None):
         with col_nombre:
             st.markdown(f'<div class="page-header">{nombre} {apellido}</div>', unsafe_allow_html=True)
     with col2:
+        #eliminar 
+        button_label = ":material/delete: Eliminar prueba"
+        if st.button(button_label, use_container_width=True, type="secondary", key="btn_delete_drawing"):
+            try:
+                id_prueba = current_prueba.get('id_prueba')
+            except Exception:
+                id_prueba = None
+
+            if id_prueba is None:
+                st.warning(":material/warning: No se pudo identificar la prueba a eliminar.")
+            else:
+                try:
+                    # Construir DataFrame con la fila seleccionada para pasar al diálogo
+                    try:
+                        selected_df = pd.DataFrame([
+                            {
+                                'id_prueba': id_prueba,
+                                'Nombre del evaluado': f"{info_obj.get('Nombre','')} {info_obj.get('Apellido','')}",
+                                'Fecha de evaluación': current_prueba.get('fecha', '')
+                            }
+                        ])
+                    except Exception:
+                        selected_df = pd.DataFrame([{'id_prueba': id_prueba}])
+
+                    confirmar_eliminacion_pruebas(selected_df)
+                except Exception as e:
+                    st.error(f"Error abriendo diálogo de confirmación: {e}")
+    with col3:
         button_label = ":material/add: Agregar dibujo"
         if st.button(button_label, use_container_width=True, type="primary", key="btn_add_drawing"):
             st.session_state['add_drawing'] = True
@@ -965,8 +974,7 @@ def individual(id_evaluado: str = None):
             st.session_state['_agregar_dialog_opened'] = True
 
 
-    # Reabrir el diálogo en reruns sólo si el usuario lo solicitó explícitamente
-    # (evita abrirlo automáticamente al entrar a la vista si `add_drawing` quedó True).
+    
     if (
         st.session_state.get('add_drawing', False)
         and st.session_state.get('_agregar_dialog_open_requested', False)

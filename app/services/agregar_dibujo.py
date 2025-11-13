@@ -9,9 +9,11 @@ from sqlalchemy import text
 from config.settings import TEMP_DIR, STD_DIR
 from services.image_preprocess import estandarizar_imagen
 from services.indicadores import simular_resultado
-from services.db import get_engine
+from services.db import get_engine, fetch_df
 from services.queries.q_registro import POST_PRUEBA, POST_RESULTADO
 from components.bounding_boxes import imagen_bboxes
+from services.exportar import render_export_popover
+from services.queries.q_usuarios import GET_ESPECIALISTAS
 try:
     import numpy as _np
 except Exception:
@@ -82,6 +84,58 @@ def agregar_dibujo(info_obj):
             )
     
     st.divider()
+
+    # --- Selección/Asignación de especialista (consistente con cargarImagen / evaluados) ---
+    try:
+        import auth
+        is_admin = auth.is_admin()
+        is_esp = auth.is_especialista()
+    except Exception:
+        is_admin = False
+        is_esp = False
+
+    # Obtener lista de especialistas
+    try:
+        df_esp = fetch_df(GET_ESPECIALISTAS)
+        esp_options = df_esp['nombre_completo'].tolist() if not df_esp.empty else []
+        esp_ids = df_esp['id_usuario'].tolist() if not df_esp.empty else []
+    except Exception:
+        esp_options = []
+        esp_ids = []
+
+    current_assigned = st.session_state.get('assigned_id_usuario', None)
+
+    if is_admin:
+        if not esp_options:
+            st.info("No hay especialistas disponibles para asignar.")
+        else:
+            default_index = 0
+            if current_assigned is not None:
+                try:
+                    default_index = esp_ids.index(int(current_assigned)) + 1
+                except Exception:
+                    default_index = 0
+            sel = st.selectbox("Especialista responsable (para esta prueba)", ["Selecciona un especialista"] + esp_options, index=default_index, key="agregar_select_esp")
+            if sel != "Selecciona un especialista":
+                sel_idx = esp_options.index(sel)
+                try:
+                    st.session_state['assigned_id_usuario'] = int(esp_ids[sel_idx])
+                except Exception:
+                    st.session_state['assigned_id_usuario'] = esp_ids[sel_idx]
+            else:
+                if 'assigned_id_usuario' in st.session_state:
+                    try:
+                        del st.session_state['assigned_id_usuario']
+                    except Exception:
+                        st.session_state['assigned_id_usuario'] = None
+    elif is_esp:
+        user = st.session_state.get('user', {})
+        uid = user.get('id_usuario')
+        try:
+            st.session_state['assigned_id_usuario'] = int(uid)
+        except Exception:
+            st.session_state['assigned_id_usuario'] = uid
+
 
     # ---------- COMPONENTES POR PASO ----------
     
@@ -185,15 +239,25 @@ def agregar_dibujo(info_obj):
         }])
         col1, col2 = st.columns(2)
         with col1:
-            csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button(
-                label="Descargar datos como CSV",
-                data=csv,
-                file_name="prueba_evaluado.csv",
-                mime='text/csv; charset=utf-8-sig',
-                use_container_width=True,
-                type="tertiary",
-            )
+            # Preparar info del evaluado para el exportador (puede aceptar dict o lista de dicts)
+            info_evaluado = {
+                "Fecha de evaluación": info_obj.get("Fecha de evaluación", ""),
+                "Fecha": info_obj.get("Fecha de evaluación", ""),
+                "Nombre": info_obj.get("Nombre", info_obj.get("Nombre del evaluado", "Desconocido")),
+                "Nombre del evaluado": info_obj.get("Nombre", info_obj.get("Nombre del evaluado", "Desconocido")),
+                "Apellido": info_obj.get("Apellido", ""),
+                "Edad": info_obj.get("Edad", "N/A"),
+                "Sexo": info_obj.get("Sexo", "N/A"),
+                "Estado civil": info_obj.get("Estado civil", "N/A"),
+                "Escolaridad": info_obj.get("Escolaridad", "N/A"),
+                "Ocupación": info_obj.get("Ocupación", "N/A"),
+                "Grupo": info_obj.get("Grupo", "N/A"),
+            }
+
+            if st.button("Exportar datos", use_container_width=True, key="agregar_export", type="tertiary"):
+                indicadores = st.session_state.get("agregar_indicadores", [])
+                # Llamar al popover de exportación (se mostrará encima del diálogo actual)
+                render_export_popover(info_evaluado, indicadores)
         with col2:
             st.download_button(
                 label="Descargar datos como JSON",

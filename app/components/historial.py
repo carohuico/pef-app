@@ -3,6 +3,8 @@ import pandas as pd
 from typing import List, Dict
 from pathlib import Path
 from services.db import fetch_df, get_engine
+from services.queries.q_individual import GET_RESULTADOS_POR_PRUEBA
+from services.exportar import render_export_popover
 from services.queries.q_historial import LISTADO_HISTORIAL_SQL, ELIMINAR_PRUEBAS
 from services.queries.q_registro import GET_GRUPOS
 from sqlalchemy import text
@@ -35,10 +37,27 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
         if st.button(label, use_container_width=True, type="primary", key="hist_confirmar_eliminar"):
             try:
                 ids = []
-                for v in selected_rows_df['id_prueba'].tolist():
+                orig_df = st.session_state.get('historial_df', pd.DataFrame())
+                for idx in selected_rows_df.index.tolist():
+                    id_val = None
+                    if 'id_prueba' in selected_rows_df.columns:
+                        try:
+                            id_val = selected_rows_df.loc[idx].get('id_prueba', None)
+                        except Exception:
+                            id_val = None
+
+                    if (id_val is None or (isinstance(id_val, float) and pd.isna(id_val))) and not orig_df.empty:
+                        try:
+                            row = orig_df.loc[idx]
+                            id_val = row.get('id_prueba', None)
+                        except Exception:
+                            id_val = None
+
                     try:
-                        ids.append(int(v))
+                        if id_val is not None and not (isinstance(id_val, float) and pd.isna(id_val)):
+                            ids.append(int(id_val))
                     except Exception:
+                        # ignore non-int ids
                         continue
 
                 if not ids:
@@ -53,8 +72,13 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
                                 rows_deleted = len(deleted_rows)
                             except Exception:
                                 rows_deleted = res.rowcount if hasattr(res, 'rowcount') and res.rowcount is not None else 0
-                        st.success(f"Se eliminaron {rows_deleted} evaluación(es).")
-                        del st.session_state['historial_df']
+                        # Eliminar solo si existe para evitar KeyError transitorio
+                        if 'historial_df' in st.session_state:
+                            try:
+                                del st.session_state['historial_df']
+                            except Exception:
+                                # Protección extra: si falla la eliminación, simplemente continuar
+                                pass
                     except Exception as e:
                         st.error(f"Error al eliminar evaluaciones: {e}")
             except Exception as e:
@@ -188,7 +212,28 @@ def dialog_filtros():
 def get_historial_data() -> List[Dict]:
     """Obtiene el historial de pruebas/evaluaciones desde la BD."""
     try:
-        df = fetch_df(LISTADO_HISTORIAL_SQL)
+        try:
+            import auth
+            if auth.is_especialista():
+                user = st.session_state.get("user", {})
+                id_usuario = user.get("id_usuario")
+                base_sql = LISTADO_HISTORIAL_SQL
+                if not id_usuario:
+                    return []
+                try:
+                    id_usuario = int(id_usuario)
+                except Exception:
+                    return []
+                if "ORDER BY" in base_sql.upper():
+                    idx = base_sql.upper().rfind("ORDER BY")
+                    filtered_sql = base_sql[:idx] + "\nWHERE e.id_usuario = :id_usuario\n" + base_sql[idx:]
+                else:
+                    filtered_sql = base_sql + "\nWHERE e.id_usuario = :id_usuario"
+                df = fetch_df(filtered_sql, {"id_usuario": id_usuario})
+            else:
+                df = fetch_df(LISTADO_HISTORIAL_SQL)
+        except Exception:
+            print("Error checking user role, loading full historial as fallback.")
         if df is None or df.empty:
             raise ValueError("No rows returned from DB")
 
@@ -246,7 +291,7 @@ def historial():
     columns_order = ['Seleccionar', 'Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación']
     df_display = df[[col for col in columns_order if col in df.columns]]
     
-    col_buscar, col_filtros, col_exportar, col_vermas = st.columns([3, 1, 1, 1])
+    col_buscar, col_filtros, col_exportar, col_eliminar, col_vermas = st.columns([3, 1, 1, 1, 1])
     
     with col_buscar:
         buscar = st.text_input(
@@ -264,6 +309,10 @@ def historial():
         button_label = ":material/file_download: Exportar"
         exportar_btn = st.button(button_label, use_container_width=True, type="secondary", key="historial_btn_exportar_top")
         pass
+    
+    with col_eliminar:
+        button_label = ":material/delete: Eliminar"
+        eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key="historial_btn_eliminar_top")
 
     with col_vermas:
         # Botón "Ver más" junto a Exportar
@@ -310,7 +359,73 @@ def historial():
         if len(seleccionados) == 0:
             st.warning(":material/warning: Selecciona al menos una evaluación para exportar")
         else:
-            st.info("Funcionalidad de exportación en desarrollo") #!aqui me quede
+            try:
+                # Construir lista de diccionarios con la info básica de cada evaluado seleccionado
+                info_list = []
+                for idx in seleccionados.index.tolist():
+                    try:
+                        row = df.loc[idx]
+                    except Exception:
+                        continue
+
+                    info = {
+                        # Mapear los campos disponibles en el historial a nombres esperados por el exportador
+                        "Fecha de evaluación": row.get('Fecha de evaluación', ''),
+                        "Fecha": row.get('Fecha de evaluación', ''),
+                        "Nombre": row.get('Nombre del evaluado', ''),
+                        "Nombre del evaluado": row.get('Nombre del evaluado', ''),
+                        "Edad": row.get('Edad', ''),
+                        "Sexo": row.get('Sexo', ''),
+                        "Grupo": row.get('Grupo', ''),
+                    }
+                    info_list.append(info)
+
+                if not info_list:
+                    st.warning(":material/warning: No se pudo resolver la información de las evaluaciones seleccionadas.")
+                else:
+                    # Construir lista de indicadores por fila consultando los resultados asociados a cada id_prueba (si está disponible)
+                    indicadores_por_fila = []
+                    for idx in seleccionados.index.tolist():
+                        try:
+                            row = df.loc[idx]
+                        except Exception:
+                            indicadores_por_fila.append([])
+                            continue
+
+                        id_prueba = row.get('id_prueba', None)
+                        if id_prueba is None or pd.isna(id_prueba):
+                            # No hay prueba asociada -> no indicadores
+                            indicadores_por_fila.append([])
+                            continue
+
+                        try:
+                            df_res = fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": int(id_prueba)})
+                            if df_res is None or df_res.empty:
+                                indicadores_por_fila.append([])
+                            else:
+                                lista_inds = []
+                                for _i, r in df_res.iterrows():
+                                    lista_inds.append({
+                                        "nombre": r.get('nombre_indicador') if 'nombre_indicador' in r else r.get('nombre') if 'nombre' in r else None,
+                                        "significado": r.get('significado') if 'significado' in r else None,
+                                        "confianza": r.get('confianza') if 'confianza' in r else None,
+                                        "id_indicador": r.get('id_indicador') if 'id_indicador' in r else None,
+                                    })
+                                indicadores_por_fila.append(lista_inds)
+                        except Exception:
+                            indicadores_por_fila.append([])
+
+                    # Si no se encontraron indicadores por fila, como fallback usar indicadores en sesión o lista vacía
+                    use_indicadores = indicadores_por_fila if any(len(x) for x in indicadores_por_fila) else st.session_state.get("indicadores", [])
+                    render_export_popover(info_list, use_indicadores)
+            except Exception as e:
+                st.error(f":material/error: Error al preparar exportación: {e}")
+
+    if eliminar_btn:
+        if len(seleccionados) == 0:
+            st.warning(":material/warning: Selecciona al menos una evaluación para eliminar")
+        else:
+            confirmar_eliminacion_pruebas(seleccionados)            
 
     if ver_mas_btn:
         if len(seleccionados) != 1:

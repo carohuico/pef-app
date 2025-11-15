@@ -5,7 +5,7 @@ import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta
 from services.db import fetch_df
-from services.queries.q_usuarios import GET_USUARIO_BY_USERNAME
+from services.queries.q_usuarios import GET_USUARIO_BY_USERNAME, UPDATE_ULTIMO_ACCESO
 import logging
 
 logger = logging.getLogger(__name__)
@@ -270,6 +270,17 @@ def verify_user(username: str, password: str):
             "email": row.get("email"),
         }
         _auth_debug(f"verify_user: credenciales correctas para usuario={username} id_usuario={id_usuario_val}")
+        # Actualizar último acceso en la base de datos. No bloquear el login si falla.
+        try:
+            if id_usuario_val is not None:
+                print(f"[auth] intentando actualizar ultimo_acceso para id_usuario={id_usuario_val}")
+                fetch_df(UPDATE_ULTIMO_ACCESO, {"id_usuario": id_usuario_val})
+                print(f"[auth] UPDATE_ULTIMO_ACCESO ejecutado para id_usuario={id_usuario_val}")
+                _auth_debug(f"verify_user: actualizado ultimo_acceso para id_usuario={id_usuario_val}")
+        except Exception as e:
+            print(f"[auth] error actualizando ultimo_acceso para id_usuario={id_usuario_val}: {e}")
+            _auth_debug(f"verify_user: error actualizando ultimo_acceso para id_usuario={id_usuario_val}: {e}")
+
         return mapped
     _auth_debug(f"verify_user: password incorrecta para usuario={username}")
     return None
@@ -317,27 +328,4 @@ def is_operador() -> bool:
     return (user.get("role") or "").lower() == "operador"
 
 
-# def require_role(role: str | list):
-#     """Decorator para proteger funciones según rol.
-#     - role puede ser string (ej. 'admin') o lista de roles aceptados.
-#     - los usuarios con rol 'admin' siempre tienen acceso.
-#     Muestra mensajes en español si no autorizado.
-#     """
-#     def decorator(func):
-#         def wrapper(*args, **kwargs):
-#             if not is_logged_in():
-#                 st.error("Debes iniciar sesión para acceder a esta sección.")
-#                 return None
-#             user = st.session_state.get("user", {})
-#             user_role = user.get("role")
-#             # admin tiene acceso total
-#             if user_role == "admin":
-#                 return func(*args, **kwargs)
-#             # Normalizar role param
-#             allowed = [role] if isinstance(role, str) else list(role)
-#             if user_role not in allowed:
-#                 st.error("No tienes permisos suficientes para realizar esta acción.")
-#                 return None
-#             return func(*args, **kwargs)
-#         return wrapper
-#     return decorator
+

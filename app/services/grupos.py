@@ -42,24 +42,19 @@ def grupos():
     df_display.insert(0, 'Seleccionar', False)
     df_display = df_display.reset_index(drop=True)
     
-    # Mostrar información ANTES de la barra de búsqueda
-    # Necesitamos verificar si hay selección previa en session_state
     seleccion_previa = None
     if 'editor_grupos' in st.session_state:
         try:
-            # Intentar obtener la selección previa del data_editor
             seleccion_previa = st.session_state.editor_grupos.get('edited_rows', {})
         except:
             pass
     
-    # Contar cuántos grupos están seleccionados (estimado antes del data_editor)
     if seleccion_previa:
         num_seleccionados = sum(1 for row_changes in seleccion_previa.values() 
                                 if row_changes.get('Seleccionar', False))
     else:
         num_seleccionados = 0
     
-    # Mostrar mensajes informativos
     if num_seleccionados == 0:
         label = ":material/info: Selecciona un grupo para gestionar sus subgrupos"
         st.info(label)
@@ -91,9 +86,7 @@ def grupos():
             lambda row: row.astype(str).str.contains(buscar, case=False).any(), axis=1
         )
         df_display = df_display[mask]
-        st.caption(f"💡 Resultados: {len(df_display)} grupo(s)")
     
-    # Mostrar tabla (solo lectura con checkbox)
     edited_df = st.data_editor(
         df_display,
         use_container_width=True,

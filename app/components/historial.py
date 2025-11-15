@@ -257,14 +257,15 @@ def historial():
     st.set_page_config(page_title="Rainly - Historial", layout="wide", initial_sidebar_state="auto")
     
     # ---------- CSS (externo) ----------
-    _css_historial = Path(__file__).parent.parent / 'assets' / 'grupos.css'      
-    _css_ajustes = Path(__file__).parent.parent / 'assets' / 'ajustes.css'
+    _css_grupos = Path(__file__).parent.parent / 'assets' / 'grupos.css'  
+    _css_historial = Path(__file__).parent.parent / 'assets' / 'historial.css'      
     
     try:
+        with open(_css_grupos, 'r', encoding='utf-8') as _f:
+            st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
         with open(_css_historial, 'r', encoding='utf-8') as _f:
             st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
-        with open(_css_ajustes, 'r', encoding='utf-8') as _f:
-            st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
+        
     except Exception as _e:
         st.markdown("""
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -287,8 +288,7 @@ def historial():
     # Crear columna de selección
     df.insert(0, 'Seleccionar', False)
     
-    # Reordenar columnas para display (sin id_prueba e id_evaluado visible)
-    columns_order = ['Seleccionar', 'Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación']
+    columns_order = ['Seleccionar','id_prueba', 'Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación']
     df_display = df[[col for col in columns_order if col in df.columns]]
     
     col_buscar, col_filtros, col_exportar, col_eliminar, col_vermas = st.columns([3, 1, 1, 1, 1])
@@ -339,10 +339,11 @@ def historial():
             "Nombre del evaluado": st.column_config.TextColumn("Nombre del evaluado", width="medium"),
             "Edad": st.column_config.NumberColumn("Edad", width="small"),
             "Sexo": st.column_config.TextColumn("Sexo", width="small"),
-            "Grupo": st.column_config.TextColumn("Grupo", width="medium"),
-            "Fecha de evaluación": st.column_config.TextColumn("Fecha de evaluación", width="medium"),
+            "Grupo": st.column_config.TextColumn("Grupo", width="small"),
+            "Fecha de evaluación": st.column_config.TextColumn("Fecha de evaluación", width="small"),
+            "id_prueba": st.column_config.TextColumn("id_prueba", width="small"),
         },
-        disabled=['Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación']
+        disabled=['Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación', 'id_prueba']
     )
     
     # Total de evaluaciones debajo de la tabla

@@ -5,13 +5,13 @@
 	border:none;
     box-shadow: 0 3px 6px rgba(0,0,0,0.06);
 	width: 100px;
-    transform: translateY(-36px);
+    transform: translateY(-20px);
 	margin: 0;
 	display: inline-block;
 }
 [data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):hover {
     background: #FFD626;
-    transform: translateY(-36px);
+    transform: translateY(-20px);
 }
 
 /*secundarios*/
@@ -19,14 +19,14 @@
 	background: #FFFFFF;
 	color: #000000;
 	box-shadow: 0 3px 6px rgba(0,0,0,0.06);
-	transform: translateY(-36px);
+	transform: translateY(-20px);
 	margin: 0;
 	display: inline-block;
 	width: 100% !important;
 }
 [data-testid^="stBaseButton-secondary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):hover {
 	background: #F0F0F0;
-	transform: translateY(-36px);
+	transform: translateY(-20px);
 }
 
 [data-testid="stButton"] div:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):not([data-testid="stBaseButton-tertiary"] *) { 
@@ -45,24 +45,39 @@
     background: #FFD626;
 }
 
-/* Reglas de layout para bloques horizontales (se mantienen) */
-.stHorizontalBlock:has(button[kind="primary"]) > div:last-child,
-.stHorizontalBlock:has(button[kind="primary"]) > div:last-child *:not(button) {
+
+.stHorizontalBlock:has(button[kind="primary"]) > div:last-child {
     display: flex !important;
     justify-content: flex-end !important;
     align-items: center !important;
     width: 100% !important;
 }
 
+.stHorizontalBlock:has(button[kind="primary"]) > div:last-child > div {
+    display: flex !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+}
+
+.stHorizontalBlock:has(button[kind="primary"]) > div:last-child > div > div {
+    display: flex !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+}
+
 .stHorizontalBlock:has(button[kind="primary"]) button[kind="primary"] {
     white-space: nowrap !important;
     min-width: max-content !important;
-    /* center the content inside the button (text / icons) */
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    /* small padding to keep visual balance */
     padding: 8px 16px !important;
+    margin-left: auto !important;
+}
+
+.stHorizontalBlock:has(button[kind="primary"]) button[kind="primary"] p {
+    text-align: center !important;
+    width: 100% !important;
 }
 
 [data-testid="stElementContainer"]:not(:has(.page-header)):not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):not([data-testid="stButton"] *){
@@ -78,7 +93,7 @@
 	font-weight: 700;
 	margin: 0;
 	display: inline-block;
-	transform: translateY(-36px);
+	transform: translateY(-20px);
 	z-index: 25;
 	width: fit-content !important;
 }
@@ -145,8 +160,12 @@
 [data-testid="stBaseButton-tertiary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
 	color: #000000;
 	width: 5px;
-	transform: translateY(-36px);
+	transform: translateY(-20px);
 	margin: 0;
 	display: inline-block;
 	border: none !important;
+}
+
+[data-testid="stMainBlockContainer"] > div:first-child {
+	transform: translateY(-20px);
 }

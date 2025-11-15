@@ -6,6 +6,7 @@ import hashlib
 import time
 from services.db import fetch_df
 from services.queries.q_usuarios import *
+from components.evaluados import evaluados
 
 def hash_password(password):
     """Genera un hash de la contraseña"""
@@ -398,9 +399,7 @@ def usuarios():
         },
         disabled=['nombre_completo', 'usuario', 'rol', 'email', 'telefono', 'ultimo_acceso', 'id_usuario']
     )
-    
-    # Total de usuarios debajo de la tabla
-    st.caption(f"**Total de usuarios:** {len(df)}")
+
     
     # Obtener usuarios seleccionados
     seleccionados = edited_df[edited_df['Seleccionar'] == True]
@@ -428,6 +427,5 @@ def usuarios():
             indices = seleccionados.index
             usuarios_completos = df.loc[indices]
             
-            # Mostrar dialog de confirmación
             confirmar_eliminacion_dialog(usuarios_completos)
-            
+     

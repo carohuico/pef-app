@@ -1,5 +1,7 @@
 import streamlit as st
 import auth
+from services.db import fetch_df
+from services.queries.q_usuarios import UPDATE_ULTIMO_ACCESO, GET_USUARIO_BY_ID, GET_USUARIO_BY_USERNAME
 
 
 def login_page():
@@ -180,6 +182,41 @@ def login_page():
                             st.error(f"{label} {e}")
                             return
                         
+                        try:
+                            uid = user.get("id_usuario")
+                            uname = user.get("username")
+                            if uid is not None:
+                                fetch_df(UPDATE_ULTIMO_ACCESO, {"id_usuario": uid})
+                                try:
+                                    df_user = fetch_df(GET_USUARIO_BY_ID, {"id_usuario": uid})
+                                    if df_user is not None and not df_user.empty:
+                                        ua = df_user.iloc[0].get("ultimo_acceso")
+                                        try:
+                                            st.success(f"Último acceso actualizado: {ua}")
+                                        except Exception:
+                                            pass
+                                except Exception as e:
+                                    print(e)
+                            else:
+                                if uname:
+                                    try:
+                                        df_user = fetch_df(GET_USUARIO_BY_USERNAME, {"usuario": uname})
+                                        if df_user is not None and not df_user.empty:
+                                            row = df_user.iloc[0]
+                                            uid2 = row.get("id_usuario")
+                                            if uid2 is not None:
+                                                fetch_df(UPDATE_ULTIMO_ACCESO, {"id_usuario": uid2})
+                                    except Exception as e:
+                                        print(e)
+                        except Exception as e:
+                            print(e)
+                        try:
+                            if "usuarios_df" in st.session_state:
+                                del st.session_state["usuarios_df"]
+                                print("[login_page] eliminada cache 'usuarios_df' en session_state")
+                        except Exception as e:
+                            print(e)
+
                         # Guardar en session state
                         st.session_state["jwt_token"] = token
                         st.session_state["user"] = user
@@ -192,7 +229,6 @@ def login_page():
                         label = ":material/check_circle: Inicio de sesión exitoso"
                         st.success(label)
                         
-                        # Recargar app
                         try:
                             st.rerun()
                         except Exception:

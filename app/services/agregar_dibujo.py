@@ -13,7 +13,7 @@ from services.db import get_engine, fetch_df
 from services.queries.q_registro import POST_PRUEBA, POST_RESULTADO
 from components.bounding_boxes import imagen_bboxes
 from services.exportar import render_export_popover
-from services.queries.q_usuarios import GET_ESPECIALISTAS
+# specialist list not needed here; avoid changing assigned user during adding a drawing
 try:
     import numpy as _np
 except Exception:
@@ -94,41 +94,11 @@ def agregar_dibujo(info_obj):
         is_admin = False
         is_esp = False
 
-    # Obtener lista de especialistas
-    try:
-        df_esp = fetch_df(GET_ESPECIALISTAS)
-        esp_options = df_esp['nombre_completo'].tolist() if not df_esp.empty else []
-        esp_ids = df_esp['id_usuario'].tolist() if not df_esp.empty else []
-    except Exception:
-        esp_options = []
-        esp_ids = []
-
+    # No mostrar selección de especialista en este modal.
+    # Mantener la asignación existente si la hay; si el que abre es especialista,
+    # asignamos automáticamente la prueba al especialista actual (comportamiento previo).
     current_assigned = st.session_state.get('assigned_id_usuario', None)
-
-    if is_admin:
-        if not esp_options:
-            st.info("No hay especialistas disponibles para asignar.")
-        else:
-            default_index = 0
-            if current_assigned is not None:
-                try:
-                    default_index = esp_ids.index(int(current_assigned)) + 1
-                except Exception:
-                    default_index = 0
-            sel = st.selectbox("Especialista responsable (para esta prueba)", ["Selecciona un especialista"] + esp_options, index=default_index, key="agregar_select_esp")
-            if sel != "Selecciona un especialista":
-                sel_idx = esp_options.index(sel)
-                try:
-                    st.session_state['assigned_id_usuario'] = int(esp_ids[sel_idx])
-                except Exception:
-                    st.session_state['assigned_id_usuario'] = esp_ids[sel_idx]
-            else:
-                if 'assigned_id_usuario' in st.session_state:
-                    try:
-                        del st.session_state['assigned_id_usuario']
-                    except Exception:
-                        st.session_state['assigned_id_usuario'] = None
-    elif is_esp:
+    if is_esp:
         user = st.session_state.get('user', {})
         uid = user.get('id_usuario')
         try:

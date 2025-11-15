@@ -12,9 +12,12 @@ SELECT
     e.estado_civil AS [Estado civil],
     e.escolaridad  AS Escolaridad,
     e.ocupacion    AS Ocupacion,
-    g.nombre       AS [Grupo]
+    g.nombre       AS [Grupo],
+    e.id_usuario   AS id_usuario,
+    u.nombre_completo AS Especialista
 FROM Evaluado e
 LEFT JOIN Grupo g ON e.id_grupo = g.id_grupo
+LEFT JOIN Usuario u ON e.id_usuario = u.id_usuario
 ORDER BY e.id_evaluado ASC;
 """
 

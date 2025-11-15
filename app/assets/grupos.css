@@ -27,19 +27,7 @@
     min-width: max-content !important;
     justify-content: flex-start !important;
 }
-/* 
-[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
-    background: #FFE451;
-    color: #000000;
-	border:none;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
-	width: 100px;
-	margin: 0;
 
-}
-[data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):hover {
-    background: #FFD626;
-} */
 
 [data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *) {
     background: #FFE451;

@@ -237,9 +237,11 @@ def dialog_crear_evaluado():
         # Botones de acción
         col1, col2 = st.columns(2)
         with col1:
+            st.markdown("<br><br/>", unsafe_allow_html=True)
             cancelar = st.form_submit_button(":material/cancel: Cancelar", use_container_width=True)
         
         with col2:
+            st.markdown("<br><br/>", unsafe_allow_html=True)
             submitted = st.form_submit_button(":material/check: Guardar", use_container_width=True, type="primary")
         
         if cancelar:
@@ -453,6 +455,39 @@ def dialog_editar_evaluado(evaluado_data):
                 index=grupo_index,
                 key="edit_grupo"
             )
+
+        # Selector de especialista (permitir reasignar al editar)
+        try:
+            df_esp = fetch_df(GET_ESPECIALISTAS)
+            if df_esp is None or df_esp.empty:
+                esp_map = {}
+                esp_ids = [None]
+            else:
+                esp_map = dict(zip(df_esp['id_usuario'], df_esp['nombre_completo']))
+                esp_ids = [None] + [int(x) for x in df_esp['id_usuario'].tolist()]
+        except Exception:
+            esp_map = {}
+            esp_ids = [None]
+
+        # Valor actual del especialista asignado al evaluado
+        raw_current_esp = evaluado_data.get('id_usuario', None)
+        try:
+            current_esp = int(raw_current_esp) if raw_current_esp not in (None, '', float('nan')) else None
+        except Exception:
+            current_esp = None
+
+        try:
+            default_idx = esp_ids.index(current_esp) if current_esp in esp_ids else 0
+        except Exception:
+            default_idx = 0
+
+        id_usuario_selected = st.selectbox(
+            "Especialista asignado",
+            options=esp_ids,
+            index=default_idx,
+            format_func=lambda x: "Sin especialista" if x is None else esp_map.get(int(x), str(x)),
+            key="edit_id_usuario"
+        )
         
         # Botones de acción
         col1, col2 = st.columns(2)
@@ -516,7 +551,8 @@ def dialog_editar_evaluado(evaluado_data):
                     estado_civil = :estado_civil,
                     escolaridad = :escolaridad,
                     ocupacion = :ocupacion,
-                    id_grupo = :id_grupo
+                    id_grupo = :id_grupo,
+                    id_usuario = :id_usuario
                 WHERE id_evaluado = :id_evaluado
                 """
                 
@@ -532,7 +568,8 @@ def dialog_editar_evaluado(evaluado_data):
                             "estado_civil": estado_civil_val,
                             "escolaridad": escolaridad_val,
                             "ocupacion": ocupacion_val,
-                            "id_grupo": id_grupo
+                            "id_grupo": id_grupo,
+                            "id_usuario": int(id_usuario_selected) if id_usuario_selected is not None else None
                         }
                     )
                 
@@ -547,7 +584,7 @@ def dialog_editar_evaluado(evaluado_data):
 
 
 @st.dialog(":material/filter_list: Filtros")
-def dialog_filtros():
+def dialog_filtros(key_prefix: str = None):
     """Diálogo para filtrar datos por columnas."""
     
     st.write("Selecciona los filtros que deseas aplicar:")
@@ -566,7 +603,7 @@ def dialog_filtros():
         "Sexo",
         sexo_options,
         index=sexo_options.index(st.session_state['active_filters'].get('Sexo', 'Todos')) if st.session_state['active_filters'].get('Sexo', 'Todos') in sexo_options else 0,
-        key="filter_sexo"
+        key=(f"{key_prefix}__filter_sexo" if key_prefix else "filter_sexo")
     )
     
     # Filtro por Estado civil
@@ -575,7 +612,7 @@ def dialog_filtros():
         "Estado civil",
         estado_options,
         index=estado_options.index(st.session_state['active_filters'].get('Estado civil', 'Todos')) if st.session_state['active_filters'].get('Estado civil', 'Todos') in estado_options else 0,
-        key="filter_estado"
+        key=(f"{key_prefix}__filter_estado" if key_prefix else "filter_estado")
     )
     
     # Filtro por Escolaridad
@@ -584,7 +621,7 @@ def dialog_filtros():
         "Escolaridad",
         escolaridad_options,
         index=escolaridad_options.index(st.session_state['active_filters'].get('Escolaridad', 'Todos')) if st.session_state['active_filters'].get('Escolaridad', 'Todos') in escolaridad_options else 0,
-        key="filter_escolaridad"
+        key=(f"{key_prefix}__filter_escolaridad" if key_prefix else "filter_escolaridad")
     )
     
     # Filtro por Ocupación
@@ -593,7 +630,7 @@ def dialog_filtros():
         "Ocupación",
         ocupacion_options,
         index=ocupacion_options.index(st.session_state['active_filters'].get('Ocupación', 'Todos')) if st.session_state['active_filters'].get('Ocupación', 'Todos') in ocupacion_options else 0,
-        key="filter_ocupacion"
+        key=(f"{key_prefix}__filter_ocupacion" if key_prefix else "filter_ocupacion")
     )
     
     # Filtro por Grupo
@@ -602,7 +639,7 @@ def dialog_filtros():
         "Grupo",
         grupo_options,
         index=grupo_options.index(st.session_state['active_filters'].get('Grupo', 'Todos')) if st.session_state['active_filters'].get('Grupo', 'Todos') in grupo_options else 0,
-        key="filter_grupo"
+        key=(f"{key_prefix}__filter_grupo" if key_prefix else "filter_grupo")
     )
     
     # Filtro por edad mínima
@@ -611,22 +648,31 @@ def dialog_filtros():
         min_value=18,
         max_value=100,
         value=st.session_state['active_filters'].get('edad_min', 18),
-        key="filter_edad_min"
+        key=(f"{key_prefix}__filter_edad_min" if key_prefix else "filter_edad_min")
     )
     
     # Botones de acción
     col1, col2, col3 = st.columns(3)
+    # key helper
+    if key_prefix:
+        def _k(s):
+            return f"{key_prefix}__{s}"
+    else:
+        def _k(s):
+            return s
+
     with col1:
         st.markdown("<br><br/>", unsafe_allow_html=True)
-        if st.button(":material/refresh: Limpiar", use_container_width=True, key="clear_filters"):
+        if st.button(":material/refresh: Limpiar", use_container_width=True, key=_k("clear_filters")):
             st.session_state['active_filters'] = {}
-            del st.session_state['evaluados_df']
+            if 'evaluados_df' in st.session_state:
+                del st.session_state['evaluados_df']
             st.rerun()
 
     
     with col3:
         st.markdown("<br><br/>", unsafe_allow_html=True)
-        if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key="apply_filters"):
+        if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key=_k("apply_filters")):
             # Guardar filtros activos
             filters = {}
             if sexo_filter != "Todos":
@@ -681,31 +727,34 @@ def get_historial_data(user_id: int = None) -> List[Dict]:
         else:
             # Try server-side filtering first by appending WHERE on the base SQL
             try:
-                base_sql = LISTADO_EVALUADOS_SQL.strip().rstrip(';')
-                # If query already contains a WHERE, append with AND
-                if ' where ' in base_sql.lower():
-                    qry = base_sql + " AND e.id_usuario = :id_usuario"
-                else:
-                    qry = base_sql + " WHERE e.id_usuario = :id_usuario"
-                df = fetch_df(qry, {"id_usuario": int(user_id)})
+                    base_sql = LISTADO_EVALUADOS_SQL.strip().rstrip(';')
+                    # If query already contains a WHERE, append with AND
+                    if ' where ' in base_sql.lower():
+                        qry = base_sql + " AND e.id_usuario = :id_usuario"
+                    else:
+                        # If the base SQL contains an ORDER BY clause, insert the WHERE before ORDER BY
+                        lower_base = base_sql.lower()
+                        order_idx = lower_base.rfind('order by')
+                        if order_idx != -1:
+                            before_order = base_sql[:order_idx]
+                            order_clause = base_sql[order_idx:]
+                            qry = before_order + " WHERE e.id_usuario = :id_usuario " + order_clause
+                        else:
+                            qry = base_sql + " WHERE e.id_usuario = :id_usuario"
+                    df = fetch_df(qry, {"id_usuario": int(user_id)})
             except Exception:
-                # fallback to fetching full table and filtering client-side
                 df = fetch_df(LISTADO_EVALUADOS_SQL)
         if df is None:
             raise ValueError("No rows returned from DB")
 
-        # Si se pidió filtrado por user_id, asegurarse de filtrar los resultados
         if user_id is not None:
             try:
-                # Si la columna id_usuario está presente en el resultado, filtramos directamente
                 if 'id_usuario' in df.columns:
                     df = df[df['id_usuario'].astype('Int64') == int(user_id)]
                 else:
-                    # Obtener los id_evaluado asignados a ese usuario directamente desde la tabla Evaluado
                     try:
                         ids_df = fetch_df("SELECT id_evaluado FROM Evaluado WHERE id_usuario = :id_usuario", {"id_usuario": int(user_id)})
                         if ids_df is None or ids_df.empty:
-                            # No hay evaluados asignados
                             df = df.iloc[0:0]
                         else:
                             ids = [int(x) for x in ids_df['id_evaluado'].tolist()]
@@ -728,7 +777,7 @@ def get_historial_data(user_id: int = None) -> List[Dict]:
 
         expected_cols = [
             'id_evaluado', 'Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil',
-            'Escolaridad', 'Ocupación', 'Grupo'
+            'Escolaridad', 'Ocupación', 'Grupo', 'id_usuario', 'Especialista'
         ]
         for c in expected_cols:
             if c not in df.columns:
@@ -741,7 +790,7 @@ def get_historial_data(user_id: int = None) -> List[Dict]:
         return []
 
 
-def evaluados(can_delete: bool = True, user_id: int = None):
+def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = None):
     """Renderiza la vista de administración de evaluados.
 
     Parameters:
@@ -759,10 +808,35 @@ def evaluados(can_delete: bool = True, user_id: int = None):
         st.markdown("""
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
         """, unsafe_allow_html=True)
+    # Preparar prefijo único para keys (evita colisiones cuando la vista se instancia varias veces)
+    # Inicializar un contador en session_state solo la primera vez para que el prefijo sea estable
+    counter_key = '_evaluados_instance_counter'
+    if counter_key not in st.session_state:
+        try:
+            st.session_state[counter_key] = 1
+        except Exception:
+            # fallback silencioso
+            pass
+
+    instance_idx = st.session_state.get(counter_key, 1)
+    key_prefix = f"evaluados_{str(user_id) if user_id is not None else 'global'}_{instance_idx}"
+
     # Cargar datos
-    if 'evaluados_df' not in st.session_state or user_id is not None:
-        # if user_id provided, refresh the cache to the filtered dataset
+    # Evitar recargar en cada rerun: solo hacerlo si no existe el cache o si cambió el user_id
+    last_user_key = '_evaluados_last_user_id'
+    need_refresh = False
+    if 'evaluados_df' not in st.session_state:
+        need_refresh = True
+    else:
+        if st.session_state.get(last_user_key) != user_id:
+            need_refresh = True
+
+    if need_refresh:
         st.session_state['evaluados_df'] = pd.DataFrame(get_historial_data(user_id=user_id))
+        try:
+            st.session_state[last_user_key] = user_id
+        except Exception:
+            pass
     
     # Verificar si hay evaluados
     if st.session_state['evaluados_df'].empty:
@@ -777,42 +851,58 @@ def evaluados(can_delete: bool = True, user_id: int = None):
     
     # Preparar DataFrame
     df = st.session_state['evaluados_df'].copy()
-    
+
     # Crear columna de selección
     df.insert(0, 'Seleccionar', False)
-    
-    # Reordenar columnas para display (sin id_evaluado visible)
-    columns_order = ['Seleccionar', 'Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo']
+
+    # Reordenar columnas para display (sin id_evaluado visible) e incluir Especialista
+    columns_order = ['Seleccionar', 'Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo', 'Especialista']
+    # Asegurar columna Especialista (proviene de la query que une con Usuario)
+    if 'Especialista' not in df.columns and 'id_usuario' in df.columns:
+        try:
+            df_esp = fetch_df(GET_ESPECIALISTAS)
+            esp_map = dict(zip(df_esp['id_usuario'], df_esp['nombre_completo'])) if not df_esp.empty else {}
+            df['Especialista'] = df['id_usuario'].apply(lambda x: esp_map.get(int(x), '') if pd.notna(x) and x != '' else '')
+        except Exception:
+            df['Especialista'] = ''
+
     df_display = df[[col for col in columns_order if col in df.columns]]
     
+    # Barra de búsqueda y botones (prefijados para evitar colisiones de key)
     if can_delete:
-        # Barra de búsqueda y botones
+        # Barra de búsqueda y botones (prefijados para evitar colisiones de key)
         col_buscar, col_filtros, col_editar, col_eliminar, col_crear = st.columns([3, 1, 1, 1, 1])
-        
+
+        buscar_key = f"{key_prefix}__buscar_evaluado_can_delete"
+        filtros_key = f"{key_prefix}__evaluados_btn_filtros_top"
+        editar_key = f"{key_prefix}__evaluados_btn_editar_top"
+        eliminar_key = f"{key_prefix}__evaluados_btn_eliminar_top"
+        crear_key = f"{key_prefix}__evaluados_btn_crear_top"
+
         with col_buscar:
             buscar = st.text_input(
                 "Buscar evaluado",
                 placeholder="Buscar...",
                 label_visibility="collapsed",
-                key="buscar_evaluado"
+                key=buscar_key
             )
-        
+
         with col_filtros:
             button_label = ":material/filter_list: Filtros"
-            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_filtros_top")
-        
+            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key=filtros_key)
+
         with col_editar:
             button_label = ":material/edit: Editar"
-            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_editar_top")
-        
+            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key=editar_key)
+
         with col_eliminar:
             button_label = ":material/delete: Eliminar"
-            eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_eliminar_top")
-        
+            eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key=eliminar_key)
+
         with col_crear:
             button_label = ":material/add: Crear"
-            crear_btn = st.button(button_label, use_container_width=True, type="primary", key="evaluados_btn_crear_top")
-        
+            crear_btn = st.button(button_label, use_container_width=True, type="primary", key=crear_key)
+
         st.markdown("<br/>", unsafe_allow_html=True)
         # Aplicar búsqueda si hay texto
         if buscar:
@@ -822,29 +912,34 @@ def evaluados(can_delete: bool = True, user_id: int = None):
             df_display = df_display[mask]
             df = df[mask]
     else:
-        # Barra de búsqueda y botones
+        # Barra de búsqueda y botones (prefijados para evitar colisiones de key)
         col_buscar, col_filtros, col_editar, col_crear = st.columns([4, 1, 1, 1])
-        
+
+        buscar_key = f"{key_prefix}__buscar_evaluado"
+        filtros_key = f"{key_prefix}__evaluados_btn_filtros_top_can_delete_false"
+        editar_key = f"{key_prefix}__evaluados_btn_editar_top_can_delete_false"
+        crear_key = f"{key_prefix}__evaluados_btn_crear_top_can_delete_false"
+
         with col_buscar:
             buscar = st.text_input(
                 "Buscar evaluado",
                 placeholder="Buscar...",
                 label_visibility="collapsed",
-                key="buscar_evaluado"
+                key=buscar_key
             )
-        
+
         with col_filtros:
             button_label = ":material/filter_list: Filtros"
-            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_filtros_top_can_delete_false")
-        
+            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key=filtros_key)
+
         with col_editar:
             button_label = ":material/edit: Editar"
-            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key="evaluados_btn_editar_top_can_delete_false")
-        
+            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key=editar_key)
+
         with col_crear:
             button_label = ":material/add: Crear"
-            crear_btn = st.button(button_label, use_container_width=True, type="primary", key="evaluados_btn_crear_top_can_delete_false")
-        
+            crear_btn = st.button(button_label, use_container_width=True, type="primary", key=crear_key)
+
         st.markdown("<br/>", unsafe_allow_html=True)
         # Aplicar búsqueda si hay texto
         if buscar:
@@ -854,12 +949,19 @@ def evaluados(can_delete: bool = True, user_id: int = None):
             df_display = df_display[mask]
             df = df[mask]
     
+    # Decidir si mostrar botón 'Ver expediente' y altura de la tabla
+    show_ver_expediente = True
+    table_height = 300
+    if not can_delete:
+        show_ver_expediente = False
+        table_height = 200
+
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
         df_display,
         use_container_width=True,
         hide_index=True,
-        key="evaluados_table_editor",
+        key=f"{key_prefix}__evaluados_table_editor",
         column_config={
             "Seleccionar": st.column_config.CheckboxColumn("", width="small"),
             "Nombre": st.column_config.TextColumn("Nombre", width="small"),
@@ -870,9 +972,10 @@ def evaluados(can_delete: bool = True, user_id: int = None):
             "Escolaridad": st.column_config.TextColumn("Escolaridad", width="small"),
             "Ocupación": st.column_config.TextColumn("Ocupación", width="small"),
             "Grupo": st.column_config.TextColumn("Grupo", width="small"),
+            "Especialista": st.column_config.TextColumn("Especialista", width="small"),
         },
-        height=300,
-        disabled=['Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo']
+            height=table_height,
+        disabled=['Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo', 'Especialista']
     )
     
     # Total de evaluados debajo de la tabla
@@ -886,7 +989,7 @@ def evaluados(can_delete: bool = True, user_id: int = None):
         dialog_crear_evaluado()
     
     if filtros_btn:
-        dialog_filtros()
+        dialog_filtros(key_prefix)
     
     if editar_btn:
         if len(seleccionados) == 0:
@@ -908,20 +1011,26 @@ def evaluados(can_delete: bool = True, user_id: int = None):
     
     # BOTÓN VER EXPEDIENTE (restaurado)
     col1, col2, col3 = st.columns([2, 1, 2])
-    with col2:
-        ver_expediente_btn = st.button("Ver expediente", type="primary", use_container_width=True, key="ver_expediente_btn")
-        
-        if ver_expediente_btn:
-            if len(seleccionados) != 1:
-                st.warning(":material/warning: Selecciona un solo evaluado para ver el expediente")
-            else:
-                try:
-                    idx = seleccionados.index[0]
-                    selected_data = df.loc[idx]
-                    st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
-                    # marcar si venimos desde la vista 'ajustes' para que el botón de regresar funcione correctamente
-                    st.session_state['from_ajustes'] = True if st.session_state.get('active_view') == 'ajustes' else False
-                    st.session_state["active_view"] = "individual"
-                    st.rerun()
-                except Exception as e:
-                    st.error(f":material/error: Error: {e}")
+    if show_ver_expediente:
+        with col2:
+            ver_key = f"{key_prefix}__ver_expediente_btn"
+            ver_expediente_btn = st.button("Ver expediente", type="primary", use_container_width=True, key=ver_key)
+
+            if ver_expediente_btn:
+                if len(seleccionados) != 1:
+                    st.warning(":material/warning: Selecciona un solo evaluado para ver el expediente")
+                else:
+                    try:
+                        idx = seleccionados.index[0]
+                        selected_data = df.loc[idx]
+                        st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
+                        # marcar si venimos desde la vista 'ajustes' para que el botón de regresar funcione correctamente
+                        st.session_state['from_ajustes'] = True if st.session_state.get('active_view') == 'ajustes' else False
+                        st.session_state["active_view"] = "individual"
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f":material/error: Error: {e}")
+    else:
+        # dejar espacio vacío en la columna central para mantener alineación
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)

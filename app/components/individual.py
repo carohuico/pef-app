@@ -193,10 +193,10 @@ def individual(id_evaluado: str = None):
         img_path = (Path(__file__).parent / img_rel_clean).resolve()
         b64 = encode_image_to_base64(str(img_path))
         if b64:
-            mime = 'jpeg' if prueba.get('formato', '').lower() in ('jpg', 'jpeg') else prueba.get('formato', 'png')
-            data_uri = f"data:image/{mime};base64,{b64}"
-            prueba['_data_uri'] = data_uri
-            images_data.append(data_uri)
+            mime = 'jpeg' if prueba.get('formato', '').lower() in ('jpg', 'jpeg') else prueba.get('formato', 'png') # Default to png
+            data_uri = f"data:image/{mime};base64,{b64}" 
+            prueba['_data_uri'] = data_uri 
+            images_data.append(data_uri) 
         else:
             prueba['_data_uri'] = img_rel
             images_data.append(img_rel)
@@ -770,7 +770,64 @@ def individual(id_evaluado: str = None):
                 </div>
             </div>
         </div>
-        
+
+        <!-- Modal para imagen ampliada (iframe) -->
+        <div id="imageModal" class="image-modal">
+            <div class="modal-backdrop" onclick="closeImageModal()"></div>
+            <div class="modal-content" role="dialog" aria-modal="true" aria-label="Imagen ampliada">
+                <button class="modal-close" onclick="closeImageModal()" aria-label="Cerrar">✕</button>
+                <iframe id="imageIframe" src="" frameborder="0" style="width:100%; height:100%; border:0;" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <style>
+            .image-modal {{
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            }}
+            .image-modal.show {{
+                display: flex;
+            }}
+            .modal-backdrop {{
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.8);
+                backdrop-filter: blur(4px);
+            }}
+            .modal-content {{
+                position: relative;
+                width: 92%;
+                max-width: 1100px;
+                height: 85vh;
+                background: #fff;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+                z-index: 10001;
+                display: flex;
+            }}
+            .modal-close {{
+                position: absolute;
+                top: 10px;
+                right: 12px;
+                z-index: 10002;
+                background: rgba(255,255,255,0.9);
+                border: none;
+                font-size: 18px;
+                color: #333;
+                cursor: pointer;
+                padding: 6px 8px;
+                border-radius: 8px;
+            }}
+            .modal-close:hover {{
+                background: rgba(255,255,255,1);
+            }}
+        </style>
+
         <script>
             let currentIndex = {current_index};
             const images = {json.dumps(images_data)};
@@ -834,8 +891,51 @@ def individual(id_evaluado: str = None):
             
             function expandImage() {{
                 const mainImage = document.getElementById('mainImage');
-                window.open(mainImage.src, '_blank');
+                openImageModal(mainImage.src);
             }}
+
+            function openImageModal(src) {{
+                try {{
+                    const modal = document.getElementById('imageModal');
+                    const iframe = document.getElementById('imageIframe');
+                    const safeSrc = String(src).replace(/"/g, '&quot;');
+                    const htmlDoc = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+                        html,body{{height:100%;margin:0;padding:0;}}
+                        body{{display:flex;align-items:flex-start;justify-content:center;background:#111;overflow-y:auto;overflow-x:hidden;}}
+                        img{{width:100%;height:auto;max-width:100%;display:block;}}
+                    </style></head><body><img src="${{safeSrc}}" alt="Imagen ampliada"></body></html>`;
+
+                    iframe.removeAttribute('src');
+                    iframe.srcdoc = htmlDoc;
+                    modal.classList.add('show');
+                    document.body.style.overflow = 'hidden';
+                }} catch (e) {{
+                    console.error('Error opening image modal', e);
+                    window.open(src, '_blank');
+                }}
+            }}
+
+            function closeImageModal() {{
+                try {{
+                    const modal = document.getElementById('imageModal');
+                    const iframe = document.getElementById('imageIframe');
+                    iframe.src = 'about:blank';
+                    modal.classList.remove('show');
+                    document.body.style.overflow = '';
+                }} catch (e) {{
+                    console.error('Error closing image modal', e);
+                }}
+            }}
+
+            // Cerrar modal con Escape
+            document.addEventListener('keydown', function(e) {{
+                if (e.key === 'Escape') {{
+                    const modal = document.getElementById('imageModal');
+                    if (modal && modal.classList.contains('show')) {{
+                        closeImageModal();
+                    }}
+                }}
+            }});
             
             function updateImage(index) {{
                 const mainImage = document.getElementById('mainImage');
@@ -968,10 +1068,11 @@ def individual(id_evaluado: str = None):
     with col3:
         button_label = ":material/add: Agregar dibujo"
         if st.button(button_label, use_container_width=True, type="primary", key="btn_add_drawing"):
+            # Marcar la solicitud para abrir el diálogo; no llamar directamente
+            # a `agregar_dibujo` aquí para evitar abrir el mismo diálogo dos veces
+            # en una misma ejecución (Streamlit solo permite un diálogo abierto).
             st.session_state['add_drawing'] = True
             st.session_state['_agregar_dialog_open_requested'] = True
-            agregar_dibujo(info_obj)
-            st.session_state['_agregar_dialog_opened'] = True
 
 
     

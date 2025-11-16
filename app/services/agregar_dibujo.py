@@ -244,14 +244,13 @@ def agregar_dibujo(info_obj):
     
     with col_back:
         if step > 1:
-            button_label = ":material/arrow_back: Atrás"
+            button_label = "Atrás"
             if st.button(button_label, use_container_width=True, key="agregar_back"):
                 # Sólo retroceder un paso (no cerrar el modal)
                 st.session_state["agregar_step"] = max(1, step - 1)
                 st.rerun()
         else:
             if st.button("Cancelar", use_container_width=True, key="agregar_cancel"):
-                # Limpiar y cerrar
                 st.session_state["agregar_step"] = 1
                 st.session_state["agregar_uploaded_file"] = None
                 st.session_state["agregar_indicadores"] = None
@@ -263,7 +262,7 @@ def agregar_dibujo(info_obj):
     with col_next:
         # PASO 1 -> PASO 2
         if step == 1:
-            button_label = "Siguiente :material/arrow_forward:"
+            button_label = "Siguiente"
             if st.button(button_label, type="primary", use_container_width=True, disabled=(st.session_state["agregar_uploaded_file"] is None), key="agregar_next_step1"):
                 if st.session_state["agregar_uploaded_file"] is None:
                     label = ":material/warning: Por favor, sube una imagen para continuar"

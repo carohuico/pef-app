@@ -69,11 +69,12 @@ h5{
     margin-top: 1rem !important; 
 }
 
-
-[data-testid="stButton"] div { 
-    width: 100vh;
-    height: 100%;
+[data-testid="stHorizontalBlock"] div:first-child:not([data-testid="stSidebar"] *):not([data-testid="stElementContainer"] *) {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
 }
+
 /*DIALOG*/
 [data-testid^="stBaseButton-tertiary"]:not([data-testid="stSidebar"] *) {
     width: 100% !important;   

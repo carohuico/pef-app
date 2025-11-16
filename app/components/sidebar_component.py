@@ -1,8 +1,25 @@
-import streamlit as st
 from pathlib import Path
 import auth
 import unicodedata
 from base64 import b64encode
+import streamlit as st
+
+
+@st.dialog(":material/warning: Cerrar sesión")
+def confirmar_cerrar_sesion():
+    """Diálogo para confirmar cierre de sesión desde el sidebar."""
+    st.warning("¿Estás seguro que quieres cerrar sesión?")
+
+    col_yes, col_no = st.columns(2)
+    with col_yes:
+        label = ":material/check: Sí, cerrar sesión"
+        if st.button(label, use_container_width=True, type="primary", key="confirm_logout_yes"):
+            st.session_state["active_view"] = "salir"
+            st.rerun()
+    with col_no:
+        label = ":material/cancel: Cancelar"
+        if st.button(label, use_container_width=True, key="confirm_logout_no"):
+            st.rerun()
 
 def render_sidebar():
     st.sidebar.title("Rainly")
@@ -104,15 +121,22 @@ def sidebar_component():
             # set the canonical session key using the normalized label_key
             if label_key == "inicio":
                 st.session_state["active_view"] = "inicio"
+                st.rerun()
             elif label_key == "historial":
                 st.session_state["active_view"] = "historial"
+                st.rerun()
             elif label_key == "estadisticas":
                 st.session_state["active_view"] = "estadisticas"
+                st.rerun()
             elif label_key == "ajustes" or label_key == "misevaluados":
                 st.session_state["active_view"] = "ajustes"
+                st.rerun()
             elif label_key == "salir":
-                st.session_state["active_view"] = "salir"
-            st.rerun()
+                try:
+                    confirmar_cerrar_sesion()
+                except Exception:
+                    st.session_state["active_view"] = "salir"
+                    st.rerun()
         st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 

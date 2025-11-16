@@ -1068,9 +1068,7 @@ def individual(id_evaluado: str = None):
     with col3:
         button_label = ":material/add: Agregar dibujo"
         if st.button(button_label, use_container_width=True, type="primary", key="btn_add_drawing"):
-            # Marcar la solicitud para abrir el diálogo; no llamar directamente
-            # a `agregar_dibujo` aquí para evitar abrir el mismo diálogo dos veces
-            # en una misma ejecución (Streamlit solo permite un diálogo abierto).
+            
             st.session_state['add_drawing'] = True
             st.session_state['_agregar_dialog_open_requested'] = True
 

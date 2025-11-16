@@ -651,9 +651,7 @@ def dialog_filtros(key_prefix: str = None):
         key=(f"{key_prefix}__filter_edad_min" if key_prefix else "filter_edad_min")
     )
     
-    # Botones de acción
-    col1, col2, col3 = st.columns(3)
-    # key helper
+    col1, col3 = st.columns(2)
     if key_prefix:
         def _k(s):
             return f"{key_prefix}__{s}"
@@ -949,12 +947,6 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
             df_display = df_display[mask]
             df = df[mask]
     
-    # Decidir si mostrar botón 'Ver expediente' y altura de la tabla
-    show_ver_expediente = True
-    table_height = 300
-    if not can_delete:
-        show_ver_expediente = False
-        table_height = 200
 
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
@@ -974,11 +966,10 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
             "Grupo": st.column_config.TextColumn("Grupo", width="small"),
             "Especialista": st.column_config.TextColumn("Especialista", width="small"),
         },
-            height=table_height,
+            height=250,
         disabled=['Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo', 'Especialista']
     )
     
-    # Total de evaluados debajo de la tabla
     st.caption(f"**Total de evaluados:** {len(df)}")
     
     # Obtener evaluados seleccionados
@@ -1011,26 +1002,23 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     
     # BOTÓN VER EXPEDIENTE (restaurado)
     col1, col2, col3 = st.columns([2, 1, 2])
-    if show_ver_expediente:
-        with col2:
-            ver_key = f"{key_prefix}__ver_expediente_btn"
-            ver_expediente_btn = st.button("Ver expediente", type="primary", use_container_width=True, key=ver_key)
+    with col2:
+        ver_key = f"{key_prefix}__ver_expediente_btn"
+        ver_expediente_btn = st.button("Ver expediente", type="primary", use_container_width=True, key=ver_key)
 
-            if ver_expediente_btn:
-                if len(seleccionados) != 1:
-                    st.warning(":material/warning: Selecciona un solo evaluado para ver el expediente")
-                else:
-                    try:
-                        idx = seleccionados.index[0]
-                        selected_data = df.loc[idx]
-                        st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
-                        # marcar si venimos desde la vista 'ajustes' para que el botón de regresar funcione correctamente
-                        st.session_state['from_ajustes'] = True if st.session_state.get('active_view') == 'ajustes' else False
-                        st.session_state["active_view"] = "individual"
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f":material/error: Error: {e}")
-    else:
-        # dejar espacio vacío en la columna central para mantener alineación
-        with col2:
-            st.markdown("<br>", unsafe_allow_html=True)
+        if ver_expediente_btn:
+            if len(seleccionados) != 1:
+                st.warning(":material/warning: Selecciona un solo evaluado para ver el expediente")
+            else:
+                try:
+                    idx = seleccionados.index[0]
+                    selected_data = df.loc[idx]
+                    st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
+                    # marcar si venimos desde la vista 'ajustes' para que el botón de regresar funcione correctamente
+                    st.session_state['from_ajustes'] = True if st.session_state.get('active_view') == 'ajustes' else False
+                    st.session_state["active_view"] = "individual"
+                    st.rerun()
+                except Exception as e:
+                    st.error(f":material/error: Error: {e}")
+    with col2:
+        st.markdown("<br>", unsafe_allow_html=True)

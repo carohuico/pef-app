@@ -132,7 +132,6 @@ def cargar_imagen_component():
                         except Exception:
                             st.session_state['assigned_id_usuario'] = esp_ids[sel_idx]
                     else:
-                        # si deselecciona, quitar el valor
                         if 'assigned_id_usuario' in st.session_state:
                             try:
                                 del st.session_state['assigned_id_usuario']
@@ -207,7 +206,7 @@ def cargar_imagen_component():
                 st.markdown('<div class="form-group">', unsafe_allow_html=True)
                 st.markdown('<label>Estado civil</label>', unsafe_allow_html=True)
                 if "form_estado_civil" not in st.session_state or st.session_state["form_estado_civil"] not in ["Selecciona una opción", "Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)", "Separado(a)", "Convivencia civil"]:
-                    st.session_state["form_estado_civil"] = "Selecciona una opción"
+                    st.session_state["form_estado_civil"] = ""
 
                 estado_options = ["Selecciona una opción", "Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)", "Separado(a)", "Convivencia civil"]
                 estado_index = estado_options.index(st.session_state.get("form_estado_civil")) if st.session_state.get("form_estado_civil") in estado_options else 0
@@ -218,14 +217,15 @@ def cargar_imagen_component():
                     label_visibility="collapsed",
                     index=estado_index
                 )
-                st.session_state["form_estado_civil"] = estado_civil_value
+                # Guardar vacío si el usuario dejó la opción por defecto
+                st.session_state["form_estado_civil"] = "" if estado_civil_value == "Selecciona una opción" else estado_civil_value
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with col2:
                 st.markdown('<div class="form-group">', unsafe_allow_html=True)
                 st.markdown('<label>Último grado alcanzado</label>', unsafe_allow_html=True)
                 if "form_escolaridad" not in st.session_state or st.session_state["form_escolaridad"] not in ["Selecciona una opción", "Ninguno", "Primaria", "Secundaria", "Preparatoria o Bachillerato", "Técnico", "Licenciatura", "Maestría", "Doctorado", "Posgrado"]:
-                    st.session_state["form_escolaridad"] = "Selecciona una opción"
+                    st.session_state["form_escolaridad"] = ""
 
                 escolaridad_options = ["Selecciona una opción", "Ninguno", "Primaria", "Secundaria", "Preparatoria o Bachillerato", "Técnico", "Licenciatura", "Maestría", "Doctorado", "Posgrado"]
                 escolaridad_index = escolaridad_options.index(st.session_state.get("form_escolaridad")) if st.session_state.get("form_escolaridad") in escolaridad_options else 0
@@ -236,7 +236,8 @@ def cargar_imagen_component():
                     label_visibility="collapsed",
                     index=escolaridad_index
                 )
-                st.session_state["form_escolaridad"] = escolaridad_value
+                # Guardar vacío si el usuario dejó la opción por defecto
+                st.session_state["form_escolaridad"] = "" if escolaridad_value == "Selecciona una opción" else escolaridad_value
                 st.markdown('</div>', unsafe_allow_html=True)
 
             # Cuarta fila: Ocupación y Grupo
@@ -245,7 +246,7 @@ def cargar_imagen_component():
                 st.markdown('<div class="form-group">', unsafe_allow_html=True)
                 st.markdown('<label>Ocupación</label>', unsafe_allow_html=True)
                 if "form_ocupacion" not in st.session_state or st.session_state["form_ocupacion"] not in ["Selecciona una opción", "Empleado(a)", "Desempleado(a)", "Jubilado(a) / Pensionado(a)", "Trabajador(a) por cuenta propia", "Empresario(a) / Emprendedor(a)", "Dedicado(a) al hogar", "Estudiante", "Otro"]:
-                    st.session_state["form_ocupacion"] = "Selecciona una opción"
+                    st.session_state["form_ocupacion"] = ""
 
                 ocupacion_options = ["Selecciona una opción", "Empleado(a)", "Desempleado(a)", "Jubilado(a) / Pensionado(a)", "Trabajador(a) por cuenta propia", "Empresario(a) / Emprendedor(a)", "Dedicado(a) al hogar", "Estudiante", "Otro"]
                 ocupacion_index = ocupacion_options.index(st.session_state.get("form_ocupacion")) if st.session_state.get("form_ocupacion") in ocupacion_options else 0
@@ -256,7 +257,8 @@ def cargar_imagen_component():
                     label_visibility="collapsed",
                     index=ocupacion_index
                 )
-                st.session_state["form_ocupacion"] = ocupacion_value
+                # Guardar vacío si el usuario dejó la opción por defecto
+                st.session_state["form_ocupacion"] = "" if ocupacion_value == "Selecciona una opción" else ocupacion_value
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with col2:
@@ -478,10 +480,10 @@ def cargar_imagen_component():
                         nombre_value = st.session_state.get("nombre", "").strip()
                         apellido_value = st.session_state.get("apellido", "").strip()
                         fecha_nacimiento = st.session_state.get("fecha_nacimiento_widget", st.session_state.get("form_fecha_nacimiento", ""))
-                        sexo_value = st.session_state.get("sexo", "Selecciona una opción")
-                        estado_civil_value = st.session_state.get("estado_civil", "Selecciona una opción")
-                        escolaridad_value = st.session_state.get("escolaridad", "Selecciona una opción")
-                        ocupacion_value = st.session_state.get("ocupacion", "Selecciona una opción")
+                        sexo_value = st.session_state.get("sexo", "")
+                        estado_civil_value = st.session_state.get("estado_civil", "")
+                        escolaridad_value = st.session_state.get("escolaridad", "")
+                        ocupacion_value = st.session_state.get("ocupacion", "")
                         grupo_value = st.session_state.get("form_grupo", "").strip()
                         if not nombre_value:
                             st.markdown("""
@@ -510,7 +512,7 @@ def cargar_imagen_component():
                                 <span>La fecha de nacimiento del evaluado es obligatoria</span>
                                 </div>
                             """, unsafe_allow_html=True)
-                        elif not sexo_value or sexo_value == "Selecciona una opción":
+                        elif not sexo_value or sexo_value == "Selecciona una opción" or sexo_value.strip() == "":
                             st.markdown("""
                                 <div class="warning">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
@@ -521,7 +523,7 @@ def cargar_imagen_component():
                             """, unsafe_allow_html=True)
                         elif not all(c.isalpha() or c.isspace() for c in nombre_value):
                             st.markdown('<div class="warning"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg> El nombre solo debe contener letras alfabéticas y espacios</div>', unsafe_allow_html=True)
-                        elif not sexo_value or sexo_value == "Selecciona una opción":
+                        elif not sexo_value or sexo_value == "Selecciona una opción" or sexo_value.strip() == "":
                             st.markdown('<div class="warning"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg> El sexo del evaluado es obligatorio</div>', unsafe_allow_html=True)
                         else:
                             # Guardar campos en sesión
@@ -529,9 +531,10 @@ def cargar_imagen_component():
                             st.session_state["form_apellido"] = apellido_value
                             st.session_state["form_fecha_nacimiento"] = fecha_nacimiento
                             st.session_state["form_sexo"] = sexo_value
-                            st.session_state["form_estado_civil"] = estado_civil_value
-                            st.session_state["form_escolaridad"] = escolaridad_value
-                            st.session_state["form_ocupacion"] = ocupacion_value
+                            # Normalizar select por defecto a cadena vacía si corresponde
+                            st.session_state["form_estado_civil"] = "" if estado_civil_value == "Selecciona una opción" else estado_civil_value
+                            st.session_state["form_escolaridad"] = "" if escolaridad_value == "Selecciona una opción" else escolaridad_value
+                            st.session_state["form_ocupacion"] = "" if ocupacion_value == "Selecciona una opción" else ocupacion_value
                             st.session_state["form_grupo"] = grupo_value
 
                             st.session_state["current_step"] = min(3, step + 1)
@@ -572,10 +575,10 @@ def cargar_imagen_component():
                                 "apellido": apellido,
                                 "fecha_nacimiento": fecha_nacimiento,
                                 "sexo": sexo,
-                                "estado_civil": estado_civil,
-                                "escolaridad": escolaridad,
-                                "ocupacion": ocupacion,
-                                "grupo": grupo if grupo else None,
+                                "estado_civil": estado_civil if estado_civil and str(estado_civil).strip() != "" else None,
+                                "escolaridad": escolaridad if escolaridad and str(escolaridad).strip() != "" else None,
+                                "ocupacion": ocupacion if ocupacion and str(ocupacion).strip() != "" else None,
+                                "grupo": grupo if grupo and str(grupo).strip() != "" else None,
                                 "id_usuario": st.session_state.get('assigned_id_usuario', None),
                             }
                             try:
@@ -617,7 +620,6 @@ def cargar_imagen_component():
                                 st.error("Error: No se encontró el ID del evaluado seleccionado")
                                 return
 
-                        # CONTINUAR CON LA PRUEBA (esto aplica tanto para nuevos como existentes)
                         try:
                             engine = get_engine()
                             id_evaluado = st.session_state.get('id_evaluado')

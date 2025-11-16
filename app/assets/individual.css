@@ -35,17 +35,6 @@
     height: 100%;
 }
 
-/* Botones primarios dentro del stDialog */
-[data-testid="stDialog"] [data-testid^="stBaseButton-primary"] {
-    background: #FFE451;
-    color: #000;
-    border: none;
-}
-[data-testid="stDialog"] [data-testid^="stBaseButton-primary"]:hover {
-    background: #FFD626;
-}
-
-
 .stHorizontalBlock:has(button[kind="primary"]) > div:last-child {
     display: flex !important;
     justify-content: flex-end !important;

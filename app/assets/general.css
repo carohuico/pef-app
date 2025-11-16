@@ -117,11 +117,6 @@ div.stApp, section.main {
 .step.active .circle { border-color: #000; color: #000; }
 .step.done .step-text, .step.active .step-text { color: #000; }
 
-/* boton primario */
-.stVerticalBlock:has(button[kind="primary"]) {
-	align-items: flex-end !important;
-	margin: 0 !important;
-}
 
 button[kind="primary"] {
 	background: #FFE451;
@@ -157,6 +152,50 @@ button[kind="secondary"]:hover {
 [data-testid="stDialog"] div {
 	align-items: center !important;
 	justify-content: center !important;
+}
+
+/*!aqui para todos los botones primarios dentro del dialogo*/
+[data-testid="stDialog"] [data-testid^="stBaseButton-primary"] {
+    background: #FFE451 !important;
+    color: #000000 !important;
+	border:none !important;
+	width: 100% !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06) !important;
+	margin: 0 !important;
+	display: inline-block !important;
+    transform: translateY(10px) !important;
+}
+[data-testid="stDialog"] [data-testid^="stBaseButton-primary"]:hover {
+    background: #FFD626 !important;
+    color: #000000 !important;
+	width: 100% !important;
+	border:none !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06) !important;
+	margin: 0 !important;
+	display: inline-block !important;
+    transform: translateY(10px) !important;
+}
+
+/*y que no este en el file uploader*/
+[data-testid="stDialog"] [data-testid^="stBaseButton-secondary"] {
+    background: rgb(255, 255, 255) !important;
+    color: #000000 !important;
+	border:none !important;
+	margin: 0 !important;
+	border: 1px solid #000000 !important;
+	width: 100% !important;
+	display: inline-block !important;
+    transform: translateY(10px) !important;
+}
+[data-testid="stDialog"] [data-testid^="stBaseButton-secondary"]:hover {
+    background: #CCCCCC !important;
+    color: #000000 !important;
+	border:none !important;
+	width: 100% !important;
+	margin: 0 !important;
+	border: 1px solid #000000 !important;
+	display: inline-block !important;
+    transform: translateY(10px) !important;
 }
 
 div[role="dialog"] {

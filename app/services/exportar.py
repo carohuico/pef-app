@@ -77,16 +77,34 @@ def render_export_popover(info_evaluado=None, indicadores=None):
 
   selected_rows = pd.DataFrame(rows_final)
 
-  # Prepare CSV data
+  try:
+    if not selected_rows.empty:
+      cols = list(selected_rows.columns)
+      if 'Fecha de evaluación' in cols:
+        if 'Fecha' in cols:
+          try:
+            selected_rows = selected_rows.drop(columns=['Fecha de evaluación'])
+          except Exception:
+            pass
+        else:
+          try:
+            selected_rows = selected_rows.rename(columns={'Fecha de evaluación': 'Fecha'})
+          except Exception:
+            pass
+  except Exception:
+    pass
+
   csv_bytes = selected_rows.to_csv(index=False).encode("utf-8-sig")
   csv_b64 = base64.b64encode(csv_bytes).decode("utf-8-sig")
   csv_href = f"data:text/csv;charset=utf-8-sig;base64,{csv_b64}"
-  filename = "historial_export.csv"
+  
+  from datetime import datetime
+  filename = f"historial_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 
   # Lista de opciones/indicadores para el dropdown
   column_options = selected_rows.columns.tolist() if not selected_rows.empty else [
     "Fecha", "Nombre", "Apellido", "Edad", "Sexo", "Estado civil", 
-    "Escolaridad", "Ocupación", "Grupo", "Fecha de evaluación"
+    "Escolaridad", "Ocupación", "Grupo"
   ]
   # asegúrate de incluir los nombres de indicadores (si no están ya)
   for n in indicadores_nombres:

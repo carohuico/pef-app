@@ -148,26 +148,47 @@ def dialog_filtros():
             key="filter_fecha_desde"
         )
     with col2:
+        # si el usuario ya seleccionó fecha_desde, evitar que fecha_hasta pueda ser anterior
+        min_hasta = None
+        try:
+            if fecha_desde is not None:
+                min_hasta = fecha_desde
+        except Exception:
+            min_hasta = None
+
         fecha_hasta = st.date_input(
             "Fecha hasta",
             value=st.session_state['active_historial_filters'].get('fecha_hasta', None),
-            key="filter_fecha_hasta"
+            key="filter_fecha_hasta",
+            min_value=min_hasta
         )
     
+    if st.session_state.get('historial_filters_invalid_date'):
+        st.markdown("<br/>", unsafe_allow_html=True)
+        st.error(":material/warning: La 'Fecha hasta' no puede ser anterior a la 'Fecha desde'.")
+    elif st.session_state.get('historial_filters_no_results'):
+        st.markdown("<br/>", unsafe_allow_html=True)
+        st.warning(":material/info: No hay evaluaciones registradas que cumplan estos criterios")
+
     # Botones de acción
-    col1, col2, col3 = st.columns(3)
+    col1, col3 = st.columns(2)
     with col1:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         if st.button(":material/refresh: Limpiar", use_container_width=True, key="clear_filters"):
             st.session_state['active_historial_filters'] = {}
             if 'historial_df' in st.session_state:
                 del st.session_state['historial_df']
+            for k in ('historial_filters_no_results', 'historial_filters_invalid_date'):
+                if k in st.session_state:
+                    try:
+                        del st.session_state[k]
+                    except Exception:
+                        pass
             st.rerun()
     
     with col3:
         st.markdown("<br><br/>", unsafe_allow_html=True)  
         if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key="apply_filters"):
-            # Guardar filtros activos
             filters = {}
             if evaluado_filter != "Todos":
                 filters['Evaluado'] = evaluado_filter
@@ -180,33 +201,54 @@ def dialog_filtros():
                 filters['fecha_desde'] = fecha_desde
             if fecha_hasta:
                 filters['fecha_hasta'] = fecha_hasta
-            
+
             st.session_state['active_historial_filters'] = filters
-            
+
+            # Validación: 'fecha_hasta' no puede ser anterior a 'fecha_desde'
+            try:
+                if fecha_desde is not None and fecha_hasta is not None and fecha_hasta < fecha_desde:
+                    st.session_state['historial_filters_invalid_date'] = True
+                    # detener ejecución para mantener el diálogo abierto y mostrar el error
+                    st.stop()
+                else:
+                    if 'historial_filters_invalid_date' in st.session_state:
+                        try:
+                            del st.session_state['historial_filters_invalid_date']
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
             # Aplicar filtros
             df_filtered = df_original.copy()
-            
+
             if evaluado_filter != "Todos":
                 df_filtered = df_filtered[df_filtered['Nombre del evaluado'] == evaluado_filter]
-            
+
             if sexo_filter != "Todos":
                 df_filtered = df_filtered[df_filtered['Sexo'] == sexo_filter]
-            
+
             if grupo_filter != "Todos":
                 df_filtered = df_filtered[df_filtered['Grupo'] == grupo_filter]
-            
-            # Filtrar por edad mínima
+
             df_filtered = df_filtered[df_filtered['Edad'] >= edad_min]
-            
-            # Filtrar por rango de fechas
+
             if fecha_desde:
                 df_filtered = df_filtered[pd.to_datetime(df_filtered['Fecha de evaluación']) >= pd.to_datetime(fecha_desde)]
-            
+
             if fecha_hasta:
                 df_filtered = df_filtered[pd.to_datetime(df_filtered['Fecha de evaluación']) <= pd.to_datetime(fecha_hasta)]
-            
-            st.session_state['historial_df'] = df_filtered
-            st.rerun()
+
+            if df_filtered is None or df_filtered.empty:
+                st.session_state['historial_filters_no_results'] = True
+            else:
+                st.session_state['historial_df'] = df_filtered
+                if 'historial_filters_no_results' in st.session_state:
+                    try:
+                        del st.session_state['historial_filters_no_results']
+                    except Exception:
+                        pass
+                st.rerun()
 
 
 def get_historial_data() -> List[Dict]:

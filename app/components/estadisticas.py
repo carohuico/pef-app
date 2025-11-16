@@ -148,7 +148,10 @@ def modal_filtros():
             fecha_fin = st.date_input(
                 'Hasta',
                 value=None,
-                min_value=fecha_min,
+                # Evitar que 'Hasta' pueda ser menor que 'Desde': si el usuario
+                # ya seleccionó una fecha 'Desde', usarla como min_value; si no,
+                # usar el rango mínimo obtenido de la BD.
+                min_value=fecha_inicio if fecha_inicio is not None else fecha_min,
                 max_value=fecha_max,
                 key='filtro_fecha_fin',
                 format="YYYY/MM/DD"
@@ -176,7 +179,10 @@ def modal_filtros():
     
     with col_btn2:
         if st.button('Aplicar filtros', use_container_width=True, type='primary', key='btn_aplicar'):
-            # Mapear selecciones a IDs
+            if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
+                st.error("La fecha 'Hasta' no puede ser anterior a la fecha 'Desde'.")
+                st.stop()
+
             id_evaluado = None
             if evaluado_selected != 'Todos':
                 idx = df_evaluados[df_evaluados['nombre_completo'] == evaluado_selected].index

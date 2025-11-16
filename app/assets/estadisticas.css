@@ -16,14 +16,14 @@
 
 /*boton filtrar*/
 .stHorizontalBlock:has(button[kind="secondary"]) > div:last-child,
-.stHorizontalBlock:has(button[kind="secondary"]) > div:last-child *:not(button) {
+.stHorizontalBlock:has(button[kind="secondary"]) > div:last-child *:not(button):not([data-testid="stDialog"] *) {
     display: flex !important;
     justify-content: flex-end !important;
     align-items: flex-end !important;
     width: 100% !important;
 }
 
-.stHorizontalBlock:has(button[kind="secondary"]) button[kind="secondary"] {
+.stHorizontalBlock:has(button[kind="secondary"]) button[kind="secondary"]:not([data-testid="stDialog"] *) {
     white-space: nowrap !important;
     min-width: max-content !important;
     justify-content: flex-start !important;

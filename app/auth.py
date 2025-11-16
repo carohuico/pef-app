@@ -73,25 +73,20 @@ def create_token(username: str, role: str, id_usuario: int | None = None) -> str
         _auth_debug("create_token: JWT_SECRET_KEY no configurada, no se puede crear token")
         raise RuntimeError("JWT_SECRET_KEY no configurada en st.secrets ni en la variable de entorno JWT_SECRET_KEY")
     now = datetime.utcnow()
-    # Usar timestamps numéricos para compatibilidad y evitar problemas en decode
-    # Restar un desfase mayor (60s) al iat para tolerar diferencias de reloj
-    # y evitar problemas con la verificación estricta de iat en algunas versiones
+    
     iat = int(now.timestamp()) - 60
-    exp = int((now + timedelta(hours=24)).timestamp())
+    exp = int((now + timedelta(hours=2)).timestamp()) #* duración del token 
     payload = {
         "sub": username,
         "role": role,
         "iat": iat,
         "exp": exp,
     }
-    # Incluir id_usuario en el payload si está disponible
     if id_usuario is not None:
         payload["id_usuario"] = int(id_usuario)
         _auth_debug(f"create_token: creando token para user={username} id_usuario={id_usuario}")
-        # conserve un print para entornos no conectados a logger
         print(f"Creating token with id_usuario: {id_usuario}")
     token = jwt.encode(payload, secret, algorithm="HS256")
-    # jwt.encode returns str in pyjwt>=2
     return token
 
 

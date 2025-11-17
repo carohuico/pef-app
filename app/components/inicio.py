@@ -120,6 +120,7 @@ def inicio():
             except Exception:
                 pass
         
+        st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Seleccionar", type="primary", use_container_width=True):
             if selected_evaluado not in ["No hay evaluados registrados", "Error al cargar evaluados"]:
                 # Obtener el id del evaluado seleccionado

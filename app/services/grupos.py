@@ -123,7 +123,8 @@ def grupos():
         if len(seleccionados) == 0:
             st.warning("Selecciona al menos un grupo para eliminar")
         else:
-            eliminar_grupos_seleccionados(seleccionados)
+            # Abrir diálogo de confirmación antes de eliminar
+            confirmar_eliminar_grupos(seleccionados)
     
     # Mostrar subgrupos si solo hay 1 grupo seleccionado
     if len(seleccionados) == 1:
@@ -197,25 +198,133 @@ def mostrar_dialogo_editar_grupo(grupo, municipios_list, municipios_dict):
                 st.error(f"Error al actualizar grupo: {str(e)}")
 
 
+@st.dialog(":material/warning: Confirmar Eliminación de Grupo")
+def confirmar_eliminar_grupos(grupos_seleccionados):
+    """Diálogo para confirmar la eliminación de uno o más grupos (y sus subgrupos)."""
+    try:
+        n = len(grupos_seleccionados)
+    except Exception:
+        n = 0
+
+    if n == 1:
+        try:
+            nombre = grupos_seleccionados.iloc[0].get('Nombre', '')
+            st.warning(f"¿Estás seguro de que deseas eliminar el grupo **{nombre}** y sus subgrupos?")
+        except Exception:
+            st.warning("¿Estás seguro de que deseas eliminar este grupo y sus subgrupos?")
+    else:
+        st.warning(f"¿Estás seguro de que deseas eliminar **{n} grupo(s)** y sus subgrupos?")
+
+    st.markdown("<span style='color: #e60000;'>Esta acción eliminará los subgrupos en cascada y no se puede deshacer.</span>", unsafe_allow_html=True)
+
+    col_yes, col_no = st.columns(2)
+    with col_yes:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
+        label = ":material/check: Sí, eliminar"
+        if st.button(label, use_container_width=True, type="primary", key="confirm_grupos_eliminar"):
+            try:
+                msgs = eliminar_grupos_seleccionados(grupos_seleccionados)
+            except Exception as e:
+                msgs = [f"Error al eliminar grupos: {e}"]
+            st.session_state['_last_delete_messages'] = msgs
+            st.session_state['_last_delete_kind'] = 'grupos'
+
+    with col_no:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
+        label = ":material/cancel: Cancelar"
+        if st.button(label, use_container_width=True, key="cancel_grupos_eliminar"):
+            st.rerun()
+
+    # Mostrar mensajes de resultado (si los hay) debajo de los botones
+    if st.session_state.get('_last_delete_messages') and st.session_state.get('_last_delete_kind') == 'grupos':
+        msgs = st.session_state.get('_last_delete_messages', [])
+        for m in msgs:
+            st.success(m)
+        try:
+            time.sleep(2)
+        except Exception:
+            pass
+        del st.session_state['_last_delete_messages']
+        try:
+            del st.session_state['_last_delete_kind']
+        except Exception:
+            pass
+        st.rerun()
+
+
+@st.dialog(":material/warning: Confirmar Eliminación de Subgrupo")
+def confirmar_eliminar_subgrupos(subgrupos_seleccionados):
+    """Diálogo para confirmar la eliminación de subgrupos."""
+    try:
+        n = len(subgrupos_seleccionados)
+    except Exception:
+        n = 0
+
+    if n == 1:
+        try:
+            nombre = subgrupos_seleccionados.iloc[0].get('Nombre', '')
+            st.warning(f"¿Estás seguro de que deseas eliminar el subgrupo **{nombre}**?")
+        except Exception:
+            st.warning("¿Estás seguro de que deseas eliminar este subgrupo?")
+    else:
+        st.warning(f"¿Estás seguro de que deseas eliminar **{n} subgrupo(s)**?")
+
+    st.markdown("<span style='color: #e60000;'>Esta acción no se puede deshacer. Los evaluados de esos subgrupos quedarán como individuales.</span>", unsafe_allow_html=True)
+
+    col_yes, col_no = st.columns(2)
+    with col_yes:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
+        label = ":material/check: Sí, eliminar"
+        if st.button(label, use_container_width=True, type="primary", key="confirm_subgrupos_eliminar"):
+            try:
+                msgs = eliminar_subgrupos_seleccionados(subgrupos_seleccionados)
+            except Exception as e:
+                msgs = [f"Error al eliminar subgrupos: {e}"]
+            st.session_state['_last_delete_messages'] = msgs
+            st.session_state['_last_delete_kind'] = 'subgrupos'
+
+    with col_no:
+        st.markdown("<br><br/>", unsafe_allow_html=True)
+        label = ":material/cancel: Cancelar"
+        if st.button(label, use_container_width=True, key="cancel_subgrupos_eliminar"):
+            st.rerun()
+
+    # Mostrar mensajes de resultado (si los hay) debajo de los botones
+    if st.session_state.get('_last_delete_messages') and st.session_state.get('_last_delete_kind') == 'subgrupos':
+        msgs = st.session_state.get('_last_delete_messages', [])
+        for m in msgs:
+            st.success(m)
+        try:
+            time.sleep(2)
+        except Exception:
+            pass
+        del st.session_state['_last_delete_messages']
+        try:
+            del st.session_state['_last_delete_kind']
+        except Exception:
+            pass
+        st.rerun()
+
+
 def eliminar_grupos_seleccionados(grupos_seleccionados):
     """Elimina grupos con sus subgrupos en cascada"""
     try:
         eliminados = []
-        
+
         for idx, grupo in grupos_seleccionados.iterrows():
             id_grupo = int(grupo['ID'])
-            
+
             # Contar subgrupos
             subgrupos = st.session_state.grupos_df[
                 st.session_state.grupos_df['Grupo Padre'] == id_grupo
             ]
             num_subgrupos = len(subgrupos)
-            
+
             # Eliminar en cascada
             fetch_df(UPDATE_EVALUADOS_A_INDIVIDUALES, {'id_grupo': id_grupo})
             fetch_df(DELETE_SUBGRUPOS, {'id_grupo': id_grupo})
             fetch_df(DELETE_GRUPO, {'id_grupo': id_grupo})
-            
+
             label = f":material/check: Grupo '{grupo['Nombre']}'"
             if num_subgrupos > 0:
                 eliminados.append(
@@ -224,15 +333,12 @@ def eliminar_grupos_seleccionados(grupos_seleccionados):
             else:
                 eliminados.append(f"{label} eliminado")
 
-        for msg in eliminados:
-            st.success(msg)
-        
-        time.sleep(2)
+        # Actualizar cache de grupos pero NO hacer rerun aquí: el llamador (diálogo) decide cuándo refrescar.
         st.session_state.grupos_df = fetch_df(GET_GRUPOS)
-        st.rerun()
-            
+        return eliminados
     except Exception as e:
-        st.error(f"Error al eliminar grupos: {str(e)}")
+        # Devolver error como mensaje para que el llamador lo muestre debajo de los botones
+        return [f"Error al eliminar grupos: {str(e)}"]
 
 
 def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, municipios_list):
@@ -311,7 +417,8 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
         if len(seleccionados) == 0:
             st.warning("Selecciona al menos un subgrupo para eliminar")
         else:
-            eliminar_subgrupos_seleccionados(seleccionados)
+            # Abrir diálogo de confirmación antes de eliminar subgrupos
+            confirmar_eliminar_subgrupos(seleccionados)
 
 
 @st.dialog("Crear Nuevo Subgrupo")
@@ -337,7 +444,7 @@ def mostrar_dialogo_crear_subgrupo(id_grupo_padre, municipios_list, municipios_d
                     'nombre': nombre,
                     'direccion': direccion
                 })
-                st.success(f"✅ Subgrupo '{nombre}' creado exitosamente")
+                st.success(f"Subgrupo '{nombre}' creado exitosamente")
                 time.sleep(1)
                 st.session_state.grupos_df = fetch_df(GET_GRUPOS)
                 st.rerun()
@@ -382,22 +489,18 @@ def eliminar_subgrupos_seleccionados(subgrupos_seleccionados):
     """Elimina subgrupos y convierte sus evaluados en individuales"""
     try:
         eliminados = []
-        
+
         for idx, subgrupo in subgrupos_seleccionados.iterrows():
             id_subgrupo = int(subgrupo['ID'])
-            
+
             # Eliminar subgrupo
             fetch_df(UPDATE_EVALUADOS_A_INDIVIDUALES, {'id_grupo': id_subgrupo})
             fetch_df(DELETE_GRUPO, {'id_grupo': id_subgrupo})
 
             eliminados.append(f":material/check: Subgrupo '{subgrupo['Nombre']}' eliminado. Evaluados ahora son individuales.")
 
-        for msg in eliminados:
-            st.success(msg)
-        
-        time.sleep(2)
+        # Actualizar cache de grupos pero NO hacer rerun aquí: el llamador (diálogo) decide cuándo refrescar.
         st.session_state.grupos_df = fetch_df(GET_GRUPOS)
-        st.rerun()
-            
+        return eliminados
     except Exception as e:
-        st.error(f"Error al eliminar subgrupos: {str(e)}")
+        return [f"Error al eliminar subgrupos: {str(e)}"]

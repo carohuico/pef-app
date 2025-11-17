@@ -7,6 +7,7 @@ LISTADO_HISTORIAL_SQL = """
 SELECT 
     p.id_prueba,
     p.id_evaluado,
+    p.ruta_imagen,  
     CONCAT(e.nombre, ' ', e.apellido) AS [Nombre del evaluado],
     DATEDIFF(YEAR, e.fecha_nacimiento, GETDATE()) AS Edad,
     e.sexo AS Sexo,

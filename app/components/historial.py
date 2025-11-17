@@ -280,7 +280,8 @@ def get_historial_data() -> List[Dict]:
             raise ValueError("No rows returned from DB")
 
         expected_cols = [
-            'id_prueba', 'id_evaluado', 'Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación'
+            'id_prueba', 'id_evaluado', 'ruta_imagen', 'Nombre del evaluado', 
+            'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación'
         ]
         for c in expected_cols:
             if c not in df.columns:
@@ -412,7 +413,6 @@ def historial():
                         continue
 
                     info = {
-                        # Mapear los campos disponibles en el historial a nombres esperados por el exportador
                         "Fecha de evaluación": row.get('Fecha de evaluación', ''),
                         "Fecha": row.get('Fecha de evaluación', ''),
                         "Nombre": row.get('Nombre del evaluado', ''),
@@ -420,6 +420,7 @@ def historial():
                         "Edad": row.get('Edad', ''),
                         "Sexo": row.get('Sexo', ''),
                         "Grupo": row.get('Grupo', ''),
+                        "ruta_imagen": row.get('ruta_imagen', ''),  
                     }
                     info_list.append(info)
 

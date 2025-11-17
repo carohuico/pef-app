@@ -207,3 +207,8 @@ div[role="dialog"] > div:first-child {
     width: 700px !important;
     max-width: 95vw !important;
 }
+
+/* Mensajes de éxito [data-testid="stSuccessMessage"] */
+[data-testid="stElementContainer"]:has([data-testid="stAlert"] [data-testid="stAlertContentSuccess"]) {
+	margin-top: 2rem;
+}

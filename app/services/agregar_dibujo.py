@@ -230,7 +230,7 @@ def agregar_dibujo(info_obj):
                 render_export_popover(info_evaluado, indicadores)
         with col2:
             st.download_button(
-                label="Descargar datos como JSON",
+                label="Descargar datos como PDF",
                 data=df.to_json(orient='records', force_ascii=False),
                 file_name="prueba_evaluado.json",
                 mime='application/json; charset=utf-8',
@@ -246,7 +246,6 @@ def agregar_dibujo(info_obj):
         if step > 1:
             button_label = "Atrás"
             if st.button(button_label, use_container_width=True, key="agregar_back"):
-                # Sólo retroceder un paso (no cerrar el modal)
                 st.session_state["agregar_step"] = max(1, step - 1)
                 st.rerun()
         else:
@@ -255,7 +254,6 @@ def agregar_dibujo(info_obj):
                 st.session_state["agregar_uploaded_file"] = None
                 st.session_state["agregar_indicadores"] = None
                 st.session_state['add_drawing'] = False
-                # Limpiar la solicitud de apertura del diálogo
                 st.session_state['_agregar_dialog_open_requested'] = False
                 st.rerun()
     

@@ -192,7 +192,7 @@ def login_page():
                                     if df_user is not None and not df_user.empty:
                                         ua = df_user.iloc[0].get("ultimo_acceso")
                                         try:
-                                            st.success(f"Último acceso actualizado: {ua}")
+                                            st.success("Inicio de sesión exitoso")
                                         except Exception:
                                             pass
                                 except Exception as e:

@@ -1,0 +1,72 @@
+[
+  {
+    "indicator_ids": [
+      27
+    ],
+    "base_label_yolo": "FiguraHumana",
+    "confidence_base": 0.923,
+    "bbox_original": [
+      96,
+      139,
+      188,
+      389
+    ],
+    "crop_filename": "pred2_crop_1_FiguraHumana.jpg"
+  },
+  {
+    "indicator_ids": [
+      16
+    ],
+    "base_label_yolo": "Ropa",
+    "confidence_base": 0.891,
+    "bbox_original": [
+      99,
+      175,
+      183,
+      305
+    ],
+    "crop_filename": "pred2_crop_2_Ropa.jpg"
+  },
+  {
+    "indicator_ids": [
+      2
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.886,
+    "bbox_original": [
+      195,
+      144,
+      355,
+      315
+    ],
+    "crop_filename": "pred2_crop_3_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.875,
+    "bbox_original": [
+      128,
+      63,
+      362,
+      118
+    ],
+    "crop_filename": "pred2_crop_4_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      2
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.833,
+    "bbox_original": [
+      30,
+      125,
+      94,
+      232
+    ],
+    "crop_filename": "pred2_crop_5_Lluvia.jpg"
+  }
+]

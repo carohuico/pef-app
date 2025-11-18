@@ -93,7 +93,7 @@ def dialog_crear_evaluado():
 
         # --- Selección/Asignación de especialista (mismo comportamiento que en cargarImagen) ---
         try:
-            import auth
+            import services.auth as auth
             is_admin = auth.is_admin()
             is_esp = auth.is_especialista()
         except Exception:
@@ -287,7 +287,7 @@ def dialog_crear_evaluado():
                 ocupacion_val = None if ocupacion == "Selecciona una opción" else ocupacion
                 
                 try:
-                    import auth
+                    import services.auth as auth
                     is_esp = auth.is_especialista()
                 except Exception:
                     is_esp = False

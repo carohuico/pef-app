@@ -34,7 +34,7 @@ def inicio():
         try:
             # Si el usuario es especialista, listar solo sus evaluados
             try:
-                import auth
+                import services.auth as auth
                 is_esp = auth.is_especialista()
             except Exception:
                 is_esp = False
@@ -84,14 +84,14 @@ def inicio():
         
         # Mostrar la opción de crear nuevo evaluado solo a admin o especialista
         try:
-            import auth
+            import services.auth as auth
             can_create = auth.is_admin() or auth.is_especialista()
         except Exception:
             can_create = False
 
         if can_create:
             try:
-                import auth
+                import services.auth as auth
                 # Admin: abrir directamente el formulario de registrar (la asignación se gestiona dentro)
                 if auth.is_admin():
                     if st.button(":material/add: Crear nuevo evaluado", type="secondary", use_container_width=True):
@@ -214,7 +214,7 @@ def inicio():
         st.markdown("""<h5>Recientes</h5>""", unsafe_allow_html=True)
 
         try:
-            import auth
+            import services.auth as auth
             is_esp = auth.is_especialista()
             is_o = auth.is_operador()
         except Exception:

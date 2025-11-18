@@ -1,0 +1,146 @@
+[
+  {
+    "indicator_ids": [
+      27,
+      32
+    ],
+    "base_label_yolo": "FiguraHumana",
+    "confidence_base": 0.925,
+    "bbox_original": [
+      250,
+      430,
+      330,
+      597
+    ],
+    "crop_filename": "pred24_crop_1_FiguraHumana.jpg"
+  },
+  {
+    "indicator_ids": [
+      9,
+      13
+    ],
+    "base_label_yolo": "Paraguas",
+    "confidence_base": 0.921,
+    "bbox_original": [
+      249,
+      359,
+      376,
+      434
+    ],
+    "crop_filename": "pred24_crop_2_Paraguas.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.651,
+    "bbox_original": [
+      65,
+      46,
+      202,
+      138
+    ],
+    "crop_filename": "pred24_crop_3_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.565,
+    "bbox_original": [
+      247,
+      42,
+      379,
+      130
+    ],
+    "crop_filename": "pred24_crop_4_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.542,
+    "bbox_original": [
+      441,
+      31,
+      596,
+      130
+    ],
+    "crop_filename": "pred24_crop_5_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      3
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.5,
+    "bbox_original": [
+      56,
+      122,
+      621,
+      319
+    ],
+    "crop_filename": "pred24_crop_6_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      1,
+      3
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.443,
+    "bbox_original": [
+      468,
+      129,
+      618,
+      298
+    ],
+    "crop_filename": "pred24_crop_7_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      2
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.427,
+    "bbox_original": [
+      241,
+      129,
+      387,
+      302
+    ],
+    "crop_filename": "pred24_crop_8_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      1,
+      3
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.421,
+    "bbox_original": [
+      62,
+      136,
+      220,
+      278
+    ],
+    "crop_filename": "pred24_crop_9_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.403,
+    "bbox_original": [
+      62,
+      17,
+      600,
+      141
+    ],
+    "crop_filename": "pred24_crop_10_Paisaje.jpg"
+  }
+]

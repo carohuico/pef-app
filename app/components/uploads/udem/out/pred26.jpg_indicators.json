@@ -1,0 +1,87 @@
+[
+  {
+    "indicator_ids": [
+      3
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.939,
+    "bbox_original": [
+      61,
+      0,
+      633,
+      180
+    ],
+    "crop_filename": "pred26_crop_1_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      9,
+      13
+    ],
+    "base_label_yolo": "Paraguas",
+    "confidence_base": 0.893,
+    "bbox_original": [
+      228,
+      80,
+      546,
+      190
+    ],
+    "crop_filename": "pred26_crop_3_Paraguas.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.741,
+    "bbox_original": [
+      477,
+      3,
+      593,
+      54
+    ],
+    "crop_filename": "pred26_crop_4_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.728,
+    "bbox_original": [
+      164,
+      12,
+      235,
+      65
+    ],
+    "crop_filename": "pred26_crop_5_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.678,
+    "bbox_original": [
+      71,
+      9,
+      160,
+      92
+    ],
+    "crop_filename": "pred26_crop_6_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.558,
+    "bbox_original": [
+      256,
+      0,
+      350,
+      69
+    ],
+    "crop_filename": "pred26_crop_7_Paisaje.jpg"
+  }
+]

@@ -1,0 +1,202 @@
+[
+  {
+    "image_filename": "pred1.jpg",
+    "indicators_saved": 4,
+    "indicators_path": ".\\out\\pred1.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred1.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred11.jpg",
+    "indicators_saved": 3,
+    "indicators_path": ".\\out\\pred11.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred11.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred12.jpg",
+    "indicators_saved": 2,
+    "indicators_path": ".\\out\\pred12.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred12.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred14.jpg",
+    "indicators_saved": 2,
+    "indicators_path": ".\\out\\pred14.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred14.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred16.jpg",
+    "indicators_saved": 8,
+    "indicators_path": ".\\out\\pred16.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred16.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred19.jpeg",
+    "indicators_saved": 4,
+    "indicators_path": ".\\out\\pred19.jpeg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred19.jpeg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred2.jpg",
+    "indicators_saved": 5,
+    "indicators_path": ".\\out\\pred2.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred2.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred20.jpeg",
+    "indicators_saved": 3,
+    "indicators_path": ".\\out\\pred20.jpeg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred20.jpeg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred21.jpg",
+    "indicators_saved": 4,
+    "indicators_path": ".\\out\\pred21.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred21.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred22.jpg",
+    "indicators_saved": 5,
+    "indicators_path": ".\\out\\pred22.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred22.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred23.jpg",
+    "indicators_saved": 2,
+    "indicators_path": ".\\out\\pred23.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred23.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred24.jpg",
+    "indicators_saved": 10,
+    "indicators_path": ".\\out\\pred24.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred24.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred25.jpg",
+    "indicators_saved": 3,
+    "indicators_path": ".\\out\\pred25.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred25.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred26.jpg",
+    "indicators_saved": 6,
+    "indicators_path": ".\\out\\pred26.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred26.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred30.jpg",
+    "indicators_saved": 2,
+    "indicators_path": ".\\out\\pred30.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred30.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred31.jpg",
+    "indicators_saved": 6,
+    "indicators_path": ".\\out\\pred31.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred31.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred32.JPG",
+    "indicators_saved": 4,
+    "indicators_path": ".\\out\\pred32.JPG_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred32.JPG_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred33.JPG",
+    "indicators_saved": 4,
+    "indicators_path": ".\\out\\pred33.JPG_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred33.JPG_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred34.JPG",
+    "indicators_saved": 2,
+    "indicators_path": ".\\out\\pred34.JPG_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred34.JPG_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred36.jpg",
+    "indicators_saved": 4,
+    "indicators_path": ".\\out\\pred36.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred36.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred37.jpg",
+    "indicators_saved": 2,
+    "indicators_path": ".\\out\\pred37.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred37.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred4.jpg",
+    "indicators_saved": 4,
+    "indicators_path": ".\\out\\pred4.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred4.jpg_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred5.png",
+    "indicators_saved": 3,
+    "indicators_path": ".\\out\\pred5.png_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred5.png_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred7.png",
+    "indicators_saved": 3,
+    "indicators_path": ".\\out\\pred7.png_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred7.png_bboxes.png",
+    "bboxes_scaled": false
+  },
+  {
+    "image_filename": "pred9.jpg",
+    "indicators_saved": 3,
+    "indicators_path": ".\\out\\pred9.jpg_indicators.json",
+    "bboxes_drawn": true,
+    "bboxes_path": ".\\out\\bboxes\\pred9.jpg_bboxes.png",
+    "bboxes_scaled": false
+  }
+]

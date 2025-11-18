@@ -255,7 +255,7 @@ def get_historial_data() -> List[Dict]:
     """Obtiene el historial de pruebas/evaluaciones desde la BD."""
     try:
         try:
-            import auth
+            import services.auth as auth
             if auth.is_especialista():
                 user = st.session_state.get("user", {})
                 id_usuario = user.get("id_usuario")

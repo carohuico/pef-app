@@ -1,0 +1,60 @@
+[
+  {
+    "indicator_ids": [
+      32
+    ],
+    "base_label_yolo": "FiguraHumana",
+    "confidence_base": 0.938,
+    "bbox_original": [
+      268,
+      283,
+      366,
+      566
+    ],
+    "crop_filename": "pred21_crop_1_FiguraHumana.jpg"
+  },
+  {
+    "indicator_ids": [
+      8
+    ],
+    "base_label_yolo": "Paraguas",
+    "confidence_base": 0.881,
+    "bbox_original": [
+      257,
+      225,
+      337,
+      285
+    ],
+    "crop_filename": "pred21_crop_2_Paraguas.jpg"
+  },
+  {
+    "indicator_ids": [
+      3,
+      4
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.865,
+    "bbox_original": [
+      29,
+      4,
+      637,
+      585
+    ],
+    "crop_filename": "pred21_crop_3_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      1,
+      2
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.745,
+    "bbox_original": [
+      462,
+      14,
+      636,
+      572
+    ],
+    "crop_filename": "pred21_crop_4_Lluvia.jpg"
+  }
+]

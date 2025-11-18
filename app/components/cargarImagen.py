@@ -6,7 +6,7 @@ from services.exportar import render_export_popover
 import bootstrap
 from streamlit_js_eval import streamlit_js_eval
 
-from config.settings import ALLOWED_EXTENSIONS, TEMP_DIR, STD_DIR
+from config.settings import ALLOWED_EXTENSIONS, TEMP_DIR, ORIGINALS_DIR
 from services.image_preprocess import estandarizar_imagen
 from services.indicadores import simular_resultado
 from services.db import get_engine, fetch_df
@@ -94,7 +94,7 @@ def cargar_imagen_component():
         def registrar_component():
             # --- Primera fila: Selección de especialista (si aplica) ---
             try:
-                import auth
+                import services.auth as auth
                 is_admin = auth.is_admin()
                 is_esp = auth.is_especialista()
             except Exception:
@@ -314,8 +314,6 @@ def cargar_imagen_component():
             with col1:
                 if st.session_state.get("uploaded_file") is not None:
                     original = Image.open(st.session_state["uploaded_file"])
-                    # st.image(image, use_container_width=True)
-                    #dibujar bounding boxes en la imagen 
                     boxes = []
                     for ind in indicadores:
                         box = {
@@ -440,6 +438,7 @@ def cargar_imagen_component():
                             "escolaridad": st.session_state.get("escolaridad", ""),
                             "ocupacion": st.session_state.get("ocupacion", ""),
                             "grupo": st.session_state.get("form_grupo", ""),
+                            "ruta_imagen": str(Path(ORIGINALS_DIR) / st.session_state.get("uploaded_file").name) if st.session_state.get("uploaded_file") is not None else ""
                         }
                         render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
                     else:
@@ -467,7 +466,8 @@ def cargar_imagen_component():
                                     ).at[0, "nombre"]
                                     if not pd.isna(df_evaluado.at[0, "id_grupo"]) else ""
                                 ) if not df_evaluado.empty else ""
-                            )
+                            ),
+                            "ruta_imagen": str(Path(ORIGINALS_DIR) / st.session_state.get("uploaded_file").name) if st.session_state.get("uploaded_file") is not None else ""
                         }
                         render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
                         
@@ -553,9 +553,11 @@ def cargar_imagen_component():
                             imagen = Image.open(st.session_state["uploaded_file"])
                             nombre = st.session_state["uploaded_file"].name
                             temp_path = Path(TEMP_DIR) / nombre
-                            std_path = Path(STD_DIR) / nombre
+                            orig_path = Path(ORIGINALS_DIR) / nombre
+                            # Save original image (no forced resize)
+                            estandarizar_imagen(imagen, orig_path)
+                            # keep a temp copy as before
                             imagen.save(temp_path)
-                            estandarizar_imagen(imagen, std_path)
                             st.session_state["current_step"] = min(3, step + 1)
                             st.rerun()
                     elif step == 3:
@@ -625,7 +627,8 @@ def cargar_imagen_component():
                             id_evaluado = st.session_state.get('id_evaluado')
                             if id_evaluado is not None:
                                 nombre_archivo = st.session_state["uploaded_file"].name
-                                ruta_imagen = str(Path(STD_DIR) / nombre_archivo)
+                                ruta_imagen = str(Path(ORIGINALS_DIR) / nombre_archivo)
+                                print("ruta_imagen:", ruta_imagen)
                                 formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
                                 fecha_actual = datetime.datetime.now()
 

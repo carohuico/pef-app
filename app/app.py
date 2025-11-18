@@ -7,8 +7,8 @@ from components.historial import historial
 from components.individual import individual
 from components.estadisticas import estadisticas
 from components.ajustes import ajustes
-import auth
-import login_page
+import services.auth as auth
+import components.login_page as login_page
 
 _css_general = Path(__file__).parent / 'assets' / 'general.css'
 _css_registrar = Path(__file__).parent / 'assets' / '1_registrar.css'

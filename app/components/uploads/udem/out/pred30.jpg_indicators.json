@@ -1,0 +1,32 @@
+[
+  {
+    "indicator_ids": [
+      2,
+      4
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.91,
+    "bbox_original": [
+      110,
+      164,
+      1428,
+      1114
+    ],
+    "crop_filename": "pred30_crop_3_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      8,
+      10
+    ],
+    "base_label_yolo": "Paraguas",
+    "confidence_base": 0.824,
+    "bbox_original": [
+      926,
+      940,
+      1276,
+      1252
+    ],
+    "crop_filename": "pred30_crop_5_Paraguas.jpg"
+  }
+]

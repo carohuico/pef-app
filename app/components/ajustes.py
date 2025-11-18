@@ -25,7 +25,7 @@ def ajustes():
 
     is_esp = False
     try:
-        import auth
+        import services.auth as auth
         is_esp = auth.is_especialista()
     except Exception:
         is_esp = False

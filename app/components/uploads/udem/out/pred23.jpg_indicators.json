@@ -1,0 +1,31 @@
+[
+  {
+    "indicator_ids": [
+      9,
+      13
+    ],
+    "base_label_yolo": "Paraguas",
+    "confidence_base": 0.889,
+    "bbox_original": [
+      175,
+      40,
+      448,
+      203
+    ],
+    "crop_filename": "pred23_crop_3_Paraguas.jpg"
+  },
+  {
+    "indicator_ids": [
+      16
+    ],
+    "base_label_yolo": "Ropa",
+    "confidence_base": 0.858,
+    "bbox_original": [
+      250,
+      296,
+      409,
+      482
+    ],
+    "crop_filename": "pred23_crop_4_Ropa.jpg"
+  }
+]

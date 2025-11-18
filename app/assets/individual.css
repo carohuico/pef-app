@@ -4,14 +4,14 @@
     color: #000000;
 	border:none;
     box-shadow: 0 3px 6px rgba(0,0,0,0.06);
-	width: 100px;
-    transform: translateY(-20px);
+	width: 100% !important;
+    transform: translateY(-36px);
 	margin: 0;
 	display: inline-block;
 }
 [data-testid^="stBaseButton-primary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *):hover {
     background: #FFD626;
-    transform: translateY(-20px);
+    transform: translateY(-36px);
 }
 
 /*secundarios*/
@@ -149,7 +149,7 @@
 [data-testid="stBaseButton-tertiary"]:not([data-testid="stSidebar"] *):not([data-testid="stDialog"] *) {
 	color: #000000;
 	width: 5px;
-	transform: translateY(-20px);
+	transform: translateY(-30px);
 	margin: 0;
 	display: inline-block;
 	border: none !important;

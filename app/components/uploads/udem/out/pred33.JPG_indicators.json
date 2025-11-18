@@ -1,0 +1,59 @@
+[
+  {
+    "indicator_ids": [
+      32
+    ],
+    "base_label_yolo": "FiguraHumana",
+    "confidence_base": 0.925,
+    "bbox_original": [
+      649,
+      1280,
+      1887,
+      2643
+    ],
+    "crop_filename": "pred33_crop_1_FiguraHumana.jpg"
+  },
+  {
+    "indicator_ids": [
+      2,
+      4
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.882,
+    "bbox_original": [
+      366,
+      671,
+      1926,
+      2386
+    ],
+    "crop_filename": "pred33_crop_3_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.828,
+    "bbox_original": [
+      0,
+      667,
+      714,
+      1040
+    ],
+    "crop_filename": "pred33_crop_4_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.658,
+    "bbox_original": [
+      1197,
+      179,
+      2491,
+      644
+    ],
+    "crop_filename": "pred33_crop_7_Paisaje.jpg"
+  }
+]

@@ -150,6 +150,15 @@ def logout():
                 del st.session_state[k]
         except Exception as exc:
             _auth_debug(f"logout: error borrando clave {k}: {str(exc)}")
+    # Además limpiar caches relacionadas a vistas que dependen del usuario
+    extra_caches = ["historial_df", "evaluados_df", "auth_debug_logs", "hist_delete_msg"]
+    for k in extra_caches:
+        try:
+            if k in st.session_state:
+                del st.session_state[k]
+                _auth_debug(f"logout: eliminada cache {k}")
+        except Exception as exc:
+            _auth_debug(f"logout: fallo borrando cache {k}: {str(exc)}")
     # Además eliminar claves relacionadas con subidas / media que pueden referenciar ids en memoria
     media_like = [
         "uploaded_file",

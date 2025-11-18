@@ -220,6 +220,13 @@ def login_page():
                         # Guardar en session state
                         st.session_state["jwt_token"] = token
                         st.session_state["user"] = user
+
+                        for _k in ("historial_df", "evaluados_df", "auth_debug_logs", "hist_delete_msg"):
+                            if _k in st.session_state:
+                                try:
+                                    del st.session_state[_k]
+                                except Exception:
+                                    pass
                         
                         try:
                             st.session_state["active_view"] = "inicio"

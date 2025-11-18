@@ -97,6 +97,14 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                         selected_rows = selected_rows.rename(columns={'Fecha de evaluación': 'Fecha'}) 
                     except Exception:
                         pass
+            # Prefer 'Nombre del evaluado' over a generic 'Nombre' column
+            try:
+                if 'Nombre del evaluado' in cols and 'Nombre' in cols:
+                    selected_rows = selected_rows.drop(columns=['Nombre'])
+                    # refresh cols to reflect changes
+                    cols = list(selected_rows.columns)
+            except Exception:
+                pass
     except Exception:
         pass
 

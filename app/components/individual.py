@@ -681,7 +681,7 @@ def individual(id_evaluado: str = None):
             .resultados-header {{
                 font-size: 16px;
                 font-weight: 600;
-                color: #444444;
+                color: #111111;
                 padding-left: 10px; 
                 display: flex;
                 align-items: center;
@@ -736,7 +736,6 @@ def individual(id_evaluado: str = None):
                 font-size: 14px;
                 font-weight: 600;
                 color: #444444;
-                margin-bottom: 10px;
                 line-height: 1.4;
             }}
             
@@ -744,7 +743,6 @@ def individual(id_evaluado: str = None):
                 font-size: 12px;
                 color: #444444;
                 line-height: 1.6;
-                margin-bottom: 14px;
                 white-space: normal;
                 word-wrap: break-word;
             }}
@@ -787,6 +785,26 @@ def individual(id_evaluado: str = None):
                 min-width: 50px;
                 text-align: right;
                 white-space: nowrap;
+            }}
+
+            /* Category label styles */
+            .categoria-label {{
+                display: inline-block;
+                font-size: 11px;
+                font-weight: 700;
+                padding: 4px 8px;
+                border-radius: 999px;
+                text-transform: none;
+                margin-right: 8px;
+                vertical-align: middle;
+            }}
+            .categoria-1 {{
+                background: #FF8C00; /* naranja */
+                color: #FFFFFF;
+            }}
+            .categoria-2 {{
+                background: #00BFFF; /* celeste */
+                color: #FFFFFF;
             }}
             
             .empty-state {{
@@ -1169,7 +1187,14 @@ def individual(id_evaluado: str = None):
 
                 console.log(`[DEBUG] Box ${{idx}}: natural=[${{bboxPixels.x}}, ${{bboxPixels.y}}, ${{bboxPixels.width}}, ${{bboxPixels.height}}] display=[${{x}}, ${{y}}, ${{width}}, ${{height}}]`);
 
-                const baseColor = bboxColors[idx % bboxColors.length];
+                // Determine category styling (force only two colors for categories 1 and 2)
+                const catId = resultado.id_categoria || 0;
+                const catName = resultado.categoria_nombre || '';
+
+                let baseColor;
+                if (parseInt(catId) === 1) {{ baseColor = '#FF8C00'; }}
+                else if (parseInt(catId) === 2) {{ baseColor = '#00BFFF'; }}
+                else {{ baseColor = '#FF8C00'; /* fallback to orange */ }}
                 const hoverColor = lightenHex(baseColor, 0.42);
                 const isHovered = (idx === hoveredBboxIndex);
 
@@ -1177,6 +1202,8 @@ def individual(id_evaluado: str = None):
                     x, y, width, height,
                     nombre: resultado.nombre_indicador || 'Indicador',
                     confianza: resultado.confianza || 0,
+                    id_categoria: catId,
+                    categoria_nombre: catName,
                     baseColor, hoverColor
                 }});
 
@@ -1186,37 +1213,34 @@ def individual(id_evaluado: str = None):
 
                 if (isHovered) {{
                     bboxCtx.fillStyle = hoverColor + '55';
-                    try {{
-                        bboxCtx.fillRect(x, y, width, height);
-                    }} catch (e) {{}}
+                    try {{ bboxCtx.fillRect(x, y, width, height); }} catch (e) {{}}
                 }}
 
-                const conf = (resultado.confianza * 100).toFixed(1);
-                const labelText = `${{conf}}%`;
+                // Draw confidence label directly above the bbox (no category name shown)
+                try {{
+                    const padding = 6;
+                    const conf = (resultado.confianza * 100).toFixed(1);
+                    const confLabel = `${{conf}}%`;
 
-                bboxCtx.font = 'bold 13px Poppins, sans-serif';
-                const textMetrics = bboxCtx.measureText(labelText);
-                const textWidth = textMetrics.width;
-                const textHeight = 16;
-                const padding = 4;
+                    bboxCtx.font = 'bold 13px Poppins, sans-serif';
+                    const confW = bboxCtx.measureText(confLabel).width;
+                    const confH = 16;
+                    const confPadding = 4;
+                    const confBg = isHovered ? hoverColor : baseColor;
+                    const confTextColor = isHovered ? 'black' : 'white';
 
-                const labelBg = isHovered ? hoverColor : baseColor;
-                const labelTextColor = isHovered ? 'black' : 'white';
+                    const confY = Math.max(0, y - confH - confPadding - padding);
 
-                bboxCtx.fillStyle = labelBg;
-                bboxCtx.fillRect(
-                    x,
-                    Math.max(0, y - textHeight - padding * 2),
-                    textWidth + padding * 2,
-                    textHeight + padding * 2
-                );
-
-                bboxCtx.fillStyle = labelTextColor;
-                bboxCtx.fillText(
-                    labelText,
-                    x + padding,
-                    Math.max(textHeight, y - padding)
-                );
+                    bboxCtx.fillStyle = confBg;
+                    bboxCtx.fillRect(
+                        x,
+                        confY,
+                        confW + confPadding * 2,
+                        confH + confPadding * 2
+                    );
+                    bboxCtx.fillStyle = confTextColor;
+                    bboxCtx.fillText(confLabel, x + confPadding, confY + confH - 2);
+                }} catch (e) {{ console.error('Error drawing confidence label', e); }}
             }});
         }}
         
@@ -1423,16 +1447,28 @@ def individual(id_evaluado: str = None):
             
             let html = '';
             resultados.forEach((resultado, idx) => {{
+                const rawSignificado = resultado.significado;
+                if (rawSignificado === undefined || rawSignificado === null) return;
+                if (typeof rawSignificado === 'string' && rawSignificado.trim() === '') return;
+                if (typeof rawSignificado === 'string' && rawSignificado.trim() === '-') return;
+
                 const nombre = escapeHtml(resultado.nombre_indicador || 'Indicador');
-                const significado = escapeHtml(resultado.significado || 'Sin descripción');
+                const significado = escapeHtml(rawSignificado || 'Sin descripción');
                 const confianza = resultado.confianza || 0;
                 const confianzaPct = Math.min(100, Math.max(0, confianza * 100));
                 const delay = idx * 0.05;
-                
+
+                const categoriaNombre = escapeHtml(resultado.categoria_nombre || '');
+                const categoriaId = resultado.id_categoria || 0;
+                const categoriaHtml = categoriaNombre ? `<span class="categoria-label categoria-${{categoriaId}}">${{categoriaNombre}}</span>` : '';
+
                 html += `
                     <div class="resultado-card" style="animation-delay: ${{delay}}s;">
-                        <div class="indicador-nombre">${{nombre}}</div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                            <div class="indicador-nombre">${{nombre}}</div>
+                        </div>
                         <div class="significado-texto">${{significado}}</div>
+                        <div style="margin-top:8px;margin-bottom:8px;">${{categoriaHtml}}</div>
                         <div class="confianza-container">
                             <span class="confianza-label">Confianza</span>
                             <div class="confianza-bar-wrapper">

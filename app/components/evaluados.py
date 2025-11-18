@@ -19,6 +19,9 @@ def confirmar_eliminacion_historial(selected_rows_df):
     except Exception:
         n = 0
 
+    # Key para mensaje de confirmación mostrado debajo de los botones
+    msg_key = 'hist_delete_msg'
+
     if n == 1:
         try:
             nombre = selected_rows_df.iloc[0].get('Nombre', '')
@@ -56,7 +59,9 @@ def confirmar_eliminacion_historial(selected_rows_df):
                                 rows_deleted = len(deleted_rows)
                             except Exception:
                                 rows_deleted = res.rowcount if hasattr(res, 'rowcount') and res.rowcount is not None else 0
-                        st.success(f"Se eliminaron {rows_deleted} evaluado(s).")
+                        # Guardar el mensaje en session_state para mostrarlo fuera de la columna
+                        st.session_state[msg_key] = f"Se eliminaron {rows_deleted} evaluado(s)."
+                        # Actualizar datos en session_state
                         st.session_state['evaluados_df'] = pd.DataFrame(get_historial_data())
                         st.session_state['historial_selection'] = {'rows': []}
                     except Exception as e:
@@ -69,7 +74,18 @@ def confirmar_eliminacion_historial(selected_rows_df):
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/cancel: Cancelar"
         if st.button(label, use_container_width=True, key="hist_cancelar_eliminar"):
+            # Si hay un mensaje previo de eliminación, eliminarlo al cancelar
+            if msg_key in st.session_state:
+                try:
+                    del st.session_state[msg_key]
+                except Exception:
+                    pass
             st.rerun()
+
+    # Mostrar mensaje de confirmación debajo de ambos botones si existe
+    if msg_key in st.session_state and st.session_state.get(msg_key):
+        st.markdown("<br/>", unsafe_allow_html=True)
+        st.success(st.session_state.get(msg_key))
 
 
 @st.dialog(":material/add: Crear Evaluado")
@@ -948,9 +964,27 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
             df = df[mask]
     
 
+    # ========== PAGINACIÓN ==========
+    ROWS_PER_PAGE = 9
+    page_key = f"{key_prefix}__page"
+    if page_key not in st.session_state:
+        st.session_state[page_key] = 1
+
+    total_rows = len(df_display)
+    total_pages = max(1, (total_rows + ROWS_PER_PAGE - 1) // ROWS_PER_PAGE)
+    if st.session_state[page_key] > total_pages:
+        st.session_state[page_key] = total_pages
+
+    page = st.session_state[page_key]
+    start_idx = (page - 1) * ROWS_PER_PAGE
+    end_idx = start_idx + ROWS_PER_PAGE
+
+    # Filtrar el DataFrame para la página actual (conservar índices originales)
+    df_display_page = df_display.iloc[start_idx:end_idx].copy()
+
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
-        df_display,
+        df_display_page,
         use_container_width=True,
         hide_index=True,
         key=f"{key_prefix}__evaluados_table_editor",
@@ -970,7 +1004,29 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
         disabled=['Nombre', 'Apellido', 'Edad', 'Sexo', 'Estado civil', 'Escolaridad', 'Ocupación', 'Grupo', 'Especialista']
     )
     
-    st.caption(f"**Total de evaluados:** {len(df)}")
+    st.caption(f"**Total de evaluados:** {len(df)} | **Mostrando:** {start_idx + 1}-{min(end_idx, total_rows)}")
+
+    # --- PAGINACIÓN (debajo de la tabla) ---
+    if total_pages > 1:
+        col_prev, col_center, col_next = st.columns([1, 2, 1])
+
+        with col_prev:
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key=f"{key_prefix}__btn_prev_page", type="tertiary", use_container_width=True):
+                st.session_state[page_key] -= 1
+                st.rerun()
+
+        with col_center:
+            st.markdown(
+                f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key]} de {total_pages}</strong></div>",
+                unsafe_allow_html=True
+            )
+
+        with col_next:
+            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state[page_key] == total_pages), key=f"{key_prefix}__btn_next_page", type="tertiary", use_container_width=True):
+                st.session_state[page_key] += 1
+                st.rerun()
+
+        st.markdown("<br/>", unsafe_allow_html=True)
     
     # Obtener evaluados seleccionados
     seleccionados = edited_df[edited_df['Seleccionar'] == True]

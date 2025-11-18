@@ -320,9 +320,25 @@ def indicadores():
         df_display = df_display[mask]
         df = df[mask]
     
+    # ========== PAGINACIÓN (indicadores) ==========
+    ROWS_PER_PAGE = 9
+    page_key = 'indicadores_current_page'
+    if page_key not in st.session_state:
+        st.session_state[page_key] = 1
+
+    total_rows = len(df_display)
+    total_pages = max(1, (total_rows + ROWS_PER_PAGE - 1) // ROWS_PER_PAGE)
+    if st.session_state[page_key] > total_pages:
+        st.session_state[page_key] = total_pages
+
+    page = st.session_state[page_key]
+    start_idx = (page - 1) * ROWS_PER_PAGE
+    end_idx = start_idx + ROWS_PER_PAGE
+    df_display_page = df_display.iloc[start_idx:end_idx].copy()
+
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
-        df_display,
+        df_display_page,
         use_container_width=True,
         hide_index=True,
         key="indicadores_table_editor",
@@ -342,7 +358,22 @@ def indicadores():
     )
     
     # Total de indicadores debajo de la tabla
-    st.caption(f"**Total de indicadores:** {len(df)}")
+    st.caption(f"**Total de indicadores:** {len(df)} | **Mostrando:** {start_idx + 1}-{min(end_idx, total_rows)}")
+
+    # Paginación debajo de la tabla
+    if total_pages > 1:
+        col_prev, col_center, col_next = st.columns([1, 2, 1])
+        with col_prev:
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key="indicadores_btn_prev", type="tertiary", use_container_width=True):
+                st.session_state[page_key] -= 1
+                st.rerun()
+        with col_center:
+            st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key]} de {total_pages}</strong></div>", unsafe_allow_html=True)
+        with col_next:
+            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state[page_key] == total_pages), key="indicadores_btn_next", type="tertiary", use_container_width=True):
+                st.session_state[page_key] += 1
+                st.rerun()
+        st.markdown("<br/>", unsafe_allow_html=True)
     
     # Obtener indicadores seleccionados
     seleccionados = edited_df[edited_df['Seleccionar'] == True]

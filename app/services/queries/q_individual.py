@@ -20,6 +20,8 @@ SELECT
             r.id_indicador,
             i.nombre AS nombre_indicador,
             i.significado,
+            i.id_categoria,
+            c.nombre AS categoria_nombre,
             r.confianza,
             r.x_min,
             r.y_min,
@@ -27,6 +29,7 @@ SELECT
             r.y_max
         FROM dbo.Resultado r
         LEFT JOIN dbo.Indicador i ON r.id_indicador = i.id_indicador
+        LEFT JOIN dbo.Categoria c ON i.id_categoria = c.id_categoria
         WHERE r.id_prueba = p.id_prueba
         ORDER BY r.id_resultado ASC
         FOR JSON PATH
@@ -49,6 +52,8 @@ SELECT
     r.id_indicador,
     i.nombre AS nombre_indicador,
     i.significado,
+    i.id_categoria,
+    c.nombre AS categoria_nombre,
     r.confianza,
     r.x_min,
     r.y_min,
@@ -56,6 +61,7 @@ SELECT
     r.y_max
 FROM dbo.Resultado r
 LEFT JOIN dbo.Indicador i ON r.id_indicador = i.id_indicador
+LEFT JOIN dbo.Categoria c ON i.id_categoria = c.id_categoria
 WHERE r.id_prueba = :id_prueba
 ORDER BY r.id_resultado ASC;  
 """

@@ -21,6 +21,27 @@ ORDER BY
     p.fecha DESC, p.id_prueba DESC;
 """
 
+# Query parametrizada para especialistas: filtra por el especialista asignado (e.id_usuario)
+LISTADO_HISTORIAL_POR_ESPECIALISTA = """
+SELECT 
+    p.id_prueba,
+    p.id_evaluado,
+    p.ruta_imagen,  
+    CONCAT(e.nombre, ' ', e.apellido) AS [Nombre del evaluado],
+    DATEDIFF(YEAR, e.fecha_nacimiento, GETDATE()) AS Edad,
+    e.sexo AS Sexo,
+    ISNULL(g.nombre, 'Sin grupo') AS Grupo,
+    FORMAT(p.fecha, 'dd/MM/yyyy') AS [Fecha de evaluación]
+FROM 
+    dbo.Prueba p
+    INNER JOIN dbo.Evaluado e ON p.id_evaluado = e.id_evaluado
+    LEFT JOIN dbo.Grupo g ON e.id_grupo = g.id_grupo
+WHERE
+    e.id_usuario = :id_usuario
+ORDER BY 
+    p.fecha DESC, p.id_prueba DESC;
+"""
+
 # Query para eliminar pruebas por lista de IDs
 ELIMINAR_PRUEBAS = """
 DECLARE @ids_table TABLE (id INT);

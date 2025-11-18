@@ -212,3 +212,7 @@ div[role="dialog"] > div:first-child {
 [data-testid="stElementContainer"]:has([data-testid="stAlert"] [data-testid="stAlertContentSuccess"]) {
 	margin-top: 2rem;
 }
+
+[data-testid="stElementContainer"]:has([data-testid="stAlert"] [data-testid="stAlertContentError"]) {
+	margin-top: 2rem;
+}

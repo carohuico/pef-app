@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
-from typing import List, Dict
+from typing import List, Dict, Set
 from pathlib import Path
 from services.db import fetch_df, get_engine
 from services.queries.q_individual import GET_RESULTADOS_POR_PRUEBA
 from services.exportar import render_export_popover
-from services.queries.q_historial import LISTADO_HISTORIAL_SQL, ELIMINAR_PRUEBAS
+from services.queries.q_historial import LISTADO_HISTORIAL_SQL, ELIMINAR_PRUEBAS, LISTADO_HISTORIAL_POR_ESPECIALISTA
 from services.queries.q_registro import GET_GRUPOS
 from sqlalchemy import text
 import datetime
@@ -57,7 +57,6 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
                         if id_val is not None and not (isinstance(id_val, float) and pd.isna(id_val)):
                             ids.append(int(id_val))
                     except Exception:
-                        # ignore non-int ids
                         continue
 
                 if not ids:
@@ -72,13 +71,14 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
                                 rows_deleted = len(deleted_rows)
                             except Exception:
                                 rows_deleted = res.rowcount if hasattr(res, 'rowcount') and res.rowcount is not None else 0
-                        # Eliminar solo si existe para evitar KeyError transitorio
                         if 'historial_df' in st.session_state:
                             try:
                                 del st.session_state['historial_df']
                             except Exception:
-                                # Protección extra: si falla la eliminación, simplemente continuar
                                 pass
+                        # Limpiar selecciones después de eliminar
+                        if 'historial_selected_indices' in st.session_state:
+                            del st.session_state['historial_selected_indices']
                     except Exception as e:
                         st.error(f"Error al eliminar evaluaciones: {e}")
             except Exception as e:
@@ -148,7 +148,6 @@ def dialog_filtros():
             key="filter_fecha_desde"
         )
     with col2:
-        # si el usuario ya seleccionó fecha_desde, evitar que fecha_hasta pueda ser anterior
         min_hasta = None
         try:
             if fecha_desde is not None:
@@ -176,8 +175,11 @@ def dialog_filtros():
         st.markdown("<br><br/>", unsafe_allow_html=True)
         if st.button(":material/refresh: Limpiar", use_container_width=True, key="clear_filters"):
             st.session_state['active_historial_filters'] = {}
+            st.session_state.historial_current_page = 1
             if 'historial_df' in st.session_state:
                 del st.session_state['historial_df']
+            if 'historial_selected_indices' in st.session_state:
+                del st.session_state['historial_selected_indices']
             for k in ('historial_filters_no_results', 'historial_filters_invalid_date'):
                 if k in st.session_state:
                     try:
@@ -208,7 +210,6 @@ def dialog_filtros():
             try:
                 if fecha_desde is not None and fecha_hasta is not None and fecha_hasta < fecha_desde:
                     st.session_state['historial_filters_invalid_date'] = True
-                    # detener ejecución para mantener el diálogo abierto y mostrar el error
                     st.stop()
                 else:
                     if 'historial_filters_invalid_date' in st.session_state:
@@ -243,6 +244,10 @@ def dialog_filtros():
                 st.session_state['historial_filters_no_results'] = True
             else:
                 st.session_state['historial_df'] = df_filtered
+                st.session_state.historial_current_page = 1
+                # Limpiar selecciones al aplicar filtros
+                if 'historial_selected_indices' in st.session_state:
+                    del st.session_state['historial_selected_indices']
                 if 'historial_filters_no_results' in st.session_state:
                     try:
                         del st.session_state['historial_filters_no_results']
@@ -254,30 +259,64 @@ def dialog_filtros():
 def get_historial_data() -> List[Dict]:
     """Obtiene el historial de pruebas/evaluaciones desde la BD."""
     try:
+        is_especialista = False
+        is_admin = False
         try:
             import services.auth as auth
-            if auth.is_especialista():
-                user = st.session_state.get("user", {})
-                id_usuario = user.get("id_usuario")
-                base_sql = LISTADO_HISTORIAL_SQL
-                if not id_usuario:
-                    return []
-                try:
-                    id_usuario = int(id_usuario)
-                except Exception:
-                    return []
-                if "ORDER BY" in base_sql.upper():
-                    idx = base_sql.upper().rfind("ORDER BY")
-                    filtered_sql = base_sql[:idx] + "\nWHERE e.id_usuario = :id_usuario\n" + base_sql[idx:]
-                else:
-                    filtered_sql = base_sql + "\nWHERE e.id_usuario = :id_usuario"
-                df = fetch_df(filtered_sql, {"id_usuario": id_usuario})
-            else:
-                df = fetch_df(LISTADO_HISTORIAL_SQL)
+            try:
+                auth.is_logged_in()
+            except Exception:
+                pass
+            try:
+                is_admin = auth.is_admin()
+            except Exception:
+                is_admin = False
+            try:
+                is_especialista = auth.is_especialista()
+            except Exception:
+                is_especialista = False
         except Exception:
-            print("Error checking user role, loading full historial as fallback.")
+            is_admin = False
+            is_especialista = False
+
+        if is_admin:
+            df = fetch_df(LISTADO_HISTORIAL_SQL)
+        elif is_especialista:
+            try:
+                logs = st.session_state.get('auth_debug_logs') or []
+                logs.append(f"get_historial_data: detected especialista; st.session_state.user={st.session_state.get('user')}")
+                st.session_state['auth_debug_logs'] = logs
+            except Exception:
+                pass
+            user = st.session_state.get("user", {})
+            id_usuario = user.get("id_usuario")
+            if not id_usuario:
+                return []
+            try:
+                id_usuario = int(id_usuario)
+            except Exception:
+                return []
+
+            df = fetch_df(LISTADO_HISTORIAL_POR_ESPECIALISTA, {"id_usuario": id_usuario})
+            try:
+                ids_df = fetch_df("SELECT id_evaluado FROM Evaluado WHERE id_usuario = :id_usuario", {"id_usuario": int(id_usuario)})
+                if ids_df is None or ids_df.empty:
+                    return []
+                assigned_ids = [int(x) for x in ids_df['id_evaluado'].tolist()]
+                if 'id_evaluado' in df.columns:
+                    df = df[df['id_evaluado'].astype('Int64').isin(assigned_ids)]
+                else:
+                    try:
+                        df = df[df['id_evaluado'].astype('Int64').isin(assigned_ids)]
+                    except Exception:
+                        return []
+            except Exception:
+                return []
+        else:
+            df = fetch_df(LISTADO_HISTORIAL_SQL)
+
         if df is None or df.empty:
-            raise ValueError("No rows returned from DB")
+            return []
 
         expected_cols = [
             'id_prueba', 'id_evaluado', 'ruta_imagen', 'Nombre del evaluado', 
@@ -328,10 +367,11 @@ def historial():
     # Preparar DataFrame
     df = st.session_state['historial_df'].copy()
     
-    # Crear columna de selección
-    df.insert(0, 'Seleccionar', False)
+    # Inicializar selecciones persistentes
+    if 'historial_selected_indices' not in st.session_state:
+        st.session_state['historial_selected_indices'] = set()
     
-    columns_order = ['Seleccionar','id_prueba', 'Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación']
+    columns_order = ['id_prueba', 'Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación']
     df_display = df[[col for col in columns_order if col in df.columns]]
     
     col_buscar, col_filtros, col_exportar, col_eliminar, col_vermas = st.columns([3, 1, 1, 1, 1])
@@ -351,14 +391,12 @@ def historial():
     with col_exportar:
         button_label = ":material/file_download: Exportar"
         exportar_btn = st.button(button_label, use_container_width=True, type="secondary", key="historial_btn_exportar_top")
-        pass
     
     with col_eliminar:
         button_label = ":material/delete: Eliminar"
         eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key="historial_btn_eliminar_top")
 
     with col_vermas:
-        # Botón "Ver más" junto a Exportar
         ver_mas_btn = st.button("Ver resultados", type="primary", use_container_width=True, key="historial_btn_vermas_top")
     
     st.markdown("<br/>", unsafe_allow_html=True)
@@ -371,31 +409,98 @@ def historial():
         df_display = df_display[mask]
         df = df[mask]
     
-    # Mostrar tabla con checkboxes
-    edited_df = st.data_editor(
-        df_display,
+    # ========== PAGINACIÓN ==========
+    ROWS_PER_PAGE = 10  # Registros por página
+
+    # Inicializar página en session_state
+    if 'historial_current_page' not in st.session_state:
+        st.session_state.historial_current_page = 1
+
+    total_rows = len(df_display)
+    total_pages = max(1, (total_rows + ROWS_PER_PAGE - 1) // ROWS_PER_PAGE)
+
+    # Asegurar que la página actual sea válida
+    if st.session_state.historial_current_page > total_pages:
+        st.session_state.historial_current_page = total_pages
+
+    page = st.session_state.historial_current_page
+
+    # Calcular índices para la página actual
+    start_idx = (page - 1) * ROWS_PER_PAGE
+    end_idx = start_idx + ROWS_PER_PAGE
+
+    # Filtrar el DataFrame para la página actual
+    df_display_page = df_display.iloc[start_idx:end_idx].copy()
+    
+    # Convertir índices globales del DataFrame a índices locales de la página (0-based)
+    global_to_local = {global_idx: local_idx for local_idx, global_idx in enumerate(df_display_page.index)}
+    
+    # Obtener índices seleccionados previamente en esta página (locales)
+    preselected_local = [
+        global_to_local[idx] 
+        for idx in st.session_state['historial_selected_indices'] 
+        if idx in global_to_local
+    ]
+    # ================================
+    
+    # Mostrar tabla con selección multi-row
+    event = st.dataframe(
+        df_display_page,
         use_container_width=True,
         hide_index=True,
-        key="historial_table_editor",
+        key=f"historial_table_p{page}_{len(st.session_state['historial_selected_indices'])}",
+        on_select="rerun",
+        selection_mode="multi-row",
         column_config={
-            "Seleccionar": st.column_config.CheckboxColumn("", width="small"),
+            "id_prueba": st.column_config.TextColumn("ID", width="small"),
             "Nombre del evaluado": st.column_config.TextColumn("Nombre del evaluado", width="medium"),
             "Edad": st.column_config.NumberColumn("Edad", width="small"),
             "Sexo": st.column_config.TextColumn("Sexo", width="small"),
             "Grupo": st.column_config.TextColumn("Grupo", width="small"),
             "Fecha de evaluación": st.column_config.TextColumn("Fecha de evaluación", width="small"),
-            "id_prueba": st.column_config.TextColumn("id_prueba", width="small"),
-        },
-        disabled=['Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación', 'id_prueba']
+        }
     )
     
-    # Total de evaluaciones debajo de la tabla
-    st.caption(f"**Total de evaluaciones:** {len(df)}")
+    # Sincronizar selecciones
+    current_local_selections = set(event.selection.rows)
     
-    # Obtener evaluaciones seleccionadas
-    seleccionados = edited_df[edited_df['Seleccionar'] == True]
+    # Remover índices de esta página que ya no están seleccionados
+    page_global_indices = set(df_display_page.index)
+    st.session_state['historial_selected_indices'] -= page_global_indices
     
-    # Manejar acciones de los botones
+    # Agregar nuevas selecciones de esta página (convertir locales a globales)
+    for local_idx in current_local_selections:
+        global_idx = df_display_page.index[local_idx]
+        st.session_state['historial_selected_indices'].add(global_idx)
+    
+    # Obtener todas las filas seleccionadas (de todas las páginas)
+    all_selected_indices = list(st.session_state['historial_selected_indices'])
+    seleccionados = df.loc[df.index.isin(all_selected_indices)] if all_selected_indices else pd.DataFrame()
+    
+    st.caption(f"**Total de evaluaciones:** {len(df)} - **Mostrando:** {start_idx + 1}-{min(end_idx, total_rows)} - **Seleccionadas:** {len(seleccionados)}")
+
+    # Controles de paginación
+    if total_pages > 1:
+        col_prev, col_center, col_next = st.columns([1, 2, 1])
+
+        with col_prev:
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state.historial_current_page == 1), key="btn_prev_page", type="tertiary", use_container_width=True):
+                st.session_state.historial_current_page -= 1
+                st.rerun()
+
+        with col_center:
+            st.markdown(
+                f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state.historial_current_page} de {total_pages}</strong></div>",
+                unsafe_allow_html=True
+            )
+
+        with col_next:
+            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state.historial_current_page == total_pages), key="btn_next_page", type="tertiary", use_container_width=True):
+                st.session_state.historial_current_page += 1
+                st.rerun()
+
+        st.markdown("<br/>", unsafe_allow_html=True)
+    
     if filtros_btn:
         dialog_filtros()
 
@@ -404,7 +509,6 @@ def historial():
             st.warning(":material/warning: Selecciona al menos una evaluación para exportar")
         else:
             try:
-                # Construir lista de diccionarios con la info básica de cada evaluado seleccionado
                 info_list = []
                 for idx in seleccionados.index.tolist():
                     try:
@@ -427,7 +531,6 @@ def historial():
                 if not info_list:
                     st.warning(":material/warning: No se pudo resolver la información de las evaluaciones seleccionadas.")
                 else:
-                    # Construir lista de indicadores por fila consultando los resultados asociados a cada id_prueba (si está disponible)
                     indicadores_por_fila = []
                     for idx in seleccionados.index.tolist():
                         try:
@@ -438,7 +541,6 @@ def historial():
 
                         id_prueba = row.get('id_prueba', None)
                         if id_prueba is None or pd.isna(id_prueba):
-                            # No hay prueba asociada -> no indicadores
                             indicadores_por_fila.append([])
                             continue
 
@@ -459,7 +561,6 @@ def historial():
                         except Exception:
                             indicadores_por_fila.append([])
 
-                    # Si no se encontraron indicadores por fila, como fallback usar indicadores en sesión o lista vacía
                     use_indicadores = indicadores_por_fila if any(len(x) for x in indicadores_por_fila) else st.session_state.get("indicadores", [])
                     render_export_popover(info_list, use_indicadores)
             except Exception as e:
@@ -480,10 +581,8 @@ def historial():
                 selected_data = df.loc[idx]
                 st.session_state["open_prueba_id"] = selected_data['id_prueba']
                 st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
-                # Indicar que venimos desde historial (no desde ajustes)
                 st.session_state['from_ajustes'] = False
                 st.session_state["active_view"] = "individual"
                 st.rerun()
             except Exception as e:
                 st.error(f":material/error: Error: {e}")
-    

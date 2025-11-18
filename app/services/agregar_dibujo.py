@@ -342,8 +342,14 @@ def agregar_dibujo(info_obj):
                                 }
                                 params_result = _normalize_params(params_result)
                                 conn.execute(text(POST_RESULTADO), params_result)
-                        
-                        # Limpiar y cerrar
+
+                            # Store the newly created prueba id so the individual view can open it
+                            try:
+                                st.session_state['open_prueba_id'] = id_prueba
+                            except Exception:
+                                pass
+
+                            # Limpiar y cerrar
                         st.session_state["agregar_step"] = 1
                         st.session_state["agregar_uploaded_file"] = None
                         st.session_state["agregar_indicadores"] = None

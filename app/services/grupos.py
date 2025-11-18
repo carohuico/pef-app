@@ -87,8 +87,24 @@ def grupos():
         )
         df_display = df_display[mask]
     
+    # ========== PAGINACIÓN (grupos) ==========
+    ROWS_PER_PAGE = 9
+    page_key = 'grupos_current_page'
+    if page_key not in st.session_state:
+        st.session_state[page_key] = 1
+
+    total_rows = len(df_display)
+    total_pages = max(1, (total_rows + ROWS_PER_PAGE - 1) // ROWS_PER_PAGE)
+    if st.session_state[page_key] > total_pages:
+        st.session_state[page_key] = total_pages
+
+    page = st.session_state[page_key]
+    start_idx = (page - 1) * ROWS_PER_PAGE
+    end_idx = start_idx + ROWS_PER_PAGE
+    df_display_page = df_display.iloc[start_idx:end_idx].copy()
+
     edited_df = st.data_editor(
-        df_display,
+        df_display_page,
         use_container_width=True,
         column_config={
             "Seleccionar": st.column_config.CheckboxColumn("", width="small"),
@@ -103,6 +119,22 @@ def grupos():
         key="editor_grupos",
         height=150
     )
+    st.caption(f"**Total de grupos:** {len(df_display)} | **Mostrando:** {start_idx + 1}-{min(end_idx, total_rows)}")
+
+    # Paginación debajo de la tabla principal
+    if total_pages > 1:
+        col_prev, col_center, col_next = st.columns([1, 2, 1])
+        with col_prev:
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key="grupos_btn_prev", type="tertiary", use_container_width=True):
+                st.session_state[page_key] -= 1
+                st.rerun()
+        with col_center:
+            st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key]} de {total_pages}</strong></div>", unsafe_allow_html=True)
+        with col_next:
+            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state[page_key] == total_pages), key="grupos_btn_next", type="tertiary", use_container_width=True):
+                st.session_state[page_key] += 1
+                st.rerun()
+        st.markdown("<br/>", unsafe_allow_html=True)
     
     # Manejar acciones
     seleccionados = edited_df[edited_df['Seleccionar'] == True]
@@ -381,8 +413,24 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
             st.markdown("<br>", unsafe_allow_html=True)
 
     # Tabla de subgrupos
+    # PAGINACIÓN para subgrupos
+    ROWS_PER_PAGE_SUB = 10
+    page_key_sub = f"subgrupos_page_{id_grupo_padre}"
+    if page_key_sub not in st.session_state:
+        st.session_state[page_key_sub] = 1
+
+    total_rows_sub = len(df_display)
+    total_pages_sub = max(1, (total_rows_sub + ROWS_PER_PAGE_SUB - 1) // ROWS_PER_PAGE_SUB)
+    if st.session_state[page_key_sub] > total_pages_sub:
+        st.session_state[page_key_sub] = total_pages_sub
+
+    page_sub = st.session_state[page_key_sub]
+    start_idx_sub = (page_sub - 1) * ROWS_PER_PAGE_SUB
+    end_idx_sub = start_idx_sub + ROWS_PER_PAGE_SUB
+    df_sub_page = df_display.iloc[start_idx_sub:end_idx_sub].copy()
+
     edited_subgrupos = st.data_editor(
-        df_display,
+        df_sub_page,
         use_container_width=True,
         column_config={
             "Seleccionar": st.column_config.CheckboxColumn("", width="small"),
@@ -397,6 +445,23 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
         key=f"editor_subgrupos_{id_grupo_padre}",
         height=150
     )
+
+    st.caption(f"**Total de subgrupos:** {len(df_display)} | **Mostrando:** {start_idx_sub + 1}-{min(end_idx_sub, total_rows_sub)}")
+
+    # Paginación debajo de la tabla de subgrupos
+    if total_pages_sub > 1:
+        col_prev_s, col_center_s, col_next_s = st.columns([1, 2, 1])
+        with col_prev_s:
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key_sub] == 1), key=f"subgrupos_btn_prev_{id_grupo_padre}", type="tertiary", use_container_width=True):
+                st.session_state[page_key_sub] -= 1
+                st.rerun()
+        with col_center_s:
+            st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key_sub]} de {total_pages_sub}</strong></div>", unsafe_allow_html=True)
+        with col_next_s:
+            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state[page_key_sub] == total_pages_sub), key=f"subgrupos_btn_next_{id_grupo_padre}", type="tertiary", use_container_width=True):
+                st.session_state[page_key_sub] += 1
+                st.rerun()
+        st.markdown("<br/>", unsafe_allow_html=True)
     
     # Manejar acciones
     seleccionados = edited_subgrupos[edited_subgrupos['Seleccionar'] == True]

@@ -1,0 +1,58 @@
+[
+  {
+    "indicator_ids": [
+      9
+    ],
+    "base_label_yolo": "Paraguas",
+    "confidence_base": 0.916,
+    "bbox_original": [
+      287,
+      86,
+      557,
+      221
+    ],
+    "crop_filename": null
+  },
+  {
+    "indicator_ids": [
+      2
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.824,
+    "bbox_original": [
+      633,
+      69,
+      697,
+      550
+    ],
+    "crop_filename": "pred1_crop_2_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      2
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.799,
+    "bbox_original": [
+      137,
+      46,
+      363,
+      612
+    ],
+    "crop_filename": "pred1_crop_3_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      36
+    ],
+    "base_label_yolo": "FiguraHumana",
+    "confidence_base": 0.779,
+    "bbox_original": [
+      390,
+      168,
+      561,
+      639
+    ],
+    "crop_filename": "pred1_crop_4_FiguraHumana.jpg"
+  }
+]

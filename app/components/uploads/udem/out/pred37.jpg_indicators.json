@@ -1,0 +1,32 @@
+[
+  {
+    "indicator_ids": [
+      34
+    ],
+    "base_label_yolo": "FiguraHumana",
+    "confidence_base": 0.942,
+    "bbox_original": [
+      68,
+      118,
+      455,
+      519
+    ],
+    "crop_filename": "pred37_crop_1_FiguraHumana.jpg"
+  },
+  {
+    "indicator_ids": [
+      8,
+      10,
+      12
+    ],
+    "base_label_yolo": "Paraguas",
+    "confidence_base": 0.91,
+    "bbox_original": [
+      358,
+      60,
+      515,
+      138
+    ],
+    "crop_filename": "pred37_crop_2_Paraguas.jpg"
+  }
+]

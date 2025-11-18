@@ -1,0 +1,31 @@
+[
+  {
+    "indicator_ids": [
+      3,
+      4
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.853,
+    "bbox_original": [
+      61,
+      90,
+      1905,
+      1760
+    ],
+    "crop_filename": "pred12_crop_2_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      16
+    ],
+    "base_label_yolo": "Ropa",
+    "confidence_base": 0.729,
+    "bbox_original": [
+      827,
+      919,
+      1401,
+      1425
+    ],
+    "crop_filename": "pred12_crop_4_Ropa.jpg"
+  }
+]

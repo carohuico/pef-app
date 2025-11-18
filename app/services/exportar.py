@@ -89,12 +89,12 @@ def render_export_popover(info_evaluado=None, indicadores=None):
             if 'Fecha de evaluación' in cols:
                 if 'Fecha' in cols:
                     try:
-                        selected_rows = selected_rows.drop(columns=['Fecha de evaluación'])
+                        selected_rows = selected_rows.drop(columns=['Fecha de evaluación']) 
                     except Exception:
                         pass
                 else:
                     try:
-                        selected_rows = selected_rows.rename(columns={'Fecha de evaluación': 'Fecha'})
+                        selected_rows = selected_rows.rename(columns={'Fecha de evaluación': 'Fecha'}) 
                     except Exception:
                         pass
     except Exception:

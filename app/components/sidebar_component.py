@@ -1,5 +1,5 @@
 from pathlib import Path
-import auth
+import services.auth as auth
 import unicodedata
 from base64 import b64encode
 import streamlit as st

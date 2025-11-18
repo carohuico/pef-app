@@ -1,0 +1,62 @@
+[
+  {
+    "indicator_ids": [
+      9,
+      12,
+      13
+    ],
+    "base_label_yolo": "Paraguas",
+    "confidence_base": 0.95,
+    "bbox_original": [
+      52,
+      0,
+      167,
+      86
+    ],
+    "crop_filename": "pred19_crop_1_Paraguas.jpg"
+  },
+  {
+    "indicator_ids": [
+      30,
+      34
+    ],
+    "base_label_yolo": "FiguraHumana",
+    "confidence_base": 0.949,
+    "bbox_original": [
+      45,
+      85,
+      151,
+      299
+    ],
+    "crop_filename": "pred19_crop_2_FiguraHumana.jpg"
+  },
+  {
+    "indicator_ids": [
+      3,
+      4
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.921,
+    "bbox_original": [
+      0,
+      0,
+      167,
+      298
+    ],
+    "crop_filename": "pred19_crop_3_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      16
+    ],
+    "base_label_yolo": "Ropa",
+    "confidence_base": 0.441,
+    "bbox_original": [
+      49,
+      170,
+      143,
+      276
+    ],
+    "crop_filename": "pred19_crop_4_Ropa.jpg"
+  }
+]

@@ -1,0 +1,60 @@
+[
+  {
+    "indicator_ids": [
+      24
+    ],
+    "base_label_yolo": "Paisaje",
+    "confidence_base": 0.949,
+    "bbox_original": [
+      0,
+      0,
+      639,
+      194
+    ],
+    "crop_filename": "pred36_crop_1_Paisaje.jpg"
+  },
+  {
+    "indicator_ids": [
+      3,
+      4
+    ],
+    "base_label_yolo": "Lluvia",
+    "confidence_base": 0.926,
+    "bbox_original": [
+      0,
+      115,
+      627,
+      617
+    ],
+    "crop_filename": "pred36_crop_3_Lluvia.jpg"
+  },
+  {
+    "indicator_ids": [
+      32,
+      33
+    ],
+    "base_label_yolo": "FiguraHumana",
+    "confidence_base": 0.916,
+    "bbox_original": [
+      265,
+      457,
+      321,
+      631
+    ],
+    "crop_filename": "pred36_crop_4_FiguraHumana.jpg"
+  },
+  {
+    "indicator_ids": [
+      22
+    ],
+    "base_label_yolo": "Resguardo",
+    "confidence_base": 0.874,
+    "bbox_original": [
+      230,
+      235,
+      367,
+      633
+    ],
+    "crop_filename": "pred36_crop_5_Resguardo.jpg"
+  }
+]

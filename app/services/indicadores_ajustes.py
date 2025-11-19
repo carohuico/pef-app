@@ -370,7 +370,7 @@ def indicadores():
         with col_center:
             st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key]} de {total_pages}</strong></div>", unsafe_allow_html=True)
         with col_next:
-            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state[page_key] == total_pages), key="indicadores_btn_next", type="tertiary", use_container_width=True):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key="indicadores_btn_next", type="tertiary", use_container_width=True):
                 st.session_state[page_key] += 1
                 st.rerun()
         st.markdown("<br/>", unsafe_allow_html=True)

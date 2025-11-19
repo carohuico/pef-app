@@ -81,23 +81,18 @@ def login_page():
         
         /* Botón amarillo */
         .stButton > button[kind="primary"] {
-            background: #FFE451 !important;
-            color: #000000 !important;
-            border: none !important;
-            border-radius: 50px !important;
-            font-size: 1.1rem !important;
-            font-weight: 600 !important;
-            margin-top: 2rem !important;
-            box-shadow: 0 4px 15px rgba(255, 228, 81, 0.4) !important;
-            transition: all 0.3s ease !important;
+            background: #FFE451;
+            color: #000000;
+            border:none;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
             width: 100% !important;
-            margin-bottom: 1rem !important;
         }
         
         .stButton > button[kind="primary"]:hover {
-            transform: translateY(-2px) !important;
-            background: #FFD626 !important;
-            box-shadow: 0 6px 20px rgba(255, 228, 81, 0.5) !important;
+            transform: scale(0.98);
+	        background: #FFD626;
         }
         
         .stButton > button[kind="primary"]:active {

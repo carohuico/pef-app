@@ -13,14 +13,6 @@
 	display: inline-block;
 }
 
-/*boton filtrar*/
-.stHorizontalBlock:has(button[kind="secondary"]) > div:last-child,
-.stHorizontalBlock:has(button[kind="secondary"]) > div:last-child *:not(button) {
-    display: flex !important;
-    justify-content: flex-end !important;
-    align-items: flex-end !important;
-    width: 100% !important;
-}
 
 .stHorizontalBlock:has(button[kind="secondary"]) button[kind="secondary"] {
     white-space: nowrap !important;
@@ -36,15 +28,6 @@
 	width: 100%;
 	margin: 0;
 	display: inline-block;
-}
-
-/*boton filtrar*/
-.stHorizontalBlock:has(button[kind="primary"]) > div:last-child,
-.stHorizontalBlock:has(button[kind="primary"]) > div:last-child *:not(button) {
-    display: flex !important;
-    justify-content: flex-end !important;
-    align-items: flex-end !important;
-    width: 100% !important;
 }
 
 .stHorizontalBlock:has(button[kind="primary"]) button[kind="primary"] {

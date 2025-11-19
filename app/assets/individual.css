@@ -87,7 +87,6 @@
 	width: fit-content !important;
 }
 
-/*drag and drop*/
 [data-testid="stFileUploaderDropzone"] {
 	position: relative;
 	border: 2px dashed #888;

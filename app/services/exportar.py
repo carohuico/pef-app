@@ -15,7 +15,6 @@ import mimetypes
 
    
 def render_export_popover(info_evaluado=None, indicadores=None):
-    # Normalizar inputs a pandas.DataFrame antes de concatenar
     def to_dataframe(obj):
         if obj is None:
             return pd.DataFrame()
@@ -32,19 +31,13 @@ def render_export_popover(info_evaluado=None, indicadores=None):
 
     df_info = to_dataframe(info_evaluado)
 
-    # Obtener nombres de indicadores desde la BD
     indicadores_nombres = fetch_df("SELECT nombre FROM dbo.Indicador ORDER BY id_indicador ASC")['nombre'].tolist()
 
-    # Normalizar el parámetro 'indicadores' para soportar:
-    # - lista global de indicadores (aplicada a todas las filas)
-    # - lista por fila: [ [ind1, ind2], [indA, indB], ... ] o list of dicts per row
     indicadores_per_row = []
     if isinstance(indicadores, list):
-        # Si la longitud coincide con el número de registros en info, interpretar como per-row
         if not df_info.empty and len(indicadores) == len(df_info):
             indicadores_per_row = indicadores
         else:
-            # Sino, aplicar la misma lista de indicadores a todas las filas
             indicadores_per_row = [indicadores] * max(1, len(df_info))
     else:
         indicadores_per_row = [[]] * max(1, len(df_info))
@@ -120,7 +113,11 @@ def render_export_popover(info_evaluado=None, indicadores=None):
         "Fecha", "Nombre", "Apellido", "Edad", "Sexo", "Estado civil", 
         "Escolaridad", "Ocupación", "Grupo"
     ]
-    # asegúrate de incluir los nombres de indicadores (si no están ya)
+    try:
+        if 'ruta_imagen' in column_options:
+            column_options = [c for c in column_options if c != 'ruta_imagen']
+    except Exception:
+        pass
     for n in indicadores_nombres:
         if n not in column_options:
             column_options.append(n)
@@ -138,15 +135,12 @@ def render_export_popover(info_evaluado=None, indicadores=None):
         </label>
         """
         
-    # Helper: convertir objetos no serializables por json a tipos nativos
     def make_serializable(o):
-        # Decimals -> float
         if isinstance(o, Decimal):
             try:
                 return float(o)
             except Exception:
                 return str(o)
-        # numpy types (si está disponible)
         if np is not None:
             try:
                 if isinstance(o, (np.integer,)):
@@ -157,7 +151,6 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                     return o.tolist()
             except Exception:
                 pass
-        # pandas / datetime timestamps
         try:
             if isinstance(o, pd.Timestamp):
                 return o.isoformat()
@@ -168,16 +161,13 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                 return o.isoformat()
         except Exception:
             pass
-        # Fallback
         try:
             return str(o)
         except Exception:
             return None
 
-    # Convertir los datos del DataFrame a JSON (usamos dict + json.dumps para controlar tipos Decimal)
     df_json = json.dumps(selected_rows.to_dict(orient='records'), default=make_serializable)
     
-    # Preparar datos para PDF con indicadores por prueba
     pruebas_data = []
     if not df_info.empty:
         for idx in range(len(df_info)):
@@ -604,18 +594,18 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                             const pageHeight = doc.internal.pageSize.height;
                             const margin = 15;
                             
-                            // Header con fondo oscuro
-                            doc.setFillColor(...primaryColor);
-                            doc.rect(0, 0, pageWidth, 30, 'F');
-                            
-                            doc.setTextColor(255, 255, 255);
-                            doc.setFontSize(18);
-                            doc.setFont(undefined, 'bold');
-                            doc.text('PERSONA BAJO LA LLUVIA', pageWidth / 2, 12, {{ align: 'center' }});
-                            
-                            doc.setFontSize(9);
-                            doc.setFont(undefined, 'normal');
-                            doc.text('Fecha de generación: {current_date}', pageWidth / 2, 20, {{ align: 'center' }});
+                                // Header: fondo blanco y texto negro (solicitado)
+                                doc.setFillColor(255, 255, 255);
+                                doc.rect(0, 0, pageWidth, 30, 'F');
+
+                                doc.setTextColor(0, 0, 0);
+                                doc.setFontSize(18);
+                                doc.setFont(undefined, 'bold');
+                                doc.text('PERSONA BAJO LA LLUVIA', pageWidth / 2, 14, {{ align: 'center' }});
+
+                                doc.setFontSize(9);
+                                doc.setFont(undefined, 'normal');
+                                doc.text('Fecha de generación: {current_date}', pageWidth / 2, 22, {{ align: 'center' }});
                             
                             // Dividir página en dos columnas
                             const columnWidth = (pageWidth - 3 * margin) / 2;
@@ -698,52 +688,68 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                             doc.line(rightColumnX, rightY, rightColumnX + columnWidth, rightY);
                             rightY += 10;
                             
-                            // === RESULTADOS (INDICADORES) ===
+                            // === RESULTADOS (DOS COLUMNAS: CAT1 izquierda, CAT2 derecha) ===
                             doc.setFontSize(12);
                             doc.setFont(undefined, 'bold');
                             doc.text('Resultados', rightColumnX, rightY);
                             rightY += 8;
-                            
+
                             if (prueba.indicadores && prueba.indicadores.length > 0) {{
-                                doc.setFontSize(9);
-                                
-                                for (let i = 0; i < prueba.indicadores.length; i++) {{
-                                    const ind = prueba.indicadores[i];
-                                    const nombre = ind.nombre || ind.Indicador || ind.indicador;
-                                    
-                                    if (selectedColumns.includes(nombre)) {{
-                                        // Verificar si necesitamos más espacio ANTES de escribir
-                                        if (rightY > pageHeight - 40) {{
-                                            // No hay más espacio en esta columna, detener
-                                            break;
-                                        }}
-                                        
-                                        // Nombre del indicador
-                                        doc.setFont(undefined, 'bold');
-                                        doc.setTextColor(...primaryColor);
-                                        const nombreLines = doc.splitTextToSize(nombre, columnWidth - 5);
-                                        doc.text(nombreLines, rightColumnX, rightY);
-                                        rightY += nombreLines.length * 5;
-                                        
-                                        // Significado
-                                        if (ind.significado) {{
-                                            doc.setFont(undefined, 'normal');
-                                            doc.setTextColor(60, 60, 60);
-                                            const sigLines = doc.splitTextToSize('Significado: ' + ind.significado, columnWidth - 5);
-                                            doc.text(sigLines, rightColumnX + 2, rightY);
-                                            rightY += sigLines.length * 4.5;
-                                        }}
-                                        
-                                        // Confianza
-                                        if (ind.confianza !== undefined && ind.confianza !== null) {{
-                                            doc.setTextColor(100, 100, 100);
-                                            doc.text('Confianza: ' + (ind.confianza * 100).toFixed(1) + '%', rightColumnX + 2, rightY);
-                                            rightY += 5;
-                                        }}
-                                        
-                                        rightY += 3;
-                                    }}
+                                // Agrupar indicadores por categoría (usar 'id_categoria' y 'categoria_nombre' si vienen)
+                                const catMap = {{}};
+                                prueba.indicadores.forEach(ind => {{
+                                    const catId = (ind && ind.id_categoria !== undefined && ind.id_categoria !== null) ? String(ind.id_categoria) : '0';
+                                    const catName = (ind && (ind.categoria_nombre || ind.categoria)) ? (ind.categoria_nombre || ind.categoria) : ('Categoría ' + catId);
+                                    if (!catMap[catId]) catMap[catId] = {{ name: catName, indicadores: [] }};
+                                    const nombre = ind && (ind.nombre || ind.Indicador || ind.indicador);
+                                    if (nombre) catMap[catId].indicadores.push(String(nombre));
+                                }});
+
+                                // Preparar dos sub-columnas dentro de la columna de resultados
+                                const resColWidth = columnWidth;
+                                const gutter = 8;
+                                const resHalf = (resColWidth - gutter) / 2;
+                                const resLeftX = rightColumnX;
+                                const resRightX = rightColumnX + resHalf + gutter;
+                                let leftY = rightY;
+                                let rightColY = rightY;
+
+                                const cat1 = catMap['1'] || {{ name: 'Categoría 1', indicadores: [] }};
+                                const cat2 = catMap['2'] || {{ name: 'Categoría 2', indicadores: [] }};
+
+                                // Títulos de cada categoría
+                                doc.setFontSize(10);
+                                doc.setFont(undefined, 'bold');
+                                doc.setTextColor(...primaryColor);
+                                const title1Lines = doc.splitTextToSize(cat1.name, resHalf - 4);
+                                doc.text(title1Lines, resLeftX, leftY);
+                                leftY += title1Lines.length * 5;
+
+                                const title2Lines = doc.splitTextToSize(cat2.name, resHalf - 4);
+                                doc.text(title2Lines, resRightX, rightColY);
+                                rightColY += title2Lines.length * 5;
+
+                                // Bullets de indicadores (solo nombres)
+                                doc.setFont(undefined, 'normal');
+                                doc.setTextColor(60, 60, 60);
+                                for (let i = 0; i < cat1.indicadores.length; i++) {{
+                                    if (leftY > pageHeight - 40) break;
+                                    const text = '• ' + cat1.indicadores[i];
+                                    const lines = doc.splitTextToSize(text, resHalf - 6);
+                                    doc.text(lines, resLeftX + 4, leftY);
+                                    leftY += lines.length * 4.5;
                                 }}
+
+                                for (let i = 0; i < cat2.indicadores.length; i++) {{
+                                    if (rightColY > pageHeight - 40) break;
+                                    const text = '• ' + cat2.indicadores[i];
+                                    const lines = doc.splitTextToSize(text, resHalf - 6);
+                                    doc.text(lines, resRightX + 4, rightColY);
+                                    rightColY += lines.length * 4.5;
+                                }}
+
+                                // Avanzar el cursor al máximo de las dos columnas
+                                rightY = Math.max(leftY, rightColY) + 6;
                             }} else {{
                                 doc.setFont(undefined, 'normal');
                                 doc.setTextColor(150, 150, 150);

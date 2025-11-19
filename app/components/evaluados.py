@@ -1022,7 +1022,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
             )
 
         with col_next:
-            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state[page_key] == total_pages), key=f"{key_prefix}__btn_next_page", type="tertiary", use_container_width=True):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key=f"{key_prefix}__btn_next_page", type="tertiary", use_container_width=True):
                 st.session_state[page_key] += 1
                 st.rerun()
 

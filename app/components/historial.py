@@ -79,6 +79,8 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
                         # Limpiar selecciones después de eliminar
                         if 'historial_selected_indices' in st.session_state:
                             del st.session_state['historial_selected_indices']
+                        if 'historial_page_selections' in st.session_state:
+                            del st.session_state['historial_page_selections']
                     except Exception as e:
                         st.error(f"Error al eliminar evaluaciones: {e}")
             except Exception as e:
@@ -180,6 +182,8 @@ def dialog_filtros():
                 del st.session_state['historial_df']
             if 'historial_selected_indices' in st.session_state:
                 del st.session_state['historial_selected_indices']
+            if 'historial_page_selections' in st.session_state:
+                del st.session_state['historial_page_selections']
             for k in ('historial_filters_no_results', 'historial_filters_invalid_date'):
                 if k in st.session_state:
                     try:
@@ -248,6 +252,8 @@ def dialog_filtros():
                 # Limpiar selecciones al aplicar filtros
                 if 'historial_selected_indices' in st.session_state:
                     del st.session_state['historial_selected_indices']
+                if 'historial_page_selections' in st.session_state:
+                    del st.session_state['historial_page_selections']
                 if 'historial_filters_no_results' in st.session_state:
                     try:
                         del st.session_state['historial_filters_no_results']
@@ -371,6 +377,10 @@ def historial():
     if 'historial_selected_indices' not in st.session_state:
         st.session_state['historial_selected_indices'] = set()
     
+    # Inicializar mapeo de selecciones por página
+    if 'historial_page_selections' not in st.session_state:
+        st.session_state['historial_page_selections'] = {}
+    
     columns_order = ['id_prueba', 'Nombre del evaluado', 'Edad', 'Sexo', 'Grupo', 'Fecha de evaluación']
     df_display = df[[col for col in columns_order if col in df.columns]]
     
@@ -441,14 +451,17 @@ def historial():
         for idx in st.session_state['historial_selected_indices'] 
         if idx in global_to_local
     ]
-    # ================================
+    
+    # ========== SOLUCIÓN SIMPLIFICADA ==========
+    # Usar una clave estable para la tabla que incluya la página actual
+    table_key = f"historial_table_page_{page}"
     
     # Mostrar tabla con selección multi-row
     event = st.dataframe(
         df_display_page,
         use_container_width=True,
         hide_index=True,
-        key=f"historial_table_p{page}_{len(st.session_state['historial_selected_indices'])}",
+        key=table_key,
         on_select="rerun",
         selection_mode="multi-row",
         column_config={
@@ -461,17 +474,33 @@ def historial():
         }
     )
     
-    # Sincronizar selecciones
+    # ========== LÓGICA DE SINCRONIZACIÓN SIMPLIFICADA ==========
     current_local_selections = set(event.selection.rows)
     
-    # Remover índices de esta página que ya no están seleccionados
-    page_global_indices = set(df_display_page.index)
-    st.session_state['historial_selected_indices'] -= page_global_indices
+    # Obtener las selecciones anteriores de esta página
+    previous_local_selections = set(st.session_state['historial_page_selections'].get(page, []))
     
-    # Agregar nuevas selecciones de esta página (convertir locales a globales)
-    for local_idx in current_local_selections:
-        global_idx = df_display_page.index[local_idx]
-        st.session_state['historial_selected_indices'].add(global_idx)
+    # Solo procesar cambios si hay una diferencia real
+    if current_local_selections != previous_local_selections:
+        # Actualizar selecciones globales basadas en los cambios
+        for local_idx in current_local_selections - previous_local_selections:
+            if local_idx < len(df_display_page):
+                global_idx = df_display_page.index[local_idx]
+                st.session_state['historial_selected_indices'].add(global_idx)
+        
+        for local_idx in previous_local_selections - current_local_selections:
+            if local_idx < len(df_display_page):
+                global_idx = df_display_page.index[local_idx]
+                st.session_state['historial_selected_indices'].discard(global_idx)
+        
+        # Actualizar el estado de esta página
+        st.session_state['historial_page_selections'][page] = list(current_local_selections)
+    
+    # Si estamos en una página con selecciones pre-existentes pero la tabla no las muestra,
+    # forzar un re-render para sincronizar la vista visual
+    elif preselected_local and not current_local_selections:
+        st.session_state['historial_page_selections'][page] = preselected_local
+        st.rerun()
     
     # Obtener todas las filas seleccionadas (de todas las páginas)
     all_selected_indices = list(st.session_state['historial_selected_indices'])
@@ -495,7 +524,7 @@ def historial():
             )
 
         with col_next:
-            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state.historial_current_page == total_pages), key="btn_next_page", type="tertiary", use_container_width=True):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state.historial_current_page == total_pages), key="btn_next_page", type="tertiary", use_container_width=True):
                 st.session_state.historial_current_page += 1
                 st.rerun()
 
@@ -551,11 +580,44 @@ def historial():
                             else:
                                 lista_inds = []
                                 for _i, r in df_res.iterrows():
+                                    # Normalizar valores que vienen como NaN desde pandas (NULL en la BD)
+                                    nombre = None
+                                    if 'nombre_indicador' in r and r.get('nombre_indicador') is not None:
+                                        nombre = r.get('nombre_indicador')
+                                    elif 'nombre' in r and r.get('nombre') is not None:
+                                        nombre = r.get('nombre')
+
+                                    significado = r.get('significado') if 'significado' in r and r.get('significado') is not None else None
+                                    confianza = r.get('confianza') if 'confianza' in r and r.get('confianza') is not None else None
+                                    id_ind = r.get('id_indicador') if 'id_indicador' in r and r.get('id_indicador') is not None else None
+
+                                    # id_categoria puede ser NaN (pandas) si es NULL en la BD; convertir a None
+                                    id_cat = None
+                                    if 'id_categoria' in r:
+                                        try:
+                                            val = r.get('id_categoria')
+                                            if not (isinstance(val, float) and pd.isna(val)):
+                                                id_cat = int(val) if val is not None else None
+                                        except Exception:
+                                            id_cat = None
+
+                                    # categoría nombre (si existe)
+                                    categoria_nombre = None
+                                    if 'categoria_nombre' in r:
+                                        try:
+                                            val = r.get('categoria_nombre')
+                                            if not (isinstance(val, float) and pd.isna(val)):
+                                                categoria_nombre = str(val)
+                                        except Exception:
+                                            categoria_nombre = None
+
                                     lista_inds.append({
-                                        "nombre": r.get('nombre_indicador') if 'nombre_indicador' in r else r.get('nombre') if 'nombre' in r else None,
-                                        "significado": r.get('significado') if 'significado' in r else None,
-                                        "confianza": r.get('confianza') if 'confianza' in r else None,
-                                        "id_indicador": r.get('id_indicador') if 'id_indicador' in r else None,
+                                        "nombre": nombre,
+                                        "significado": significado,
+                                        "confianza": confianza,
+                                        "id_indicador": id_ind,
+                                        "id_categoria": id_cat,
+                                        "categoria_nombre": categoria_nombre,
                                     })
                                 indicadores_por_fila.append(lista_inds)
                         except Exception:

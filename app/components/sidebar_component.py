@@ -112,7 +112,10 @@ def sidebar_component():
 
     for icon, label in zip(icons, nav_links):
         label_key = label_to_key(label)
-        is_active = st.session_state["active_view"] == label_key
+        if label_key == 'misevaluados':
+            is_active = st.session_state.get("active_view") == 'ajustes'
+        else:
+            is_active = st.session_state.get("active_view") == label_key
         custom_class = "primary" if is_active else "secondary"
         st.sidebar.markdown(f'<div class="nav-item-container" style="margin: 0; padding: 0;">', unsafe_allow_html=True)
         # use a sanitized key for the Streamlit widget key

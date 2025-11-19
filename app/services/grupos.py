@@ -131,7 +131,7 @@ def grupos():
         with col_center:
             st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key]} de {total_pages}</strong></div>", unsafe_allow_html=True)
         with col_next:
-            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state[page_key] == total_pages), key="grupos_btn_next", type="tertiary", use_container_width=True):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key="grupos_btn_next", type="tertiary", use_container_width=True):
                 st.session_state[page_key] += 1
                 st.rerun()
         st.markdown("<br/>", unsafe_allow_html=True)
@@ -457,10 +457,10 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
                 st.rerun()
         with col_center_s:
             st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key_sub]} de {total_pages_sub}</strong></div>", unsafe_allow_html=True)
-        with col_next_s:
-            if st.button(":material/arrow_forward: Siguiente", disabled=(st.session_state[page_key_sub] == total_pages_sub), key=f"subgrupos_btn_next_{id_grupo_padre}", type="tertiary", use_container_width=True):
-                st.session_state[page_key_sub] += 1
-                st.rerun()
+            with col_next_s:
+                if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key_sub] == total_pages_sub), key=f"subgrupos_btn_next_{id_grupo_padre}", type="tertiary", use_container_width=True):
+                    st.session_state[page_key_sub] += 1
+                    st.rerun()
         st.markdown("<br/>", unsafe_allow_html=True)
     
     # Manejar acciones

@@ -95,7 +95,7 @@ def inicio():
                 import services.auth as auth
                 # Admin: abrir directamente el formulario de registrar (la asignación se gestiona dentro)
                 if auth.is_admin():
-                    if st.button(":material/add: Crear nuevo evaluado", type="secondary", use_container_width=True):
+                    if st.button(":material/add: Crear nuevo evaluado", type="secondary", width='stretch'):
                         if 'assigned_id_usuario' in st.session_state:
                             try:
                                 del st.session_state['assigned_id_usuario']
@@ -109,7 +109,7 @@ def inicio():
                     # Especialista: crear evaluado y asignarlo a sí mismo
                     user = st.session_state.get("user", {})
                     uid = user.get("id_usuario")
-                    if st.button(":material/add: Crear nuevo evaluado", type="secondary", use_container_width=True):
+                    if st.button(":material/add: Crear nuevo evaluado", type="secondary", width='stretch'):
                         try:
                             st.session_state['assigned_id_usuario'] = int(uid)
                         except Exception:
@@ -122,7 +122,7 @@ def inicio():
                 pass
         
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("Seleccionar", type="primary", use_container_width=True):
+        if st.button("Seleccionar", type="primary", width='stretch'):
             if selected_evaluado not in ["No hay evaluados registrados", "Error al cargar evaluados"]:
                 # Obtener el id del evaluado seleccionado
                 idx = evaluado_options.index(selected_evaluado)
@@ -265,7 +265,7 @@ def inicio():
                     label = f"**{nombre} {apellido}**  \n{fecha}"
                     key = f"recent_btn_{id_prueba}"
                     
-                    if st.button(label, key=key, type="secondary", use_container_width=True):
+                    if st.button(label, key=key, type="secondary", width='stretch'):
                         try:
                             st.session_state['open_prueba_id'] = int(id_prueba)
                         except Exception:
@@ -280,7 +280,7 @@ def inicio():
             # Mostrar 'Ver más' sólo a quienes tengan acceso al historial
             try:
                 if not is_o:
-                    if st.button("Ver más >", key="view_more", type="secondary", use_container_width=True):
+                    if st.button("Ver más >", key="view_more", type="secondary", width='stretch'):
                         st.session_state["active_view"] = "historial"
                         st.rerun()
             except Exception:

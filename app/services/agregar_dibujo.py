@@ -149,7 +149,7 @@ def agregar_dibujo(info_obj):
                     boxes.append(box)
                 
                 preview = imagen_bboxes(original, boxes)
-                st.image(preview, use_container_width=True)
+                st.image(preview, width='stretch')
 
             with col2:
                 st.markdown("### Indicadores detectados")
@@ -180,7 +180,7 @@ def agregar_dibujo(info_obj):
                     try:
                         st.data_editor(
                             df,
-                            use_container_width=True,
+                            width='stretch',
                             hide_index=True,
                             key="agregar_indicadores_table",
                             height=200,
@@ -193,7 +193,7 @@ def agregar_dibujo(info_obj):
                         )
                     except Exception:
                         # Fallback: si data_editor no está disponible, usar st.dataframe simple
-                        st.dataframe(df, use_container_width=True, hide_index=True)
+                        st.dataframe(df, width='stretch', hide_index=True)
 
     elif step == 3:
         df = pd.DataFrame([{
@@ -223,7 +223,7 @@ def agregar_dibujo(info_obj):
                 "ruta_imagen": str(Path(ORIGINALS_DIR) / st.session_state.get("agregar_uploaded_file").name) if st.session_state.get("agregar_uploaded_file") is not None else ""
             }
             st.markdown("<style>[data-testid=\"stBaseButton-tertiary\"]:not([data-testid=\"stSidebar\"] *) { background: #FFFFFF; border:none; color: #000000; margin-top: 1rem; padding: 16px 24px; display: inline-block; text-decoration: underline;  cursor: pointer; }</style>", unsafe_allow_html=True)
-            if st.button("Exportar prueba", use_container_width=True, key="agregar_export", type="tertiary"):
+            if st.button("Exportar prueba", width='stretch', key="agregar_export", type="tertiary"):
                 indicadores = st.session_state.get("agregar_indicadores", [])
                 render_export_popover(info_evaluado, indicadores)
 
@@ -234,11 +234,11 @@ def agregar_dibujo(info_obj):
     with col_back:
         if step > 1:
             button_label = "Atrás"
-            if st.button(button_label, use_container_width=True, key="agregar_back"):
+            if st.button(button_label, width='stretch', key="agregar_back"):
                 st.session_state["agregar_step"] = max(1, step - 1)
                 st.rerun()
         else:
-            if st.button("Cancelar", use_container_width=True, key="agregar_cancel"):
+            if st.button("Cancelar", width='stretch', key="agregar_cancel"):
                 st.session_state["agregar_step"] = 1
                 st.session_state["agregar_uploaded_file"] = None
                 st.session_state["agregar_indicadores"] = None
@@ -250,7 +250,7 @@ def agregar_dibujo(info_obj):
         # PASO 1 -> PASO 2
         if step == 1:
             button_label = "Siguiente"
-            if st.button(button_label, type="primary", use_container_width=True, disabled=(st.session_state["agregar_uploaded_file"] is None), key="agregar_next_step1"):
+            if st.button(button_label, type="primary", width='stretch', disabled=(st.session_state["agregar_uploaded_file"] is None), key="agregar_next_step1"):
                 if st.session_state["agregar_uploaded_file"] is None:
                     label = ":material/warning: Por favor, sube una imagen para continuar"
                     st.error(label)
@@ -272,13 +272,13 @@ def agregar_dibujo(info_obj):
         # PASO 2 -> PASO 3
         elif step == 2:
             button_label = "Siguiente :material/arrow_forward:"
-            if st.button(button_label, type="primary", use_container_width=True, key="agregar_next_step2"):
+            if st.button(button_label, type="primary", width='stretch', key="agregar_next_step2"):
                 st.session_state["agregar_step"] = 3
                 st.rerun(scope="fragment")
         
         # PASO 3: GUARDAR
         elif step == 3:
-            if st.button("Guardar prueba", type="primary", use_container_width=True, key="agregar_save"):
+            if st.button("Guardar prueba", type="primary", width='stretch', key="agregar_save"):
                 with st.spinner("Guardando..."):
                     try:
                         engine = get_engine()

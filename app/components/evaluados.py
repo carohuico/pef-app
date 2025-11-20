@@ -38,7 +38,7 @@ def confirmar_eliminacion_historial(selected_rows_df):
     with col_yes:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/check: Sí, eliminar"
-        if st.button(label, use_container_width=True, type="primary", key="hist_confirmar_eliminar"):
+        if st.button(label, width='stretch', type="primary", key="hist_confirmar_eliminar"):
             try:
                 ids = []
                 for v in selected_rows_df['id_evaluado'].tolist():
@@ -80,7 +80,7 @@ def confirmar_eliminacion_historial(selected_rows_df):
     with col_no:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/cancel: Cancelar"
-        if st.button(label, use_container_width=True, key="hist_cancelar_eliminar"):
+        if st.button(label, width='stretch', key="hist_cancelar_eliminar"):
             # Si hay un mensaje previo de eliminación, eliminarlo al cancelar
             if msg_key in st.session_state:
                 try:
@@ -261,11 +261,11 @@ def dialog_crear_evaluado():
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("<br><br/>", unsafe_allow_html=True)
-            cancelar = st.form_submit_button(":material/cancel: Cancelar", use_container_width=True)
+            cancelar = st.form_submit_button(":material/cancel: Cancelar", width='stretch')
         
         with col2:
             st.markdown("<br><br/>", unsafe_allow_html=True)
-            submitted = st.form_submit_button(":material/check: Guardar", use_container_width=True, type="primary")
+            submitted = st.form_submit_button(":material/check: Guardar", width='stretch', type="primary")
         
         if cancelar:
             st.rerun()
@@ -516,11 +516,11 @@ def dialog_editar_evaluado(evaluado_data):
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("<br><br/>", unsafe_allow_html=True)
-            cancelar = st.form_submit_button(":material/cancel: Cancelar", use_container_width=True)
+            cancelar = st.form_submit_button(":material/cancel: Cancelar", width='stretch')
         
         with col2:
             st.markdown("<br><br/>", unsafe_allow_html=True)
-            submitted = st.form_submit_button(":material/check: Guardar Cambios", use_container_width=True, type="primary")
+            submitted = st.form_submit_button(":material/check: Guardar Cambios", width='stretch', type="primary")
         
         if cancelar:
             st.rerun()
@@ -684,7 +684,7 @@ def dialog_filtros(key_prefix: str = None):
 
     with col1:
         st.markdown("<br><br/>", unsafe_allow_html=True)
-        if st.button(":material/refresh: Limpiar", use_container_width=True, key=_k("clear_filters")):
+        if st.button(":material/refresh: Limpiar", width='stretch', key=_k("clear_filters")):
             st.session_state['active_filters'] = {}
             if 'evaluados_df' in st.session_state:
                 del st.session_state['evaluados_df']
@@ -693,7 +693,7 @@ def dialog_filtros(key_prefix: str = None):
     
     with col3:
         st.markdown("<br><br/>", unsafe_allow_html=True)
-        if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key=_k("apply_filters")):
+        if st.button(":material/check: Aplicar", width='stretch', type="primary", key=_k("apply_filters")):
             # Guardar filtros activos
             filters = {}
             if sexo_filter != "Todos":
@@ -864,7 +864,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
         col1, col2, col3 = st.columns([1, 5, 1])
         with col1:
             button_label = ":material/add: Crear"
-            if st.button(button_label, use_container_width=True, type="primary"):
+            if st.button(button_label, width='stretch', type="primary"):
                 dialog_crear_evaluado()
         
         st.info(":material/info: No hay evaluados registrados.")
@@ -910,19 +910,19 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
 
         with col_filtros:
             button_label = ":material/filter_list: Filtros"
-            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key=filtros_key)
+            filtros_btn = st.button(button_label, width='stretch', type="secondary", key=filtros_key)
 
         with col_editar:
             button_label = ":material/edit: Editar"
-            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key=editar_key)
+            editar_btn = st.button(button_label, width='stretch', type="secondary", key=editar_key)
 
         with col_eliminar:
             button_label = ":material/delete: Eliminar"
-            eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key=eliminar_key)
+            eliminar_btn = st.button(button_label, width='stretch', type="secondary", key=eliminar_key)
 
         with col_crear:
             button_label = ":material/add: Crear"
-            crear_btn = st.button(button_label, use_container_width=True, type="primary", key=crear_key)
+            crear_btn = st.button(button_label, width='stretch', type="primary", key=crear_key)
 
         st.markdown("<br/>", unsafe_allow_html=True)
         # Aplicar búsqueda si hay texto
@@ -951,15 +951,15 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
 
         with col_filtros:
             button_label = ":material/filter_list: Filtros"
-            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key=filtros_key)
+            filtros_btn = st.button(button_label, width='stretch', type="secondary", key=filtros_key)
 
         with col_editar:
             button_label = ":material/edit: Editar"
-            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key=editar_key)
+            editar_btn = st.button(button_label, width='stretch', type="secondary", key=editar_key)
 
         with col_crear:
             button_label = ":material/add: Crear"
-            crear_btn = st.button(button_label, use_container_width=True, type="primary", key=crear_key)
+            crear_btn = st.button(button_label, width='stretch', type="primary", key=crear_key)
 
         st.markdown("<br/>", unsafe_allow_html=True)
         # Aplicar búsqueda si hay texto
@@ -992,7 +992,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
         df_display_page,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
         key=f"{key_prefix}__evaluados_table_editor",
         column_config={
@@ -1018,7 +1018,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
         col_prev, col_center, col_next = st.columns([1, 2, 1])
 
         with col_prev:
-            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key=f"{key_prefix}__btn_prev_page", type="tertiary", use_container_width=True):
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key=f"{key_prefix}__btn_prev_page", type="tertiary", width='stretch'):
                 st.session_state[page_key] -= 1
                 st.rerun()
 
@@ -1029,7 +1029,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
             )
 
         with col_next:
-            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key=f"{key_prefix}__btn_next_page", type="tertiary", use_container_width=True):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key=f"{key_prefix}__btn_next_page", type="tertiary", width='stretch'):
                 st.session_state[page_key] += 1
                 st.rerun()
 
@@ -1089,7 +1089,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
         ver_key = f"{key_prefix}__ver_expediente_btn"
-        ver_expediente_btn = st.button("Ver expediente", type="primary", use_container_width=True, key=ver_key)
+        ver_expediente_btn = st.button("Ver expediente", type="primary", width='stretch', key=ver_key)
 
         if ver_expediente_btn:
             if len(seleccionados) != 1:

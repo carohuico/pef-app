@@ -1,5 +1,5 @@
 streamlit==1.48.0
-pillow==10.3.0
+pillow>=9.5,<12
 streamlit-js-eval==0.1.7
 pandas>=2.2
 sqlalchemy>=2.0

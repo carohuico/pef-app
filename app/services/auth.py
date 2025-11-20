@@ -219,29 +219,19 @@ def logout():
         pass
     
 def _test_direct_connection():
-    import pyodbc
-    server = st.secrets["DB_HOST"]
-    port = st.secrets["DB_PORT"]
-    database = st.secrets["DB_NAME"]
-    username = st.secrets["DB_USER"]
-    password = st.secrets["DB_PASS"]
-
+    """Prueba simple de conexión a DB usando la capa `services.db`.
+    Evita usar `pyodbc` directamente (que requiere controladores del sistema)
+    y devuelve un mensaje legible para los logs.
+    """
     try:
-        conn = pyodbc.connect(
-            f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-            f"SERVER={server},{port};"
-            f"DATABASE={database};"
-            f"UID={username};"
-            f"PWD={password};"
-            "Encrypt=yes;"
-            "TrustServerCertificate=yes;"
-            "Connection Timeout=10;"
-        )
-        cursor = conn.cursor()
-        cursor.execute("SELECT TOP 1 usuario FROM usuarios;")
-        return "[OK] pyodbc directo funciona"
+        # Intentar ejecutar una consulta simple vía fetch_df (SQLAlchemy)
+        df = fetch_df("SELECT TOP 1 usuario FROM usuarios;")
+        if df is None:
+            return "[ERROR] No se recibió resultado de la consulta de prueba"
+        return "[OK] Consulta de prueba ejecutada (SQLAlchemy)"
     except Exception as e:
-        return f"[ERROR] pyodbc directo falla: {e}"
+        # Devolver el error para que el log muestre por qué falló (p. ej. falta de driver)
+        return f"[ERROR] fallo conexión DB vía SQLAlchemy: {e}"
 
 
 def verify_user(username: str, password: str):

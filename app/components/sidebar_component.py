@@ -5,22 +5,6 @@ from base64 import b64encode
 import streamlit as st
 
 
-@st.dialog(":material/warning: Cerrar sesión")
-def confirmar_cerrar_sesion():
-    """Diálogo para confirmar cierre de sesión desde el sidebar."""
-    st.warning("¿Estás seguro que quieres cerrar sesión?")
-
-    col_yes, col_no = st.columns(2)
-    with col_yes:
-        label = ":material/check: Sí, cerrar sesión"
-        if st.button(label, use_container_width=True, type="primary", key="confirm_logout_yes"):
-            st.session_state["active_view"] = "salir"
-            st.rerun()
-    with col_no:
-        label = ":material/cancel: Cancelar"
-        if st.button(label, use_container_width=True, key="confirm_logout_no"):
-            st.rerun()
-
 def render_sidebar():
     st.sidebar.title("Rainly")
 
@@ -37,19 +21,60 @@ def sidebar_component():
             """,
             unsafe_allow_html=True
         )
-        
+    
+    # ========== BARRA MÓVIL HORIZONTAL ==========
     logo_path = Path(__file__).parent.parent / 'assets' / 'logo.png'
     with open(logo_path, "rb") as _img:
         _b64 = b64encode(_img.read()).decode("utf-8")
+    
+    mobile_topbar_html = f"""
+    <div class="mobile-topbar">
+        <button class="mobile-topbar-hamburger" onclick="toggleMobileSidebar()">
+            ☰
+        </button>
+        <img src="data:image/png;base64,{_b64}" alt="Rainly Logo" class="mobile-topbar-logo" />
+    </div>
+    <div class="mobile-sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+    <script>
+        function toggleMobileSidebar() {{
+            const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
+            const overlay = window.parent.document.querySelector('.mobile-sidebar-overlay');
+            
+            if (sidebar && overlay) {{
+                sidebar.classList.toggle('mobile-sidebar-open');
+                overlay.classList.toggle('active');
+            }}
+        }}
+        
+        // Cerrar sidebar al hacer clic en un botón de navegación (móvil)
+        if (window.innerWidth <= 768) {{
+            window.parent.document.addEventListener('click', function(e) {{
+                if (e.target.closest('[data-testid="stSidebar"] button')) {{
+                    const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
+                    const overlay = window.parent.document.querySelector('.mobile-sidebar-overlay');
+                    if (sidebar && overlay) {{
+                        sidebar.classList.remove('mobile-sidebar-open');
+                        overlay.classList.remove('active');
+                    }}
+                }}
+            }});
+        }}
+    </script>
+    """
+    st.html(mobile_topbar_html)
+    
+    # ========== LOGO EN SIDEBAR (Desktop) ==========
     html_logo = f"""
-    <div class="sidebar-logo-container" style="text-align: center; ">
+    <div class="sidebar-logo-container" style="text-align: center;">
         <img src="data:image/png;base64,{_b64}" alt="Rainly Logo" class="sidebar-logo" style="width:100px; height:auto;" />
     </div>
     """
     st.sidebar.html(html_logo)
     
+    # ========== AVATAR Y PERFIL DE USUARIO ==========
     avatar_path = Path(__file__).parent.parent / 'assets' / 'avatar.webp'
     st.sidebar.image(avatar_path, width=100)
+    
     # Mostrar usuario logueado si existe
     user = st.session_state.get("user")
     if user:
@@ -64,7 +89,6 @@ def sidebar_component():
             """,
             unsafe_allow_html=True
         )
-        # Nota: para cerrar sesión usa la opción "Salir" en el menú lateral.
     else:
         st.sidebar.markdown(
             f"""
@@ -79,7 +103,7 @@ def sidebar_component():
     if "active_view" not in st.session_state:
         st.session_state["active_view"] = "inicio"
 
-    # Construir menú dinámicamente según rol
+    # ========== CONSTRUIR MENÚ DINÁMICAMENTE SEGÚN ROL ==========
     try:
         is_admin = auth.is_admin()
     except Exception:
@@ -110,6 +134,7 @@ def sidebar_component():
         ascii_only = nf.encode('ASCII', 'ignore').decode('ASCII')
         return ascii_only.lower().replace(' ', '')
 
+    # ========== BOTONES DE NAVEGACIÓN ==========
     for icon, label in zip(icons, nav_links):
         label_key = label_to_key(label)
         if label_key == 'misevaluados':
@@ -118,20 +143,24 @@ def sidebar_component():
             is_active = st.session_state.get("active_view") == label_key
         custom_class = "primary" if is_active else "secondary"
         st.sidebar.markdown(f'<div class="nav-item-container" style="margin: 0; padding: 0;">', unsafe_allow_html=True)
+        
         # use a sanitized key for the Streamlit widget key
         widget_key = f"nav_{label_key}"
         if st.sidebar.button(f"{icon} {label}", key=widget_key, type=custom_class):
-            # set the canonical session key using the normalized label_key
-            if label_key == "inicio":
+            if label_key == 'inicio':
+                st.session_state['show_inicio_loader'] = True
                 st.session_state["active_view"] = "inicio"
                 st.rerun()
-            elif label_key == "historial":
+            elif label_key == 'historial':
+                st.session_state['show_historial_loader'] = True
                 st.session_state["active_view"] = "historial"
                 st.rerun()
-            elif label_key == "estadisticas":
+            elif label_key == 'estadisticas':
+                st.session_state['show_estadisticas_loader'] = True
                 st.session_state["active_view"] = "estadisticas"
                 st.rerun()
-            elif label_key == "ajustes" or label_key == "misevaluados":
+            elif label_key == 'ajustes' or label_key == 'misevaluados':
+                st.session_state['show_ajustes_loader'] = True
                 st.session_state["active_view"] = "ajustes"
                 st.rerun()
             elif label_key == "salir":
@@ -143,4 +172,18 @@ def sidebar_component():
         st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 
+@st.dialog(":material/warning: Cerrar sesión")
+def confirmar_cerrar_sesion():
+    """Diálogo para confirmar cierre de sesión desde el sidebar."""
+    st.warning("¿Estás seguro que quieres cerrar sesión?")
 
+    col_yes, col_no = st.columns(2)
+    with col_yes:
+        label = ":material/check: Sí, cerrar sesión"
+        if st.button(label, use_container_width=True, type="primary", key="confirm_logout_yes"):
+            st.session_state["active_view"] = "salir"
+            st.rerun()
+    with col_no:
+        label = ":material/cancel: Cancelar"
+        if st.button(label, use_container_width=True, key="confirm_logout_no"):
+            st.rerun()

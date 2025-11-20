@@ -48,7 +48,14 @@ def confirmar_eliminacion_historial(selected_rows_df):
                         continue
 
                 if not ids:
-                    st.warning('No se pudieron resolver los ids seleccionados.')
+                    st.markdown("""
+                    <div class="warning">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                    <span>No se pudieron resolver los ids seleccionados.</span>
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
                     ids_csv = ','.join(str(x) for x in ids)
                     try:
@@ -1040,9 +1047,23 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     
     if editar_btn:
         if len(seleccionados) == 0:
-            st.warning(":material/warning: Selecciona un evaluado para editar")
+            st.markdown("""
+                <div class="warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <span>:material/warning: Selecciona un evaluado para editar</span>
+                </div>
+            """, unsafe_allow_html=True)
         elif len(seleccionados) > 1:
-            st.warning(":material/warning: Selecciona solo un evaluado para editar")
+            st.markdown("""
+                <div class="warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <span>:material/warning: Selecciona solo un evaluado para editar</span>
+                </div>
+            """, unsafe_allow_html=True)
         else:
             idx = seleccionados.index[0]
             evaluado_completo = df.loc[idx].to_dict()
@@ -1050,7 +1071,15 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     
     if can_delete and eliminar_btn:
         if len(seleccionados) == 0:
-            st.warning(":material/warning: Selecciona al menos un evaluado para eliminar")
+            st.markdown("""
+                <div class="warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12
+                        9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <span>:material/warning: Selecciona al menos un evaluado para eliminar</span>
+                </div>
+            """, unsafe_allow_html=True)
         else:
             indices = seleccionados.index
             evaluados_completos = df.loc[indices]
@@ -1064,7 +1093,14 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
 
         if ver_expediente_btn:
             if len(seleccionados) != 1:
-                st.warning(":material/warning: Selecciona un solo evaluado para ver el expediente")
+                st.markdown("""
+                <div class="warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <span>:material/warning: Selecciona un solo evaluado para ver el expediente</span>
+                </div>
+                """, unsafe_allow_html=True)
             else:
                 try:
                     idx = seleccionados.index[0]

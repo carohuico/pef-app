@@ -49,13 +49,13 @@ def cargar_imagen_component():
     if "current_step" not in st.session_state:
         st.session_state["current_step"] = 1
     if "form_nombre" not in st.session_state:
-        st.session_state["form_nombre"] = "Caro"
+        st.session_state["form_nombre"] = ""
     if "form_apellido" not in st.session_state:
         st.session_state["form_apellido"] = ""
     if "form_fecha_nacimiento" not in st.session_state:
         st.session_state["form_fecha_nacimiento"] = None
     if "form_sexo" not in st.session_state:
-        st.session_state["form_sexo"] = "Mujer"
+        st.session_state["form_sexo"] = ""
     if "form_estado_civil" not in st.session_state:
         st.session_state["form_estado_civil"] = ""
     if "form_escolaridad" not in st.session_state:
@@ -124,7 +124,9 @@ def cargar_imagen_component():
                             default_index = esp_ids.index(int(current_assigned)) + 1
                         except Exception:
                             default_index = 0
-                    sel = st.selectbox("Especialista responsable", ["Selecciona un especialista"] + esp_options, index=default_index, label_visibility='visible')
+                    # Mostrar label HTML con asterisco rojo de obligatorio
+                    st.markdown('<label>Especialista responsable <span class="required" style="color: #e74c3c;">*</span></label>', unsafe_allow_html=True)
+                    sel = st.selectbox("", ["Selecciona un especialista"] + esp_options, index=default_index, label_visibility='collapsed')
                     if sel != "Selecciona un especialista":
                         sel_idx = esp_options.index(sel)
                         try:
@@ -138,7 +140,6 @@ def cargar_imagen_component():
                             except Exception:
                                 st.session_state['assigned_id_usuario'] = None
             elif is_esp:
-                # Especialista: por defecto se asigna a sí mismo, pero no mostrar select editable
                 user = st.session_state.get("user", {})
                 uid = user.get("id_usuario")
                 try:
@@ -304,9 +305,25 @@ def cargar_imagen_component():
             #nombre archivo pero .txt
             if st.session_state.get("uploaded_file") is not None:
                 filename = st.session_state["uploaded_file"].name
-                indicadores = simular_resultado(filename)
+                raw_indicadores = simular_resultado(filename)
             else:
-                indicadores = []
+                raw_indicadores = []
+
+            indicadores = []
+            for ind in (raw_indicadores or []):
+                try:
+                    sig = ind.get('significado', None)
+                except Exception:
+                    sig = None
+                if sig is None:
+                    continue
+                if isinstance(sig, str) and sig.strip() == "":
+                    continue
+                if isinstance(sig, str) and sig.strip() == "-":
+                    continue
+                indicadores.append(ind)
+
+            # Guardar indicadores filtrados en sesión para usos posteriores
             st.session_state["indicadores"] = indicadores
 
             col1, col2 = st.columns([1,2], vertical_alignment="top")
@@ -485,6 +502,24 @@ def cargar_imagen_component():
                         escolaridad_value = st.session_state.get("escolaridad", "")
                         ocupacion_value = st.session_state.get("ocupacion", "")
                         grupo_value = st.session_state.get("form_grupo", "").strip()
+                        try:
+                            import services.auth as auth
+                            _is_admin_for_validation = auth.is_admin()
+                        except Exception:
+                            _is_admin_for_validation = False
+
+                        if _is_admin_for_validation:
+                            assigned = st.session_state.get('assigned_id_usuario', None)
+                            if not assigned:
+                                st.markdown("""
+                                    <div class="warning">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                    </svg>
+                                    <span>Debes asignar un especialista antes de continuar</span>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                return
                         if not nombre_value:
                             st.markdown("""
                                 <div class="warning">

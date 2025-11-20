@@ -5,6 +5,7 @@ from services.indicadores_ajustes import indicadores
 import streamlit as st
 from pathlib import Path
 import pandas as pd
+from components.loader import show_loader
 
 def ajustes():
     # ---------- CONFIGURACIÓN ----------
@@ -58,4 +59,5 @@ def ajustes():
         usuarios()  
     with tab4:
         indicadores()
+    show_loader('show_ajustes_loader', min_seconds=1.0)
     

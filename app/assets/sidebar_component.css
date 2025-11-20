@@ -131,3 +131,183 @@ body {
     margin: 0;
 }
 
+/* ============================================
+   BARRA MÓVIL HORIZONTAL
+   ============================================ */
+
+/* Barra superior móvil - oculta en desktop */
+.mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: #111;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.mobile-topbar-hamburger {
+    position: absolute;
+    left: 1rem;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    transition: transform 0.2s ease;
+}
+
+.mobile-topbar-hamburger:active {
+    transform: scale(0.95);
+}
+
+.mobile-topbar-logo {
+    height: 45px;
+    width: auto;
+}
+
+/* ============================================
+   RESPONSIVE MOBILE
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Mostrar barra móvil */
+    .mobile-topbar {
+        display: flex !important;
+    }
+    
+    /* Ajustar contenido principal para la barra superior */
+    [data-testid="stAppViewContainer"] {
+        padding-top: 60px !important;
+    }
+    
+    section.main > div.block-container,
+    div.stMainBlockContainer.block-container,
+    div.block-container.st-emotion {
+        margin-top: 0.5rem !important;
+    }
+    
+    /* Sidebar oculto por defecto en móvil */
+    [data-testid="stSidebar"] {
+        position: fixed !important;
+        left: -100% !important;
+        top: 60px !important;
+        height: calc(100vh - 60px) !important;
+        width: 280px !important;
+        transition: left 0.3s ease !important;
+        z-index: 9998 !important;
+        overflow-y: auto !important;
+    }
+    
+    /* Sidebar visible cuando está activo */
+    [data-testid="stSidebar"].mobile-sidebar-open {
+        left: 0 !important;
+    }
+    
+    /* Overlay oscuro cuando el sidebar está abierto */
+    .mobile-sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9997;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+    }
+    
+    .mobile-sidebar-overlay.active {
+        display: block;
+    }
+    
+    /* Ajustar botones del sidebar en móvil */
+    [data-testid="stSidebar"] button[kind="primary"],
+    [data-testid="stSidebar"] button[kind="secondary"],
+    [data-testid="stSidebar"] button[kind="secondary"]:hover {
+        width: 100% !important;
+        max-width: 250px;
+    }
+    
+    /* Avatar más pequeño en móvil */
+    [data-testid="stSidebarContent"] [data-testid="stImage"] {
+        width: 80px !important;
+    }
+    
+    [data-testid="stImageContainer"] img:not([data-testid="stMain"] *) {
+        width: 70px !important;
+        height: 70px !important;
+    }
+    
+    .username {
+        font-size: 1.1em;
+    }
+    
+    .role {
+        font-size: 0.85em;
+    }
+    
+    /* Ocultar logo del sidebar en móvil (ya está en topbar) */
+    .sidebar-logo-container {
+        display: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .mobile-topbar {
+        height: 55px;
+    }
+    
+    .mobile-topbar-logo {
+        height: 40px;
+    }
+    
+    .mobile-topbar-hamburger {
+        font-size: 1.6rem;
+        width: 35px;
+        height: 35px;
+    }
+    
+    [data-testid="stAppViewContainer"] {
+        padding-top: 55px !important;
+    }
+    
+    [data-testid="stSidebar"] {
+        top: 55px !important;
+        height: calc(100vh - 55px) !important;
+        width: 260px !important;
+    }
+    
+    .mobile-sidebar-overlay {
+        top: 55px;
+    }
+    
+    [data-testid="stSidebar"] button[kind="primary"],
+    [data-testid="stSidebar"] button[kind="secondary"],
+    [data-testid="stSidebar"] button[kind="secondary"]:hover {
+        font-size: 15px;
+        padding: 9px 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    [data-testid="stSidebar"] {
+        width: 240px !important;
+    }
+    
+    .mobile-topbar-logo {
+        height: 35px;
+    }
+}

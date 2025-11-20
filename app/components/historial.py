@@ -9,6 +9,9 @@ from services.queries.q_historial import LISTADO_HISTORIAL_SQL, ELIMINAR_PRUEBAS
 from services.queries.q_registro import GET_GRUPOS
 from sqlalchemy import text
 import datetime
+import time
+import threading
+from components.loader import show_loader
 
 
 @st.dialog(":material/warning: Confirmar Eliminación")
@@ -76,7 +79,6 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
                                 del st.session_state['historial_df']
                             except Exception:
                                 pass
-                        # Limpiar selecciones después de eliminar
                         if 'historial_selected_indices' in st.session_state:
                             del st.session_state['historial_selected_indices']
                         if 'historial_page_selections' in st.session_state:
@@ -97,15 +99,12 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
 def dialog_filtros():
     """Diálogo para filtrar datos por columnas."""
         
-    # Obtener datos originales
     original_data = get_historial_data()
     df_original = pd.DataFrame(original_data)
     
-    # Inicializar filtros en session_state si no existen
     if 'active_historial_filters' not in st.session_state:
         st.session_state['active_historial_filters'] = {}
     
-    # Filtro por Evaluado (nombre completo)
     evaluado_options = ["Todos"] + sorted(df_original['Nombre del evaluado'].dropna().unique().tolist())
     evaluado_filter = st.selectbox(
         "Evaluado",
@@ -114,7 +113,6 @@ def dialog_filtros():
         key="filter_evaluado"
     )
     
-    # Filtro por Sexo
     sexo_options = ["Todos"] + sorted(df_original['Sexo'].dropna().unique().tolist())
     sexo_filter = st.selectbox(
         "Sexo",
@@ -123,7 +121,6 @@ def dialog_filtros():
         key="filter_sexo"
     )
     
-    # Filtro por Grupo
     grupo_options = ["Todos"] + sorted(df_original['Grupo'].dropna().unique().tolist())
     grupo_filter = st.selectbox(
         "Grupo",
@@ -132,7 +129,6 @@ def dialog_filtros():
         key="filter_grupo"
     )
     
-    # Filtro por edad mínima
     edad_min = st.number_input(
         "Edad mínima",
         min_value=18,
@@ -141,7 +137,6 @@ def dialog_filtros():
         key="filter_edad_min"
     )
     
-    # Filtro por rango de fechas
     col1, col2 = st.columns(2)
     with col1:
         fecha_desde = st.date_input(
@@ -171,7 +166,6 @@ def dialog_filtros():
         st.markdown("<br/>", unsafe_allow_html=True)
         st.warning(":material/info: No hay evaluaciones registradas que cumplan estos criterios")
 
-    # Botones de acción
     col1, col3 = st.columns(2)
     with col1:
         st.markdown("<br><br/>", unsafe_allow_html=True)
@@ -210,7 +204,6 @@ def dialog_filtros():
 
             st.session_state['active_historial_filters'] = filters
 
-            # Validación: 'fecha_hasta' no puede ser anterior a 'fecha_desde'
             try:
                 if fecha_desde is not None and fecha_hasta is not None and fecha_hasta < fecha_desde:
                     st.session_state['historial_filters_invalid_date'] = True
@@ -224,7 +217,6 @@ def dialog_filtros():
             except Exception:
                 pass
 
-            # Aplicar filtros
             df_filtered = df_original.copy()
 
             if evaluado_filter != "Todos":
@@ -249,7 +241,6 @@ def dialog_filtros():
             else:
                 st.session_state['historial_df'] = df_filtered
                 st.session_state.historial_current_page = 1
-                # Limpiar selecciones al aplicar filtros
                 if 'historial_selected_indices' in st.session_state:
                     del st.session_state['historial_selected_indices']
                 if 'historial_page_selections' in st.session_state:
@@ -341,6 +332,7 @@ def get_historial_data() -> List[Dict]:
 
 def historial():
     """Renderiza la vista de historial de evaluaciones/pruebas"""
+    
     # ---------- CONFIGURACIÓN ----------
     st.set_page_config(page_title="Rainly - Historial", layout="wide", initial_sidebar_state="auto")
     
@@ -361,23 +353,19 @@ def historial():
     
     st.markdown('<div class="page-header">Historial de evaluaciones</div>', unsafe_allow_html=True)
     
-    # Cargar datos
     if 'historial_df' not in st.session_state:
         st.session_state['historial_df'] = pd.DataFrame(get_historial_data())
     
-    # Verificar si hay evaluaciones
+    
     if st.session_state['historial_df'].empty:
         st.info(":material/info: No hay evaluaciones registradas.")
         return
     
-    # Preparar DataFrame
     df = st.session_state['historial_df'].copy()
     
-    # Inicializar selecciones persistentes
     if 'historial_selected_indices' not in st.session_state:
         st.session_state['historial_selected_indices'] = set()
     
-    # Inicializar mapeo de selecciones por página
     if 'historial_page_selections' not in st.session_state:
         st.session_state['historial_page_selections'] = {}
     
@@ -411,7 +399,6 @@ def historial():
     
     st.markdown("<br/>", unsafe_allow_html=True)
     
-    # Aplicar búsqueda si hay texto
     if buscar:
         mask = df_display[['Nombre del evaluado', 'Sexo', 'Grupo']].apply(
             lambda row: row.astype(str).str.contains(buscar, case=False).any(), axis=1
@@ -419,44 +406,32 @@ def historial():
         df_display = df_display[mask]
         df = df[mask]
     
-    # ========== PAGINACIÓN ==========
-    ROWS_PER_PAGE = 10  # Registros por página
+    ROWS_PER_PAGE = 10
 
-    # Inicializar página en session_state
     if 'historial_current_page' not in st.session_state:
         st.session_state.historial_current_page = 1
 
     total_rows = len(df_display)
     total_pages = max(1, (total_rows + ROWS_PER_PAGE - 1) // ROWS_PER_PAGE)
 
-    # Asegurar que la página actual sea válida
     if st.session_state.historial_current_page > total_pages:
         st.session_state.historial_current_page = total_pages
 
     page = st.session_state.historial_current_page
-
-    # Calcular índices para la página actual
     start_idx = (page - 1) * ROWS_PER_PAGE
     end_idx = start_idx + ROWS_PER_PAGE
-
-    # Filtrar el DataFrame para la página actual
     df_display_page = df_display.iloc[start_idx:end_idx].copy()
     
-    # Convertir índices globales del DataFrame a índices locales de la página (0-based)
     global_to_local = {global_idx: local_idx for local_idx, global_idx in enumerate(df_display_page.index)}
     
-    # Obtener índices seleccionados previamente en esta página (locales)
     preselected_local = [
         global_to_local[idx] 
         for idx in st.session_state['historial_selected_indices'] 
         if idx in global_to_local
     ]
     
-    # ========== SOLUCIÓN SIMPLIFICADA ==========
-    # Usar una clave estable para la tabla que incluya la página actual
     table_key = f"historial_table_page_{page}"
     
-    # Mostrar tabla con selección multi-row
     event = st.dataframe(
         df_display_page,
         use_container_width=True,
@@ -474,15 +449,10 @@ def historial():
         }
     )
     
-    # ========== LÓGICA DE SINCRONIZACIÓN SIMPLIFICADA ==========
     current_local_selections = set(event.selection.rows)
-    
-    # Obtener las selecciones anteriores de esta página
     previous_local_selections = set(st.session_state['historial_page_selections'].get(page, []))
     
-    # Solo procesar cambios si hay una diferencia real
     if current_local_selections != previous_local_selections:
-        # Actualizar selecciones globales basadas en los cambios
         for local_idx in current_local_selections - previous_local_selections:
             if local_idx < len(df_display_page):
                 global_idx = df_display_page.index[local_idx]
@@ -493,22 +463,17 @@ def historial():
                 global_idx = df_display_page.index[local_idx]
                 st.session_state['historial_selected_indices'].discard(global_idx)
         
-        # Actualizar el estado de esta página
         st.session_state['historial_page_selections'][page] = list(current_local_selections)
     
-    # Si estamos en una página con selecciones pre-existentes pero la tabla no las muestra,
-    # forzar un re-render para sincronizar la vista visual
     elif preselected_local and not current_local_selections:
         st.session_state['historial_page_selections'][page] = preselected_local
         st.rerun()
     
-    # Obtener todas las filas seleccionadas (de todas las páginas)
     all_selected_indices = list(st.session_state['historial_selected_indices'])
     seleccionados = df.loc[df.index.isin(all_selected_indices)] if all_selected_indices else pd.DataFrame()
     
     st.caption(f"**Total de evaluaciones:** {len(df)} - **Mostrando:** {start_idx + 1}-{min(end_idx, total_rows)} - **Seleccionadas:** {len(seleccionados)}")
 
-    # Controles de paginación
     if total_pages > 1:
         col_prev, col_center, col_next = st.columns([1, 2, 1])
 
@@ -535,108 +500,44 @@ def historial():
 
     if exportar_btn:
         if len(seleccionados) == 0:
-            st.warning(":material/warning: Selecciona al menos una evaluación para exportar")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona al menos una evaluación para exportar</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             try:
-                info_list = []
-                for idx in seleccionados.index.tolist():
-                    try:
-                        row = df.loc[idx]
-                    except Exception:
-                        continue
-
-                    info = {
-                        "Fecha de evaluación": row.get('Fecha de evaluación', ''),
-                        "Fecha": row.get('Fecha de evaluación', ''),
-                        "Nombre": row.get('Nombre del evaluado', ''),
-                        "Nombre del evaluado": row.get('Nombre del evaluado', ''),
-                        "Edad": row.get('Edad', ''),
-                        "Sexo": row.get('Sexo', ''),
-                        "Grupo": row.get('Grupo', ''),
-                        "ruta_imagen": row.get('ruta_imagen', ''),  
-                    }
-                    info_list.append(info)
-
-                if not info_list:
-                    st.warning(":material/warning: No se pudo resolver la información de las evaluaciones seleccionadas.")
-                else:
-                    indicadores_por_fila = []
-                    for idx in seleccionados.index.tolist():
-                        try:
-                            row = df.loc[idx]
-                        except Exception:
-                            indicadores_por_fila.append([])
-                            continue
-
-                        id_prueba = row.get('id_prueba', None)
-                        if id_prueba is None or pd.isna(id_prueba):
-                            indicadores_por_fila.append([])
-                            continue
-
-                        try:
-                            df_res = fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": int(id_prueba)})
-                            if df_res is None or df_res.empty:
-                                indicadores_por_fila.append([])
-                            else:
-                                lista_inds = []
-                                for _i, r in df_res.iterrows():
-                                    # Normalizar valores que vienen como NaN desde pandas (NULL en la BD)
-                                    nombre = None
-                                    if 'nombre_indicador' in r and r.get('nombre_indicador') is not None:
-                                        nombre = r.get('nombre_indicador')
-                                    elif 'nombre' in r and r.get('nombre') is not None:
-                                        nombre = r.get('nombre')
-
-                                    significado = r.get('significado') if 'significado' in r and r.get('significado') is not None else None
-                                    confianza = r.get('confianza') if 'confianza' in r and r.get('confianza') is not None else None
-                                    id_ind = r.get('id_indicador') if 'id_indicador' in r and r.get('id_indicador') is not None else None
-
-                                    # id_categoria puede ser NaN (pandas) si es NULL en la BD; convertir a None
-                                    id_cat = None
-                                    if 'id_categoria' in r:
-                                        try:
-                                            val = r.get('id_categoria')
-                                            if not (isinstance(val, float) and pd.isna(val)):
-                                                id_cat = int(val) if val is not None else None
-                                        except Exception:
-                                            id_cat = None
-
-                                    # categoría nombre (si existe)
-                                    categoria_nombre = None
-                                    if 'categoria_nombre' in r:
-                                        try:
-                                            val = r.get('categoria_nombre')
-                                            if not (isinstance(val, float) and pd.isna(val)):
-                                                categoria_nombre = str(val)
-                                        except Exception:
-                                            categoria_nombre = None
-
-                                    lista_inds.append({
-                                        "nombre": nombre,
-                                        "significado": significado,
-                                        "confianza": confianza,
-                                        "id_indicador": id_ind,
-                                        "id_categoria": id_cat,
-                                        "categoria_nombre": categoria_nombre,
-                                    })
-                                indicadores_por_fila.append(lista_inds)
-                        except Exception:
-                            indicadores_por_fila.append([])
-
-                    use_indicadores = indicadores_por_fila if any(len(x) for x in indicadores_por_fila) else st.session_state.get("indicadores", [])
-                    render_export_popover(info_list, use_indicadores)
+                # Llamar al popover de exportación con las filas seleccionadas
+                render_export_popover(seleccionados)
             except Exception as e:
                 st.error(f":material/error: Error al preparar exportación: {e}")
 
     if eliminar_btn:
         if len(seleccionados) == 0:
-            st.warning(":material/warning: Selecciona al menos una evaluación para eliminar")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona al menos una evaluación para eliminar</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             confirmar_eliminacion_pruebas(seleccionados)            
 
     if ver_mas_btn:
         if len(seleccionados) != 1:
-            st.warning(":material/warning: Selecciona una sola evaluación para ver los resultados")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona exactamente una evaluación para ver sus resultados.</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             try:
                 idx = seleccionados.index[0]
@@ -648,3 +549,4 @@ def historial():
                 st.rerun()
             except Exception as e:
                 st.error(f":material/error: Error: {e}")
+    show_loader('show_historial_loader', min_seconds=1.0)

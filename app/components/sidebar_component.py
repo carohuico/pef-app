@@ -22,46 +22,11 @@ def sidebar_component():
             unsafe_allow_html=True
         )
     
-    # ========== BARRA MÓVIL HORIZONTAL ==========
+    # # ========== BARRA MÓVIL HORIZONTAL ==========
     logo_path = Path(__file__).parent.parent / 'assets' / 'logo.png'
     with open(logo_path, "rb") as _img:
         _b64 = b64encode(_img.read()).decode("utf-8")
     
-    mobile_topbar_html = f"""
-    <div class="mobile-topbar">
-        <button class="mobile-topbar-hamburger" onclick="toggleMobileSidebar()">
-            ☰
-        </button>
-        <img src="data:image/png;base64,{_b64}" alt="Rainly Logo" class="mobile-topbar-logo" />
-    </div>
-    <div class="mobile-sidebar-overlay" onclick="toggleMobileSidebar()"></div>
-    <script>
-        function toggleMobileSidebar() {{
-            const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
-            const overlay = window.parent.document.querySelector('.mobile-sidebar-overlay');
-            
-            if (sidebar && overlay) {{
-                sidebar.classList.toggle('mobile-sidebar-open');
-                overlay.classList.toggle('active');
-            }}
-        }}
-        
-        // Cerrar sidebar al hacer clic en un botón de navegación (móvil)
-        if (window.innerWidth <= 768) {{
-            window.parent.document.addEventListener('click', function(e) {{
-                if (e.target.closest('[data-testid="stSidebar"] button')) {{
-                    const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
-                    const overlay = window.parent.document.querySelector('.mobile-sidebar-overlay');
-                    if (sidebar && overlay) {{
-                        sidebar.classList.remove('mobile-sidebar-open');
-                        overlay.classList.remove('active');
-                    }}
-                }}
-            }});
-        }}
-    </script>
-    """
-    st.html(mobile_topbar_html)
     
     # ========== LOGO EN SIDEBAR (Desktop) ==========
     html_logo = f"""
@@ -180,10 +145,10 @@ def confirmar_cerrar_sesion():
     col_yes, col_no = st.columns(2)
     with col_yes:
         label = ":material/check: Sí, cerrar sesión"
-        if st.button(label, use_container_width=True, type="primary", key="confirm_logout_yes"):
+        if st.button(label, width='stretch', type="primary", key="confirm_logout_yes"):
             st.session_state["active_view"] = "salir"
             st.rerun()
     with col_no:
         label = ":material/cancel: Cancelar"
-        if st.button(label, use_container_width=True, key="confirm_logout_no"):
+        if st.button(label, width='stretch', key="confirm_logout_no"):
             st.rerun()

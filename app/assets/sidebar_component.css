@@ -3,6 +3,10 @@ body {
     overflow: hidden;
 }
 
+span[data-testid="stIconMaterial"] {
+    font-family: 'Source Sans Pro', sans-serif !important;
+}
+
 [data-testid="stImageContainer"] img:not([data-testid="stMain"] *) {
     border-radius: 50%;
     height: auto;

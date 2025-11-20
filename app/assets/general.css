@@ -7,6 +7,11 @@ html, body {
 	height: 100%;
 	overflow: hidden;
 }
+
+span[data-testid="stIconMaterial"] {
+	visibility: hidden !important;
+}
+
 [class*="st-"] {
 	font-family: 'Poppins', sans-serif;
 	color: #1a1a1a;

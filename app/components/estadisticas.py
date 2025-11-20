@@ -164,7 +164,7 @@ def modal_filtros():
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
-        if st.button('Limpiar filtros', use_container_width=True, key='btn_limpiar'):
+        if st.button('Limpiar filtros', width='stretch', key='btn_limpiar'):
             st.session_state.filtros_aplicados = {
                 'id_evaluado': None,
                 'sexo': None,
@@ -179,7 +179,7 @@ def modal_filtros():
             st.rerun()
     
     with col_btn2:
-        if st.button('Aplicar filtros', use_container_width=True, type='primary', key='btn_aplicar'):
+        if st.button('Aplicar filtros', width='stretch', type='primary', key='btn_aplicar'):
             if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
                 st.error("La fecha 'Hasta' no puede ser anterior a la fecha 'Desde'.")
                 st.stop()
@@ -246,7 +246,7 @@ def estadisticas():
         st.markdown('<div class="page-header">Estadísticas</div>', unsafe_allow_html=True)
     with col2:
         button_label = ":material/filter_list: Filtros"
-        if st.button(button_label, use_container_width=True):
+        if st.button(button_label, width='stretch'):
             modal_filtros()
 
     # ---------- VERIFICAR SI HAY FILTROS ACTIVOS ----------
@@ -408,7 +408,7 @@ def estadisticas():
             .properties(height=250)
         )
 
-        st.altair_chart(chart, use_container_width=True)
+        st.altair_chart(chart, width='stretch')
     
     with col_right:
         st.markdown('<div class="chart-title">Evaluaciones por año</div>', unsafe_allow_html=True)
@@ -435,7 +435,7 @@ def estadisticas():
                 y='Evaluaciones',
                 color='#FFD751',
                 height=250,
-                use_container_width=True
+                width='stretch'
             )
 
             stop_loader(_loader_handle, min_seconds=1.0)

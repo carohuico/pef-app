@@ -37,7 +37,7 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
     col_yes, col_no = st.columns(2)
     with col_yes:
         label = ":material/check: Sí, eliminar"
-        if st.button(label, use_container_width=True, type="primary", key="hist_confirmar_eliminar"):
+        if st.button(label, width='stretch', type="primary", key="hist_confirmar_eliminar"):
             try:
                 ids = []
                 orig_df = st.session_state.get('historial_df', pd.DataFrame())
@@ -91,7 +91,7 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
 
     with col_no:
         label = ":material/cancel: Cancelar"
-        if st.button(label, use_container_width=True, key="hist_cancelar_eliminar"):
+        if st.button(label, width='stretch', key="hist_cancelar_eliminar"):
             st.rerun()
 
 
@@ -169,7 +169,7 @@ def dialog_filtros():
     col1, col3 = st.columns(2)
     with col1:
         st.markdown("<br><br/>", unsafe_allow_html=True)
-        if st.button(":material/refresh: Limpiar", use_container_width=True, key="clear_filters"):
+        if st.button(":material/refresh: Limpiar", width='stretch', key="clear_filters"):
             st.session_state['active_historial_filters'] = {}
             st.session_state.historial_current_page = 1
             if 'historial_df' in st.session_state:
@@ -188,7 +188,7 @@ def dialog_filtros():
     
     with col3:
         st.markdown("<br><br/>", unsafe_allow_html=True)  
-        if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key="apply_filters"):
+        if st.button(":material/check: Aplicar", width='stretch', type="primary", key="apply_filters"):
             filters = {}
             if evaluado_filter != "Todos":
                 filters['Evaluado'] = evaluado_filter
@@ -384,18 +384,18 @@ def historial():
     
     with col_filtros:
         button_label = ":material/filter_list: Filtros"
-        filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key="historial_btn_filtros_top")
+        filtros_btn = st.button(button_label, width='stretch', type="secondary", key="historial_btn_filtros_top")
     
     with col_exportar:
         button_label = ":material/file_download: Exportar"
-        exportar_btn = st.button(button_label, use_container_width=True, type="secondary", key="historial_btn_exportar_top")
+        exportar_btn = st.button(button_label, width='stretch', type="secondary", key="historial_btn_exportar_top")
     
     with col_eliminar:
         button_label = ":material/delete: Eliminar"
-        eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key="historial_btn_eliminar_top")
+        eliminar_btn = st.button(button_label, width='stretch', type="secondary", key="historial_btn_eliminar_top")
 
     with col_vermas:
-        ver_mas_btn = st.button("Ver resultados", type="primary", use_container_width=True, key="historial_btn_vermas_top")
+        ver_mas_btn = st.button("Ver resultados", type="primary", width='stretch', key="historial_btn_vermas_top")
     
     st.markdown("<br/>", unsafe_allow_html=True)
     
@@ -434,7 +434,7 @@ def historial():
     
     event = st.dataframe(
         df_display_page,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
         key=table_key,
         on_select="rerun",
@@ -478,7 +478,7 @@ def historial():
         col_prev, col_center, col_next = st.columns([1, 2, 1])
 
         with col_prev:
-            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state.historial_current_page == 1), key="btn_prev_page", type="tertiary", use_container_width=True):
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state.historial_current_page == 1), key="btn_prev_page", type="tertiary", width='stretch'):
                 st.session_state.historial_current_page -= 1
                 st.rerun()
 
@@ -489,7 +489,7 @@ def historial():
             )
 
         with col_next:
-            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state.historial_current_page == total_pages), key="btn_next_page", type="tertiary", use_container_width=True):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state.historial_current_page == total_pages), key="btn_next_page", type="tertiary", width='stretch'):
                 st.session_state.historial_current_page += 1
                 st.rerun()
 

@@ -55,10 +55,10 @@ def agregar_indicador_dialog():
         col_btn1, col_btn2 = st.columns([1, 1])
         with col_btn2:
             label = ":material/check: Guardar"
-            submitted = st.form_submit_button(label, use_container_width=True, type="primary")
+            submitted = st.form_submit_button(label, width='stretch', type="primary")
         with col_btn1:
             label = ":material/cancel: Cancelar"
-            cancelar = st.form_submit_button(label, use_container_width=True)
+            cancelar = st.form_submit_button(label, width='stretch')
         
         if cancelar:
             st.rerun()
@@ -157,10 +157,10 @@ def editar_indicador_dialog(indicador_data):
         col_btn1, col_btn2 = st.columns([1, 1])
         with col_btn2:
             button_label = ":material/check: Guardar Cambios"
-            submitted = st.form_submit_button(button_label, use_container_width=True, type="primary")
+            submitted = st.form_submit_button(button_label, width='stretch', type="primary")
         with col_btn1:
             button_label = ":material/cancel: Cancelar"
-            cancelar = st.form_submit_button(button_label, use_container_width=True)
+            cancelar = st.form_submit_button(button_label, width='stretch')
         
         if cancelar:
             st.rerun()
@@ -241,7 +241,7 @@ def confirmar_eliminacion_dialog(indicadores_seleccionados):
     col_conf1, col_conf2 = st.columns(2)
     with col_conf1:
         label = ":material/check: Sí, eliminar"
-        if st.button(label, use_container_width=True, type="primary", key="indicadores_confirmar_eliminar_modal"):
+        if st.button(label, width='stretch', type="primary", key="indicadores_confirmar_eliminar_modal"):
             # Guardar los IDs para eliminar en session_state
             try:
                 st.session_state['indicadores_a_eliminar'] = list(indicadores_seleccionados['id_indicador'].astype(int))
@@ -256,7 +256,7 @@ def confirmar_eliminacion_dialog(indicadores_seleccionados):
             st.rerun()
     with col_conf2:
         label = ":material/cancel: Cancelar"
-        if st.button(label, use_container_width=True, key="indicadores_cancelar_eliminar_modal"):
+        if st.button(label, width='stretch', key="indicadores_cancelar_eliminar_modal"):
             st.rerun()
 
 def indicadores():
@@ -270,7 +270,7 @@ def indicadores():
         col1, col2, col3 = st.columns([1, 5, 1])
         with col1:
             button_label = ":material/add: Crear"
-            if st.button(button_label, use_container_width=True, type="primary"):
+            if st.button(button_label, width='stretch', type="primary"):
                 agregar_indicador_dialog()
         
         label = ":material/info: No hay indicadores registrados."
@@ -300,15 +300,15 @@ def indicadores():
     
     with col_editar:
         button_label = ":material/edit: Editar"
-        editar_btn = st.button(button_label, use_container_width=True, type="secondary", key="indicadores_btn_editar_top")
+        editar_btn = st.button(button_label, width='stretch', type="secondary", key="indicadores_btn_editar_top")
     
     with col_eliminar:
         button_label = ":material/delete: Eliminar"
-        eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key="indicadores_btn_eliminar_top")
+        eliminar_btn = st.button(button_label, width='stretch', type="secondary", key="indicadores_btn_eliminar_top")
     
     with col_crear:
         button_label = ":material/add: Crear"
-        crear_btn = st.button(button_label, use_container_width=True, type="primary", key="indicadores_btn_crear_top")
+        crear_btn = st.button(button_label, width='stretch', type="primary", key="indicadores_btn_crear_top")
     
     st.markdown("<br/>", unsafe_allow_html=True)
     
@@ -339,7 +339,7 @@ def indicadores():
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
         df_display_page,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
         key="indicadores_table_editor",
         column_config={
@@ -364,13 +364,13 @@ def indicadores():
     if total_pages > 1:
         col_prev, col_center, col_next = st.columns([1, 2, 1])
         with col_prev:
-            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key="indicadores_btn_prev", type="tertiary", use_container_width=True):
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key="indicadores_btn_prev", type="tertiary", width='stretch'):
                 st.session_state[page_key] -= 1
                 st.rerun()
         with col_center:
             st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key]} de {total_pages}</strong></div>", unsafe_allow_html=True)
         with col_next:
-            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key="indicadores_btn_next", type="tertiary", use_container_width=True):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key="indicadores_btn_next", type="tertiary", width='stretch'):
                 st.session_state[page_key] += 1
                 st.rerun()
         st.markdown("<br/>", unsafe_allow_html=True)

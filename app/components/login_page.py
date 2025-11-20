@@ -2,14 +2,16 @@ import streamlit as st
 import services.auth as auth
 from services.db import fetch_df
 from services.queries.q_usuarios import UPDATE_ULTIMO_ACCESO, GET_USUARIO_BY_ID, GET_USUARIO_BY_USERNAME
+from pathlib import Path
+import base64
 
 
 def login_page():
-    """Página de login con diseño split screen limpio"""
+    """Página de login con diseño split screen limpio y responsive"""
     
     st.html("""
     <style>
-        /* Ocultar elementos de Streamlit */
+        /* ===== ESTILOS GENERALES ===== */
         [data-testid="stMainBlockContainer"] div { padding: 0 !important; margin: 0 !important; }
         [data-testid="stSidebar"] { display: none; }
         [data-testid="stToolbar"] { display: none; }
@@ -26,7 +28,7 @@ def login_page():
             max-width: 100% !important;
         }
         
-        /* Forzar las columnas a ser 50/50 en altura completa */
+        /* ===== DISEÑO DESKTOP (Split Screen) ===== */
         [data-testid="stElement"] {
             padding: 0 !important;
             min-height: 100vh !important;
@@ -35,7 +37,7 @@ def login_page():
             align-items: center !important;
         }
         
-            [data-testid="stColumn"]:first-child div {
+        [data-testid="stColumn"]:first-child div {
             background: #000000 !important;
             min-height: 95vh !important;
             height: 100%;
@@ -45,17 +47,40 @@ def login_page():
             align-content: center !important;          
         }
         
+        /* COLUMNA DERECHA: Centrado vertical y horizontal */
         [data-testid="stColumn"]:last-child {
             background: white !important;
             color: black !important;
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            align-content: center !important;    
-            padding: 4rem !important;      
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            padding-top: 4rem !important;
+            padding-bottom: 8rem !important;
+            min-height: 95vh !important;
         }
         
-        /* Logo centrado */
+        /* Contenedor interno del formulario centrado */
+        [data-testid="stColumn"]:last-child > div {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            max-width: 500px !important;
+        }
+        
+        /* Todos los elementos del formulario centrados */
+        [data-testid="stColumn"]:last-child [data-testid="stVerticalBlock"] {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+        }
+        
+        /* Logo centrado en columna izquierda */
         [data-testid="stColumn"]:first-child img {
             display: flex !important;
             justify-content: center !important;
@@ -64,7 +89,10 @@ def login_page():
             margin: 0 auto !important;
         }
         
-
+        /* OCULTAR logo negro en DESKTOP */
+        .logo-black {
+            display: none !important;
+        }
         
         /* Título Welcome */
         .welcome-title {
@@ -73,9 +101,20 @@ def login_page():
             font-weight: 700;
             text-align: center;
             margin-bottom: 3rem;
-            margin-top: 3rem !important;
+            margin-top: 0 !important;
         }
         
+        /* Inputs centrados con ancho fijo */
+        [data-testid="stColumn"]:last-child [data-testid="stTextInput"] {
+            width: 100% !important;
+            max-width: 500px !important;
+        }
+        
+        /* Botón centrado con ancho fijo */
+        [data-testid="stColumn"]:last-child .stButton {
+            width: 100% !important;
+            max-width: 500px !important;
+        }
         
         /* Botón amarillo */
         .stButton > button[kind="primary"] {
@@ -90,60 +129,129 @@ def login_page():
         
         .stButton > button[kind="primary"]:hover {
             transform: scale(0.98);
-	        background: #FFD626;
+            background: #FFD626;
         }
         
         .stButton > button[kind="primary"]:active {
             transform: translateY(0) !important;
         }
         
-        /* Alertas en fondo negro */
-        .stAlert {
-            border-radius: 12px !important;
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            color: white !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        /* Alertas centradas */
+        [data-testid="stColumn"]:last-child .stAlert {
+            width: 100% !important;
+            max-width: 500px !important;
         }
         
+        .stAlert {
+            border-radius: 12px !important;
+            background-color: rgba(0, 0, 0, 0.05) !important;
+            color: black !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
         
         /* Caption */
         .stCaption div {
-            color: rgba(255, 255, 255, 0.6) !important;
+            color: rgba(0, 0, 0, 0.6) !important;
             text-align: center !important;
             margin-top: 2.5rem !important;
             font-size: 0.95rem !important;
         }
         
-        /* Responsive */
-        @media (max-width: 968px) {
-            [data-testid="column"] {
-                min-height: 50vh !important;
+        /* ===== RESPONSIVE MÓVIL ===== */
+        @media (max-width: 768px) {
+            /* Ocultar columna izquierda en móvil */
+            [data-testid="stColumn"]:first-child {
+                display: none !important;
+            }
+            
+            /* Columna derecha ocupa toda la pantalla con fondo blanco */
+            [data-testid="stColumn"]:last-child {
+                background: white !important;
+                min-height: 90vh !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            
+            /* MOSTRAR logo negro SOLO en móvil */
+            .logo-black {
+                display: block !important;
+                margin: 0 auto 0rem auto !important;
+                max-width: 200px !important;
+                width: 60% !important;
+            }
+            
+            /* Título más pequeño en móvil */
+            .welcome-title {
+                visibility: hidden !important;
+            }
+            
+            /* Inputs en móvil */
+            [data-testid="stTextInput"] input {
+                font-size: 16px !important;
+                padding: 0.75rem !important;
+            }
+            
+            /* Botón en móvil */
+            .stButton > button[kind="primary"] {
+                font-size: 1rem !important;
+                padding: 0.875rem !important;
+                margin-top: 1.5rem !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            [data-testid="stColumn"]:last-child {
+                padding: 1.5rem 1rem !important;
+            }
+            
+            .logo-black {
+                max-width: 160px !important;
             }
             
             .welcome-title {
-                font-size: 2.5rem;
+                font-size: 1.75rem !important;
             }
         }
     </style>
     """)
     
     col_left, col_right = st.columns(2)
-    
-    # ===== COLUMNA IZQUIERDA - LOGO =====
+
+    # ===== COLUMNA IZQUIERDA - LOGO BLANCO (Solo Desktop) =====
     with col_left:
         st.image("assets/logo.png", use_container_width=True)
-            
+
     # ===== COLUMNA DERECHA - FORMULARIO =====
     with col_right:
+        # Logo negro usando HTML puro (controlado por CSS para móvil)
+        try:
+            logo_path = Path(__file__).parent.parent / 'assets' / 'logo_black.png'
+            if logo_path.is_file():
+                with open(logo_path, 'rb') as _f:
+                    b64 = base64.b64encode(_f.read()).decode('ascii')
+                img_src = f"data:image/png;base64,{b64}"
+            else:
+                img_src = "assets/logo_black.png"
+        except Exception:
+            img_src = "assets/logo_black.png"
+
+        # Usar st.markdown en lugar de st.html para evitar problemas
+        st.markdown(
+            f'<img src="{img_src}" class="logo-black" alt="Rainly Logo">',
+            unsafe_allow_html=True
+        )
+
         # Título
-        st.html('<h1 class="welcome-title">¡Hola!</h1>')
-        
+        st.markdown('<h1 class="welcome-title">¡Hola!</h1>', unsafe_allow_html=True)
+
         # Formulario
         username = st.text_input(
             "Usuario",
             key="login_username",
             placeholder="Usuario",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
         )
         st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
         password = st.text_input(
@@ -151,9 +259,9 @@ def login_page():
             type="password",
             key="login_password",
             placeholder="Contraseña",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
         )
-        
+
         # Botón de login
         if st.button("Iniciar sesión", type="primary", use_container_width=True):
             if not username or not password:
@@ -252,4 +360,3 @@ def login_page():
         if auth_err:
             label = ":material/warning: Aviso de autenticación"
             st.warning(f"{label} {auth_err}")
-        

@@ -343,7 +343,7 @@ def cargar_imagen_component():
                         boxes.append(box)
                         
                     preview = imagen_bboxes(original, boxes)
-                    st.image(preview, use_container_width=True)
+                    st.image(preview, width='stretch')
 
             with col2:
                 with st.container(): 
@@ -367,7 +367,7 @@ def cargar_imagen_component():
                         try:
                             st.data_editor(
                                 df,
-                                use_container_width=True,
+                                width='stretch',
                                 hide_index=True,
                                 key="cargar_indicadores_table",
                                 column_config={
@@ -383,7 +383,7 @@ def cargar_imagen_component():
                                 return df.style.set_properties(**{'border-radius': '10px', 'border': '1px solid #ddd', 'margin-left': '20px',
                                               'text-align': 'center', 'background-color': "#ffffff", 'color': "#000000", 'height': '40px', 'font-family': 'Poppins'})
                             styled_df = style_dataframe(df)
-                            st.dataframe(styled_df, use_container_width=True)
+                            st.dataframe(styled_df, width='stretch')
 
         # ---------- LÓGICA DE PASOS ----------
         if step == 1 and st.session_state["already_registered"] == False:

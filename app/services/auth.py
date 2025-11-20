@@ -225,7 +225,7 @@ def _test_direct_connection():
     """
     try:
         # Intentar ejecutar una consulta simple vía fetch_df (SQLAlchemy)
-        df = fetch_df("SELECT TOP 1 usuario FROM usuarios;")
+        df = fetch_df("SELECT TOP 1 usuario FROM Usuario;")
         if df is None:
             return "[ERROR] No se recibió resultado de la consulta de prueba"
         return "[OK] Consulta de prueba ejecutada (SQLAlchemy)"

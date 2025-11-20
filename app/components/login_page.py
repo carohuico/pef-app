@@ -221,7 +221,22 @@ def login_page():
 
     # ===== COLUMNA IZQUIERDA - LOGO BLANCO (Solo Desktop) =====
     with col_left:
-        st.image("assets/logo.png", use_container_width=True)
+        try:
+            left_logo_path = Path(__file__).parent.parent / 'assets' / 'logo.png'
+            if left_logo_path.is_file():
+                st.image(str(left_logo_path), use_container_width=True)
+            else:
+                # Fallback: try logo_black (may be used for mobile styles)
+                fallback = Path(__file__).parent.parent / 'assets' / 'logo_black.png'
+                if fallback.is_file():
+                    with open(fallback, 'rb') as _f:
+                        b64 = base64.b64encode(_f.read()).decode('ascii')
+                    img_src = f"data:image/png;base64,{b64}"
+                    st.markdown(f'<img src="{img_src}" style="max-width:100%;" alt="Rainly Logo">', unsafe_allow_html=True)
+                else:
+                    st.markdown("<div style='height:4rem;'></div>", unsafe_allow_html=True)
+        except Exception:
+            st.markdown("<div style='height:4rem;'></div>", unsafe_allow_html=True)
 
     # ===== COLUMNA DERECHA - FORMULARIO =====
     with col_right:

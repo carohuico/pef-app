@@ -28,7 +28,7 @@ SERVER = _secret_get("DB_SERVER", "DB_HOST", default="localhost")
 PORT = _secret_get("DB_PORT", default="1433")
 DB = _secret_get("DB_NAME", default="PBLL")
 DRIVER = quote_plus("ODBC Driver 18 for SQL Server")
-TRUSTED = str(_secret_get("DB_TRUSTED", default="yes")).lower() in ("1", "true", "yes")
+TRUSTED = False
 UID = _secret_get("DB_USER", "DB_USERNAME", default="")
 PWD = _secret_get("DB_PASSWORD", "DB_PASS", default="")
 
@@ -41,7 +41,9 @@ def _conn_str():
         f"?driver={DRIVER}"
         f"&Encrypt=yes"
         f"&TrustServerCertificate=yes"
+        f"&trusted_connection=no"
     )
+
 
 
 def get_engine():

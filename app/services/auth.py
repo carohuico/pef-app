@@ -218,6 +218,31 @@ def logout():
     except Exception:
         pass
     
+def _test_direct_connection():
+    import pyodbc
+    server = st.secrets["DB_HOST"]
+    port = st.secrets["DB_PORT"]
+    database = st.secrets["DB_NAME"]
+    username = st.secrets["DB_USER"]
+    password = st.secrets["DB_PASS"]
+
+    try:
+        conn = pyodbc.connect(
+            f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+            f"SERVER={server},{port};"
+            f"DATABASE={database};"
+            f"UID={username};"
+            f"PWD={password};"
+            "Encrypt=yes;"
+            "TrustServerCertificate=yes;"
+            "Connection Timeout=10;"
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT TOP 1 usuario FROM usuarios;")
+        return "[OK] pyodbc directo funciona"
+    except Exception as e:
+        return f"[ERROR] pyodbc directo falla: {e}"
+
 
 def verify_user(username: str, password: str):
     """Verifica credenciales contra la tabla `usuarios`.
@@ -291,6 +316,7 @@ def verify_user(username: str, password: str):
 
 
 def is_logged_in() -> bool:
+    st.write(_test_direct_connection())
     """Verifica si hay sesión activa y token válido. Si expiró, hace logout y devuelve False."""
     token = st.session_state.get("jwt_token")
     _auth_debug(f"is_logged_in: token presente? {'si' if token else 'no'}")

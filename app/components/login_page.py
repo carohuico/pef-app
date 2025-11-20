@@ -64,9 +64,7 @@ def login_page():
             margin: 0 auto !important;
         }
         
-        [data-testid="stColumn"]:last-child .stTextInput > div {
-            margin-bottom: 1.5rem !important;
-        }
+
         
         /* Título Welcome */
         .welcome-title {
@@ -147,7 +145,7 @@ def login_page():
             placeholder="Usuario",
             label_visibility="collapsed"
         )
-        
+        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
         password = st.text_input(
             "Contraseña",
             type="password",
@@ -159,6 +157,7 @@ def login_page():
         # Botón de login
         if st.button("Iniciar sesión", type="primary", use_container_width=True):
             if not username or not password:
+                st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
                 label = ":material/warning: Por favor completa todos los campos"
                 st.error(label)
             else:
@@ -239,6 +238,7 @@ def login_page():
                             finally:
                                 st.stop()
                     else:
+                        st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
                         label = ":material/error: Credenciales inválidas. Revisa usuario y contraseña."
                         st.error(label)
         

@@ -43,6 +43,7 @@ if not auth.is_logged_in():
 else:
     sidebar_component()
 
+
 if st.session_state["active_view"] == "inicio":
     inicio()
     
@@ -63,5 +64,4 @@ elif st.session_state["active_view"] == "estadisticas":
     estadisticas()
 
 elif st.session_state["active_view"] == "salir":
-    # Cerrar sesión
     auth.logout()

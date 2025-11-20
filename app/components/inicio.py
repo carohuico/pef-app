@@ -5,6 +5,7 @@ from services.queries.q_inicio import GET_RECIENTES, GET_EVALUADOS_EXISTENTES
 from services.db import fetch_df
 import streamlit as st
 import pandas as pd
+from components.loader import show_loader
 
 def inicio():
     # ---------- CONFIGURACIÓN ----------
@@ -207,10 +208,10 @@ def inicio():
     with col2:
 
         button_label = ":material/add_2: Nueva evaluación"
-
         if st.button(button_label, key="new_eval", type="primary"):
             dialog_seleccionar_evaluado()
         
+        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("""<h5>Recientes</h5>""", unsafe_allow_html=True)
 
         try:
@@ -284,3 +285,4 @@ def inicio():
                         st.rerun()
             except Exception:
                 pass
+    show_loader('show_inicio_loader', min_seconds=1.0)

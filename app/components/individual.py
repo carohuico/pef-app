@@ -172,7 +172,50 @@ def individual(id_evaluado: str = None):
     }
     
     if not expediente:
-        st.warning("No hay pruebas para este evaluado.")
+        # Mostrar la cabecera (nombre, regresar, agregar) incluso si no hay pruebas
+        col1, col2, col3 = st.columns([3,1,1])
+        with col1:
+            nombre = info_obj.get("Nombre", "Desconocido")
+            apellido = info_obj.get("Apellido", "Desconocido")
+            boton_regresar, col_nombre = st.columns([1, 6])
+            with boton_regresar:
+                button_label = ":material/arrow_back:"
+                if st.button(button_label, use_container_width=True, type="tertiary"):
+                    if 'from_ajustes' in st.session_state and st.session_state['from_ajustes']:
+                        st.session_state['from_ajustes'] = False
+                        st.session_state['active_view'] = 'ajustes'
+                    else:
+                        st.session_state['from_ajustes'] = False
+                        st.session_state['active_view'] = 'historial'
+                    st.session_state['current_image_index'] = 0
+                    st.session_state['add_drawing'] = False
+                    st.rerun()
+
+            with col_nombre:
+                st.markdown(f'<div class="page-header">{nombre} {apellido}</div>', unsafe_allow_html=True)
+
+        with col2:
+            button_label = ":material/delete: Eliminar prueba"
+            # No hay pruebas, al pulsar simplemente mostrar aviso
+            if st.button(button_label, use_container_width=True, type="secondary", key="btn_delete_drawing_noexp"):
+                st.warning(":material/warning: No hay pruebas para eliminar.")
+
+        with col3:
+            button_label = ":material/add: Agregar dibujo"
+            if st.button(button_label, use_container_width=True, type="primary", key="btn_add_drawing_noexp"):
+                st.session_state['add_drawing'] = True
+                st.session_state['_agregar_dialog_open_requested'] = True
+
+        # Si el usuario solicitó agregar dibujo, abrir el diálogo
+        if (
+            st.session_state.get('add_drawing', False)
+            and st.session_state.get('_agregar_dialog_open_requested', False)
+            and not st.session_state.get('_agregar_dialog_opened', False)
+        ):
+            agregar_dibujo(info_obj)
+            st.session_state['_agregar_dialog_opened'] = True
+
+        st.info("No hay pruebas para este evaluado")
         return
 
     current_index = st.session_state.current_image_index
@@ -227,11 +270,9 @@ def individual(id_evaluado: str = None):
             if os.path.isfile(img_path):
                 with _PILImage.open(img_path) as _tmpim:
                     nw, nh = _tmpim.size
-                    print(f"[DEBUG] prueba_index={idx} image_path={img_path} natural_size={nw}x{nh}")
                     prueba['_natural_w'] = nw
                     prueba['_natural_h'] = nh
         except Exception as _e:
-            print(f"[DEBUG] could not open image {img_path}: {_e}")
             nw, nh = None, None
             
         if b64:
@@ -296,7 +337,6 @@ def individual(id_evaluado: str = None):
                             nr['bbox_original'] = [x_min_px, y_min_px, x_max_px, y_max_px]
                             nr['_coords_in_absolute_pixels'] = True
                             
-                            print(f"[DEBUG] Converted bbox for {nr.get('nombre_indicador')}: [{x_min_px}, {y_min_px}, {x_max_px}, {y_max_px}] (img: {nw}x{nh})")
                         
                         # Guardar metadata para referencia (opcional ahora)
                         if meta_info:
@@ -467,7 +507,6 @@ def individual(id_evaluado: str = None):
                 padding: 8px 16px;
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
                 border: 1px solid rgba(255, 255, 255, 0.15);
-                z-index: 9999;
                 font-weight: 600;
                 color: #ffffff;
                 font-size: 14px;
@@ -529,6 +568,7 @@ def individual(id_evaluado: str = None):
                 color: #ffffff;
                 font-size: 13px;
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
             }}
             
             .info-arrow {{
@@ -1166,7 +1206,6 @@ def individual(id_evaluado: str = None):
             const resultados = resultadosData[currentIndex] || [];
             currentBboxes = [];
             
-            console.log('[DEBUG] Drawing', resultados.length, 'boxes for image', currentIndex);
             
             resultados.forEach((resultado, idx) => {{
                 if (resultado.x_min === undefined || resultado.x_min === null) return;
@@ -1185,7 +1224,6 @@ def individual(id_evaluado: str = None):
                 const width = bboxPixels.width;
                 const height = bboxPixels.height;
 
-                console.log(`[DEBUG] Box ${{idx}}: natural=[${{bboxPixels.x}}, ${{bboxPixels.y}}, ${{bboxPixels.width}}, ${{bboxPixels.height}}] display=[${{x}}, ${{y}}, ${{width}}, ${{height}}]`);
 
                 // Determine category styling (force only two colors for categories 1 and 2)
                 const catId = resultado.id_categoria || 0;
@@ -1358,7 +1396,6 @@ def individual(id_evaluado: str = None):
                 currentBboxes = [];
                 
                 modalImage.onload = function() {{
-                    console.log('[DEBUG] modalImage loaded', src, 'natural', this.naturalWidth, this.naturalHeight, 'rect', this.getBoundingClientRect());
                     
                     setTimeout(drawBoundingBoxes, 50);
                 }};

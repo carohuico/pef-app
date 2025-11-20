@@ -119,7 +119,6 @@ def grupos():
         key="editor_grupos",
         height=150
     )
-    st.caption(f"**Total de grupos:** {len(df_display)} | **Mostrando:** {start_idx + 1}-{min(end_idx, total_rows)}")
 
     # Paginación debajo de la tabla principal
     if total_pages > 1:
@@ -144,18 +143,38 @@ def grupos():
     
     if editar_btn:
         if len(seleccionados) == 0:
-            st.warning("Selecciona un grupo para editar")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona un grupo para editar</span>
+            </div>
+            """, unsafe_allow_html=True)
         elif len(seleccionados) > 1:
-            st.warning("Selecciona solo un grupo para editar")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona solo un grupo para editar</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             grupo = seleccionados.iloc[0]
             mostrar_dialogo_editar_grupo(grupo, municipios_df['nombre'].tolist(), municipios_dict)
     
     if eliminar_btn:
         if len(seleccionados) == 0:
-            st.warning("Selecciona al menos un grupo para eliminar")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona al menos un grupo para eliminar</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            # Abrir diálogo de confirmación antes de eliminar
             confirmar_eliminar_grupos(seleccionados)
     
     # Mostrar subgrupos si solo hay 1 grupo seleccionado
@@ -446,7 +465,6 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
         height=150
     )
 
-    st.caption(f"**Total de subgrupos:** {len(df_display)} | **Mostrando:** {start_idx_sub + 1}-{min(end_idx_sub, total_rows_sub)}")
 
     # Paginación debajo de la tabla de subgrupos
     if total_pages_sub > 1:
@@ -471,18 +489,38 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
     
     if editar_sub_btn:
         if len(seleccionados) == 0:
-            st.warning("Selecciona un subgrupo para editar")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona al menos un subgrupo para editar</span>
+            </div>
+            """, unsafe_allow_html=True)
         elif len(seleccionados) > 1:
-            st.warning("Selecciona solo un subgrupo para editar")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona solo un subgrupo para editar</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             subgrupo = seleccionados.iloc[0]
             mostrar_dialogo_editar_subgrupo(subgrupo, id_grupo_padre, municipios_list, municipios_dict)
     
     if eliminar_sub_btn:
         if len(seleccionados) == 0:
-            st.warning("Selecciona al menos un subgrupo para eliminar")
+            st.markdown("""
+            <div class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <span>Selecciona al menos un subgrupo para eliminar</span>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            # Abrir diálogo de confirmación antes de eliminar subgrupos
             confirmar_eliminar_subgrupos(seleccionados)
 
 

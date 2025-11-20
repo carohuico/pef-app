@@ -65,10 +65,6 @@ div.css-1lsmgbg,
 div.stApp, section.main {
 	background: #ffffff !important;
 }
-@media (max-width: 1100px){
-	.content-card {padding: 2.25rem 2rem 3rem 2rem;}
-	.page-header {font-size: 2.1rem;}
-}
 
 /* STEPPER */
 .stepper {
@@ -215,4 +211,261 @@ div[role="dialog"] > div:first-child {
 
 [data-testid="stElementContainer"]:has([data-testid="stAlert"] [data-testid="stAlertContentError"]) {
 	margin-top: 2rem;
+}
+
+.warning {
+    position: fixed;
+    top: 3rem;
+    right: 1rem;
+    z-index: 1000;
+    color: rgba(133, 100, 4, 0.9);
+	background-color: rgba(255, 230, 100, 0.25);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-size: 14px;
+    animation: slideIn 0.5s ease-out;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - MOBILE
+   ============================================ */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 1100px){
+	.content-card {padding: 2.25rem 2rem 3rem 2rem;}
+	.page-header {font-size: 2.1rem;}
+}
+
+/* Tablets pequeñas */
+@media (max-width: 768px) {
+	/* Permitir scroll vertical en tablets */
+	html, body {
+		overflow-y: auto !important;
+		overflow-x: hidden !important;
+	}
+	
+	div.stApp, section.main, main {
+		overflow-y: auto !important;
+		overflow-x: hidden !important;
+	}
+	
+	section.main > div.block-container,
+	div.stMainBlockContainer.block-container,
+	div.block-container.st-emotion {
+		margin: 1rem !important;
+		width: calc(100% - 2rem) !important;
+		border-radius: 12px !important;
+		height: auto !important;
+		min-height: calc(100vh - 2rem);
+		overflow-y: auto !important;
+		padding-bottom: 2rem;
+	}
+	
+	.page-header {
+		font-size: 1.3rem;
+		transform: translateY(-24px);
+	}
+	
+	.stepper {
+		padding: 0 0.5rem;
+	}
+	
+	.step {
+		width: 80px;
+	}
+	
+	.circle {
+		height: 50px;
+		width: 50px;
+		font-size: 0.9rem;
+	}
+	
+	.step-text {
+		font-size: 0.75rem;
+	}
+	
+	button[kind="primary"],
+	button[kind="secondary"] {
+		width: 90px;
+		font-size: 0.9rem;
+		padding: 0.5rem 1rem;
+	}
+	
+	.warning {
+		right: 0.5rem;
+		left: 0.5rem;
+		top: 2rem;
+		font-size: 13px;
+		padding: 0.75rem;
+	}
+}
+
+/* Móviles */
+@media (max-width: 480px) {
+	/* Permitir scroll vertical en móviles */
+	html, body {
+		font-size: 14px;
+		overflow-y: auto !important;
+		overflow-x: hidden !important;
+		height: auto !important;
+	}
+	
+	div.stApp, section.main, main {
+		overflow-y: auto !important;
+		overflow-x: hidden !important;
+	}
+	
+	section.main > div.block-container,
+	div.stMainBlockContainer.block-container,
+	div.block-container.st-emotion {
+		margin: 0.5rem !important;
+		width: calc(100% - 1rem) !important;
+		border-radius: 8px !important;
+		height: auto !important;
+		min-height: calc(100vh - 1rem);
+		max-height: none !important;
+		overflow-y: visible !important;
+		box-shadow: 0 3px 12px rgba(0,0,0,0.15) !important;
+		padding-bottom: 2rem;
+	}
+	
+	.page-header {
+		font-size: 1.1rem;
+		transform: translateY(-20px);
+	}
+	
+	/* Stepper más compacto para móviles */
+	.stepper {
+		padding: 0 0.25rem;
+		margin-bottom: 0.75rem;
+	}
+	
+	.stepper::before {
+		top: 20px;
+		left: 8%;
+		right: 8%;
+	}
+	
+	.step {
+		width: 60px;
+	}
+	
+	.circle {
+		height: 40px;
+		width: 40px;
+		font-size: 0.8rem;
+		border-width: 1.5px;
+		margin-bottom: 0.25rem;
+	}
+	
+	.step-text {
+		font-size: 0.65rem;
+		text-align: center;
+		line-height: 1.2;
+	}
+	
+	/* Botones más pequeños en móvil */
+	button[kind="primary"],
+	button[kind="secondary"] {
+		width: 80px;
+		font-size: 0.85rem;
+		padding: 0.4rem 0.8rem;
+		margin-top: 1rem;
+	}
+	
+	/* Diálogos en móvil */
+	div[role="dialog"] {
+		width: 95vw !important;
+		margin: 0 !important;
+		max-height: 90vh !important;
+		overflow-y: auto !important;
+	}
+	
+	div[role="dialog"] > div:first-child {
+		width: 95vw !important;
+		max-height: 90vh !important;
+		overflow-y: auto !important;
+	}
+	
+	[data-testid="stDialog"] [data-testid^="stBaseButton-primary"],
+	[data-testid="stDialog"] [data-testid^="stBaseButton-secondary"] {
+		font-size: 0.9rem;
+		padding: 0.6rem 1rem;
+	}
+	
+	/* Alertas en móvil */
+	[data-testid="stElementContainer"]:has([data-testid="stAlert"]) {
+		margin-top: 1rem;
+	}
+	
+	.warning {
+		position: fixed;
+		top: 1rem;
+		right: 0.5rem;
+		left: 0.5rem;
+		font-size: 12px;
+		padding: 0.6rem;
+		border-radius: 6px;
+	}
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 360px) {
+	.step {
+		width: 50px;
+	}
+	
+	.circle {
+		height: 35px;
+		width: 35px;
+		font-size: 0.7rem;
+	}
+	
+	.step-text {
+		font-size: 0.6rem;
+	}
+	
+	.stepper::before {
+		left: 10%;
+		right: 10%;
+	}
+	
+	button[kind="primary"],
+	button[kind="secondary"] {
+		width: 70px;
+		font-size: 0.8rem;
+		padding: 0.35rem 0.6rem;
+	}
+}
+
+/* Landscape en móviles */
+@media (max-width: 768px) and (orientation: landscape) {
+	section.main > div.block-container,
+	div.stMainBlockContainer.block-container,
+	div.block-container.st-emotion {
+		height: auto !important;
+		min-height: calc(100vh - 1rem);
+		margin: 0.5rem !important;
+	}
+	
+	.stepper {
+		margin-bottom: 0.5rem;
+	}
+	
+	.circle {
+		height: 35px;
+		width: 35px;
+		font-size: 0.75rem;
+	}
+	
+	.step-text {
+		font-size: 0.65rem;
+	}
 }

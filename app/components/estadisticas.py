@@ -22,6 +22,7 @@ import streamlit as st
 import pandas as pd
 import datetime
 import altair as alt
+from components.loader import start_loader, stop_loader
 
 @st.dialog("Filtros de estadística", width="large")
 def modal_filtros():
@@ -209,6 +210,8 @@ def modal_filtros():
 def estadisticas():
     # ---------- CONFIGURACIÓN ----------
     st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
+    # Mostrar loader antes de cualquier trabajo pesado (si fue activado desde sidebar)
+    _loader_handle = start_loader('show_estadisticas_loader')
     
     # ---------- CSS (externo) ----------
     _css_general = Path(__file__).parent.parent / 'assets' / 'general.css'      
@@ -434,3 +437,12 @@ def estadisticas():
                 height=250,
                 use_container_width=True
             )
+
+            stop_loader(_loader_handle, min_seconds=1.0)
+            _loader_handle = None
+
+    try:
+        if _loader_handle is not None:
+            stop_loader(_loader_handle, min_seconds=1.0)
+    except Exception:
+        pass

@@ -1,80 +1,70 @@
-import os
-from urllib.parse import quote_plus
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+import streamlit as st
+import pyodbc
 import pandas as pd
+from urllib.parse import quote_plus
 
-load_dotenv()
 
-try:
-    import streamlit as _st
-    _secrets = getattr(_st, "secrets", None)
-except Exception:
-    _secrets = None
+def get_connection():
+    """
+    Crea una conexión estable a SQL Server (Cloud SQL - GCP)
+    usando pyodbc directo, con SSL habilitado.
+    """
 
-def _secret_get(*keys, default=None):
-    # Try secrets first (in order), then environment variables, then default
-    if _secrets:
-        for k in keys:
-            if k in _secrets:
-                return _secrets[k]
-    for k in keys:
-        val = os.getenv(k)
-        if val is not None:
-            return val
-    return default
+    server = st.secrets["DB_HOST"]
+    port = st.secrets["DB_PORT"]
+    database = st.secrets["DB_NAME"]
+    username = st.secrets["DB_USER"]
+    password = st.secrets["DB_PASS"]
 
-SERVER = _secret_get("DB_SERVER", "DB_HOST", default="localhost")
-PORT = _secret_get("DB_PORT", default="1433")
-DB = _secret_get("DB_NAME", default="PBLL")
-DRIVER = quote_plus("ODBC Driver 18 for SQL Server")
-TRUSTED = False
-UID = _secret_get("DB_USER", "DB_USERNAME", default="")
-PWD = _secret_get("DB_PASSWORD", "DB_PASS", default="")
-
-_engine = None
-
-def _conn_str():
-    return (
-        f"mssql+pyodbc://{quote_plus(UID)}:{quote_plus(PWD)}"
-        f"@{SERVER},{PORT}/{DB}"
-        f"?driver={DRIVER}"
-        f"&Encrypt=yes"
-        f"&TrustServerCertificate=yes"
-        f"&trusted_connection=no"
+    conn_str = (
+        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+        f"SERVER={server},{port};"
+        f"DATABASE={database};"
+        f"UID={username};"
+        f"PWD={password};"
+        "Encrypt=yes;"
+        "TrustServerCertificate=yes;"
+        "Connection Timeout=30;"
     )
 
-
-
-def get_engine():
-    global _engine
-    if _engine is None:
-        _engine = create_engine(_conn_str(), pool_pre_ping=True, future=True)
-    return _engine
+    return pyodbc.connect(conn_str)
 
 
 def fetch_df(sql: str, params: dict | None = None):
     """
-    Ejecuta una consulta SQL (string puro) y devuelve un DataFrame.
-    Compatible con SQLAlchemy 2.x y pandas 2.x
+    Ejecuta una consulta SQL y devuelve un DataFrame.
+    Reemplaza completamente SQLAlchemy para asegurar estabilidad en Streamlit Cloud.
     """
-    engine = get_engine()
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
     try:
-        # Use a transaction block so INSERT/UPDATE/DELETE are committed.
-        with engine.begin() as conn:
-            result = conn.execute(text(sql), params or {})
-            # If the statement returns rows (SELECT), build a DataFrame.
-            if getattr(result, 'returns_rows', False):
-                try:
-                    rows = result.mappings().all()
-                    df = pd.DataFrame(rows)
-                except Exception:
-                    rows = result.fetchall()
-                    df = pd.DataFrame(rows, columns=result.keys())
-                return df
-            else:
-                # DML statement executed (no rows to return). Return empty DataFrame.
-                return pd.DataFrame()
+        if params:
+            cursor.execute(sql, params)
+        else:
+            cursor.execute(sql)
+
+        # SELECT → devuelve rows
+        if cursor.description:
+            columns = [col[0] for col in cursor.description]
+            rows = cursor.fetchall()
+            return pd.DataFrame.from_records(rows, columns=columns)
+
+        # UPDATE / INSERT / DELETE → sin rows
+        conn.commit()
+        return pd.DataFrame()
+
     except Exception as e:
         print("Error al ejecutar consulta:", e)
         raise
+
+    finally:
+        try:
+            cursor.close()
+        except:
+            pass
+        try:
+            conn.close()
+        except:
+            pass

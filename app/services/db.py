@@ -6,13 +6,33 @@ import pandas as pd
 
 load_dotenv()
 
-SERVER = os.getenv("DB_SERVER", "localhost")
-PORT = os.getenv("DB_PORT", "1433")
-DB = os.getenv("DB_NAME", "PBLL")
+# Prefer `st.secrets` when available (deployed Streamlit app). Support common
+# alternative key names so users can set `DB_HOST`/`DB_SERVER` and `DB_PASS`/`DB_PASSWORD`.
+try:
+    import streamlit as _st
+    _secrets = getattr(_st, "secrets", None)
+except Exception:
+    _secrets = None
+
+def _secret_get(*keys, default=None):
+    # Try secrets first (in order), then environment variables, then default
+    if _secrets:
+        for k in keys:
+            if k in _secrets:
+                return _secrets[k]
+    for k in keys:
+        val = os.getenv(k)
+        if val is not None:
+            return val
+    return default
+
+SERVER = _secret_get("DB_SERVER", "DB_HOST", default="localhost")
+PORT = _secret_get("DB_PORT", default="1433")
+DB = _secret_get("DB_NAME", default="PBLL")
 DRIVER = quote_plus("ODBC Driver 17 for SQL Server")
-TRUSTED = os.getenv("DB_TRUSTED", "yes").lower() in ("1", "true", "yes")
-UID = os.getenv("DB_USER", "")
-PWD = os.getenv("DB_PASSWORD", "")
+TRUSTED = str(_secret_get("DB_TRUSTED", default="yes")).lower() in ("1", "true", "yes")
+UID = _secret_get("DB_USER", "DB_USERNAME", default="")
+PWD = _secret_get("DB_PASSWORD", "DB_PASS", default="")
 
 _engine = None
 

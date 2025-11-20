@@ -68,3 +68,10 @@ def fetch_df(sql: str, params: dict | None = None):
             conn.close()
         except:
             pass
+        
+        
+def get_engine():
+    raise NotImplementedError(
+        "get_engine() ya no existe. Usa fetch_df() y pyodbc directo."
+    )
+

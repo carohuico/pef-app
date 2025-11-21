@@ -1,6 +1,6 @@
 import streamlit as st
 import services.auth as auth
-from services.db import fetch_df
+from services.db import fetch_df, get_db_info
 from services.queries.q_usuarios import UPDATE_ULTIMO_ACCESO, GET_USUARIO_BY_ID, GET_USUARIO_BY_USERNAME
 from pathlib import Path
 import base64
@@ -375,3 +375,31 @@ def login_page():
         if auth_err:
             label = ":material/warning: Aviso de autenticación"
             st.warning(f"{label} {auth_err}")
+
+        # ===== PANEL DE DIAGNÓSTICO (temporal) =====
+        with st.expander("Diagnóstico DB (solo debugging)"):
+            if st.button("Ejecutar diagnóstico DB"):
+                try:
+                    info = get_db_info()
+                    if isinstance(info, dict) and info.get("error"):
+                        st.error(f"Error diagnóstico: {info.get('error')}")
+                    else:
+                        st.write("**Base de datos actual:**", info.get("current_db"))
+                        st.write("**Usuario de conexión:**", info.get("current_user"))
+                        st.write("**Tablas visibles (primeras 200):**")
+                        tables = info.get("tables")
+                        try:
+                            st.dataframe(tables.head(200) if hasattr(tables, 'head') else tables)
+                        except Exception:
+                            st.write(tables)
+
+                    # Ejecutar también la consulta de usuarios de prueba
+                    try:
+                        df_test = fetch_df("SELECT TOP 1 usuario FROM usuarios;")
+                        st.write("**Resultado de SELECT TOP 1 usuario FROM usuarios;**")
+                        st.write(df_test)
+                    except Exception as e:
+                        st.error(f"Consulta de prueba falló: {e}")
+
+                except Exception as e:
+                    st.error(f"Error ejecutando diagnóstico: {e}")

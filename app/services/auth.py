@@ -226,6 +226,7 @@ def _test_direct_connection():
     try:
         # Intentar ejecutar una consulta simple vía fetch_df (SQLAlchemy)
         df = fetch_df("SELECT TOP 1 usuario FROM Usuario;")
+        print(f"[auth] prueba conexión DB fetch_df result: {df}")
         if df is None:
             return "[ERROR] No se recibió resultado de la consulta de prueba"
         return "[OK] Consulta de prueba ejecutada (SQLAlchemy)"
@@ -244,6 +245,7 @@ def verify_user(username: str, password: str):
 
     try:
         df = fetch_df(GET_USUARIO_BY_USERNAME, {"usuario": username})
+        st.write("DEBUG DF:", df)
     except Exception as exc:
         _auth_debug(f"verify_user: error conectando a DB para usuario={username}: {str(exc)}")
         st.error("Error al conectarse a la base de datos al verificar usuario.")

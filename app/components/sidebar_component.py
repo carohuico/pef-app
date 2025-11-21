@@ -145,10 +145,10 @@ def confirmar_cerrar_sesion():
     col_yes, col_no = st.columns(2)
     with col_yes:
         label = ":material/check: Sí, cerrar sesión"
-        if st.button(label, width='stretch', type="primary", key="confirm_logout_yes"):
+        if st.button(label, use_container_width=True, type="primary", key="confirm_logout_yes"):
             st.session_state["active_view"] = "salir"
             st.rerun()
     with col_no:
         label = ":material/cancel: Cancelar"
-        if st.button(label, width='stretch', key="confirm_logout_no"):
+        if st.button(label, use_container_width=True, key="confirm_logout_no"):
             st.rerun()

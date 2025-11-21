@@ -71,13 +71,13 @@ def grupos():
 
     with col2:
         button_label = ":material/edit: Editar"
-        editar_btn = st.button(button_label, type="secondary", width='stretch', key="grupos_btn_editar_top")
+        editar_btn = st.button(button_label, type="secondary", use_container_width=True, key="grupos_btn_editar_top")
     with col3:
         button_label = ":material/delete: Eliminar"
-        eliminar_btn = st.button(button_label, type="secondary", width='stretch', key="grupos_btn_eliminar_top")
+        eliminar_btn = st.button(button_label, type="secondary", use_container_width=True, key="grupos_btn_eliminar_top")
     with col4:
         button_label = ":material/add: Crear"
-        crear_btn = st.button(button_label, type="primary", width='stretch', key="grupos_btn_crear_top")
+        crear_btn = st.button(button_label, type="primary", use_container_width=True, key="grupos_btn_crear_top")
         st.markdown("<br>", unsafe_allow_html=True)
 
     # Aplicar búsqueda
@@ -105,7 +105,7 @@ def grupos():
 
     edited_df = st.data_editor(
         df_display_page,
-        width='stretch',
+        use_container_width=True,
         column_config={
             "Seleccionar": st.column_config.CheckboxColumn("", width="small"),
             "ID": st.column_config.NumberColumn("ID", disabled=True, width="small"),
@@ -124,13 +124,13 @@ def grupos():
     if total_pages > 1:
         col_prev, col_center, col_next = st.columns([1, 2, 1])
         with col_prev:
-            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key="grupos_btn_prev", type="tertiary", width='stretch'):
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key="grupos_btn_prev", type="tertiary", use_container_width=True):
                 st.session_state[page_key] -= 1
                 st.rerun()
         with col_center:
             st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key]} de {total_pages}</strong></div>", unsafe_allow_html=True)
         with col_next:
-            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key="grupos_btn_next", type="tertiary", width='stretch'):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key="grupos_btn_next", type="tertiary", use_container_width=True):
                 st.session_state[page_key] += 1
                 st.rerun()
         st.markdown("<br/>", unsafe_allow_html=True)
@@ -193,7 +193,7 @@ def mostrar_dialogo_crear_grupo(municipios_list, municipios_dict):
         municipio = st.selectbox("Municipio *", municipios_list)
         direccion = st.text_area("Dirección *", max_chars=200)
         
-        submitted = st.form_submit_button("Crear Grupo", type="primary", width='stretch')
+        submitted = st.form_submit_button("Crear Grupo", type="primary", use_container_width=True)
         
         if submitted:
             if not nombre or not direccion or not municipio:
@@ -224,7 +224,7 @@ def mostrar_dialogo_editar_grupo(grupo, municipios_list, municipios_dict):
         municipio = st.selectbox("Municipio *", municipios_list, index=municipios_list.index(grupo['Municipio']))
         direccion = st.text_area("Dirección *", value=grupo['Dirección'], max_chars=200)
         
-        submitted = st.form_submit_button("Guardar Cambios", type="primary", width='stretch')
+        submitted = st.form_submit_button("Guardar Cambios", type="primary", use_container_width=True)
         
         if submitted:
             if not nombre or not direccion or not municipio:
@@ -272,7 +272,7 @@ def confirmar_eliminar_grupos(grupos_seleccionados):
     with col_yes:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/check: Sí, eliminar"
-        if st.button(label, width='stretch', type="primary", key="confirm_grupos_eliminar"):
+        if st.button(label, use_container_width=True, type="primary", key="confirm_grupos_eliminar"):
             try:
                 msgs = eliminar_grupos_seleccionados(grupos_seleccionados)
             except Exception as e:
@@ -283,7 +283,7 @@ def confirmar_eliminar_grupos(grupos_seleccionados):
     with col_no:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/cancel: Cancelar"
-        if st.button(label, width='stretch', key="cancel_grupos_eliminar"):
+        if st.button(label, use_container_width=True, key="cancel_grupos_eliminar"):
             st.rerun()
 
     # Mostrar mensajes de resultado (si los hay) debajo de los botones
@@ -326,7 +326,7 @@ def confirmar_eliminar_subgrupos(subgrupos_seleccionados):
     with col_yes:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/check: Sí, eliminar"
-        if st.button(label, width='stretch', type="primary", key="confirm_subgrupos_eliminar"):
+        if st.button(label, use_container_width=True, type="primary", key="confirm_subgrupos_eliminar"):
             try:
                 msgs = eliminar_subgrupos_seleccionados(subgrupos_seleccionados)
             except Exception as e:
@@ -337,7 +337,7 @@ def confirmar_eliminar_subgrupos(subgrupos_seleccionados):
     with col_no:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/cancel: Cancelar"
-        if st.button(label, width='stretch', key="cancel_subgrupos_eliminar"):
+        if st.button(label, use_container_width=True, key="cancel_subgrupos_eliminar"):
             st.rerun()
 
     # Mostrar mensajes de resultado (si los hay) debajo de los botones
@@ -408,7 +408,7 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
     if subgrupos_df.empty:
         with col_crear:
             button_label = ":material/add: Crear"
-            if st.button(button_label, key=f"crear_sub_{id_grupo_padre}", type="primary", width='stretch'):
+            if st.button(button_label, key=f"crear_sub_{id_grupo_padre}", type="primary", use_container_width=True):
                 mostrar_dialogo_crear_subgrupo(id_grupo_padre, municipios_list, municipios_dict)
         
         st.info(f"No hay subgrupos registrados para '{nombre_grupo_padre}'.")
@@ -422,13 +422,13 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
     # Botones de acción en la fila del título
     with col_editar:
         button_label = ":material/edit: Editar"
-        editar_sub_btn = st.button(button_label, key=f"editar_btn_{id_grupo_padre}", type="secondary", width='stretch')
+        editar_sub_btn = st.button(button_label, key=f"editar_btn_{id_grupo_padre}", type="secondary", use_container_width=True)
     with col_eliminar:
         button_label = ":material/delete: Eliminar"
-        eliminar_sub_btn = st.button(button_label, key=f"eliminar_btn_{id_grupo_padre}", type="secondary", width='stretch')
+        eliminar_sub_btn = st.button(button_label, key=f"eliminar_btn_{id_grupo_padre}", type="secondary", use_container_width=True)
     with col_crear:
             button_label = ":material/add: Crear"
-            crear_sub_btn = st.button(button_label, key=f"crear_btn_{id_grupo_padre}", type="primary", width='stretch')
+            crear_sub_btn = st.button(button_label, key=f"crear_btn_{id_grupo_padre}", type="primary", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
 
     # Tabla de subgrupos
@@ -450,7 +450,7 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
 
     edited_subgrupos = st.data_editor(
         df_sub_page,
-        width='stretch',
+        use_container_width=True,
         column_config={
             "Seleccionar": st.column_config.CheckboxColumn("", width="small"),
             "ID": st.column_config.NumberColumn("ID", disabled=True, width="small"),
@@ -470,13 +470,13 @@ def gestionar_subgrupos(id_grupo_padre, nombre_grupo_padre, municipios_dict, mun
     if total_pages_sub > 1:
         col_prev_s, col_center_s, col_next_s = st.columns([1, 2, 1])
         with col_prev_s:
-            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key_sub] == 1), key=f"subgrupos_btn_prev_{id_grupo_padre}", type="tertiary", width='stretch'):
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key_sub] == 1), key=f"subgrupos_btn_prev_{id_grupo_padre}", type="tertiary", use_container_width=True):
                 st.session_state[page_key_sub] -= 1
                 st.rerun()
         with col_center_s:
             st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key_sub]} de {total_pages_sub}</strong></div>", unsafe_allow_html=True)
             with col_next_s:
-                if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key_sub] == total_pages_sub), key=f"subgrupos_btn_next_{id_grupo_padre}", type="tertiary", width='stretch'):
+                if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key_sub] == total_pages_sub), key=f"subgrupos_btn_next_{id_grupo_padre}", type="tertiary", use_container_width=True):
                     st.session_state[page_key_sub] += 1
                     st.rerun()
         st.markdown("<br/>", unsafe_allow_html=True)
@@ -532,7 +532,7 @@ def mostrar_dialogo_crear_subgrupo(id_grupo_padre, municipios_list, municipios_d
         municipio = st.selectbox("Municipio *", municipios_list)
         direccion = st.text_area("Dirección *", max_chars=200)
         
-        submitted = st.form_submit_button("Crear Subgrupo", type="primary", width='stretch')
+        submitted = st.form_submit_button("Crear Subgrupo", type="primary", use_container_width=True)
         
         if submitted:
             if not nombre or not direccion or not municipio:
@@ -563,7 +563,7 @@ def mostrar_dialogo_editar_subgrupo(subgrupo, id_grupo_padre, municipios_list, m
         municipio = st.selectbox("Municipio *", municipios_list, index=municipios_list.index(subgrupo['Municipio']))
         direccion = st.text_area("Dirección *", value=subgrupo['Dirección'], max_chars=200)
         
-        submitted = st.form_submit_button("Guardar Cambios", type="primary", width='stretch')
+        submitted = st.form_submit_button("Guardar Cambios", type="primary", use_container_width=True)
         
         if submitted:
             if not nombre or not direccion or not municipio:

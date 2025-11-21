@@ -491,24 +491,66 @@ def historial():
             """, unsafe_allow_html=True)
         else:
             try:
-                # Obtener indicadores para cada prueba seleccionada
-                indicadores_por_prueba = []
-                for idx in seleccionados.index:
-                    id_prueba = seleccionados.loc[idx, 'id_prueba']
+                # Construir lista de diccionarios con la info básica de cada evaluado seleccionado
+                info_list = []
+                for idx in seleccionados.index.tolist():
                     try:
-                        df_indicadores = fetch_df(
-                            GET_RESULTADOS_POR_PRUEBA,
-                            {"id_prueba": int(id_prueba)}
-                        )
-                        if df_indicadores is not None and not df_indicadores.empty:
-                            indicadores_list = df_indicadores.to_dict('records')
-                        else:
-                            indicadores_list = []
+                        row = df.loc[idx]
                     except Exception:
-                        indicadores_list = []
-                    indicadores_por_prueba.append(indicadores_list)
-                
-                render_export_popover(seleccionados, indicadores_por_prueba)
+                        continue
+
+                    info = {
+                        "Fecha de evaluación": row.get('Fecha de evaluación', ''),
+                        "Fecha": row.get('Fecha de evaluación', ''),
+                        "Nombre": row.get('Nombre del evaluado', ''),
+                        "Nombre del evaluado": row.get('Nombre del evaluado', ''),
+                        "Edad": row.get('Edad', ''),
+                        "Sexo": row.get('Sexo', ''),
+                        "Grupo": row.get('Grupo', ''),
+                        "ruta_imagen": row.get('ruta_imagen', ''),
+                    }
+                    info_list.append(info)
+
+                if not info_list:
+                    st.warning(":material/warning: No se pudo resolver la información de las evaluaciones seleccionadas.")
+                else:
+                    # Construir lista de indicadores por fila consultando los resultados asociados a cada id_prueba
+                    indicadores_por_fila = []
+                    for idx in seleccionados.index.tolist():
+                        try:
+                            row = df.loc[idx]
+                        except Exception:
+                            indicadores_por_fila.append([])
+                            continue
+
+                        id_prueba = row.get('id_prueba', None)
+                        if id_prueba is None or pd.isna(id_prueba):
+                            indicadores_por_fila.append([])
+                            continue
+
+                        try:
+                            df_res = fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": int(id_prueba)})
+                            if df_res is None or df_res.empty:
+                                indicadores_por_fila.append([])
+                            else:
+                                lista_inds = []
+                                for _i, r in df_res.iterrows():
+                                    lista_inds.append({
+                                        "nombre": r.get('nombre_indicador') if 'nombre_indicador' in r else r.get('nombre') if 'nombre' in r else None,
+                                        "significado": r.get('significado') if 'significado' in r else None,
+                                        "confianza": r.get('confianza') if 'confianza' in r else None,
+                                        "id_indicador": r.get('id_indicador') if 'id_indicador' in r else None,
+                                        "id_categoria": r.get('id_categoria') if 'id_categoria' in r else None,
+                                        "categoria_nombre": r.get('categoria_nombre') if 'categoria_nombre' in r else None,
+                                        "categoria": r.get('categoria') if 'categoria' in r else None,
+                                    })
+                                indicadores_por_fila.append(lista_inds)
+                        except Exception:
+                            indicadores_por_fila.append([])
+
+                    # Si no se encontraron indicadores por fila, como fallback usar indicadores en sesión o lista vacía
+                    use_indicadores = indicadores_por_fila if any(len(x) for x in indicadores_por_fila) else st.session_state.get("indicadores", [])
+                    render_export_popover(info_list, use_indicadores)
             except Exception as e:
                 st.error(f":material/error: Error al preparar exportación: {e}")
 

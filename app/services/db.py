@@ -61,3 +61,32 @@ def get_engine():
         "get_engine() ya no existe. Usa fetch_df() y pyodbc directo."
     )
 
+
+def get_db_info():
+    """Retorna información diagnóstica de la conexión:
+    - current_db: nombre de la base de datos en la sesión
+    - current_user: usuario actual
+    - tables: DataFrame con los schemas y tablas visibles
+    """
+    try:
+        df_db = fetch_df("SELECT DB_NAME() AS current_db, SUSER_SNAME() AS current_user;")
+        current_db = None
+        current_user = None
+        if df_db is not None and not df_db.empty:
+            current_db = df_db.iloc[0].get("current_db")
+            current_user = df_db.iloc[0].get("current_user")
+
+        df_tables = fetch_df(
+            "SELECT s.name AS schema_name, t.name AS table_name "
+            "FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id "
+            "ORDER BY s.name, t.name;"
+        )
+
+        return {
+            "current_db": current_db,
+            "current_user": current_user,
+            "tables": df_tables,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+

@@ -31,12 +31,29 @@ def fetch_df(sql: str, params: dict | None = None):
     Compatible con Streamlit Cloud.
     """
 
+    import re
+
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
         if params:
-            cursor.execute(sql, params)
+            # pymssql does not support T-SQL named parameters like `@usuario` when
+            # passing a dict directly. Convert named params to positional `%s`
+            # placeholders and build a tuple of values in the order of appearance.
+            if isinstance(params, dict):
+                # find parameter names in order of appearance
+                names = re.findall(r"@([A-Za-z0-9_]+)", sql)
+                if names:
+                    values = tuple(params.get(n) for n in names)
+                    sql_exec = re.sub(r"@([A-Za-z0-9_]+)", "%s", sql)
+                    cursor.execute(sql_exec, values)
+                else:
+                    # no @params found; try passing dict directly (best-effort)
+                    cursor.execute(sql, params)
+            else:
+                # params provided as sequence/tuple - pass through
+                cursor.execute(sql, params)
         else:
             cursor.execute(sql)
 

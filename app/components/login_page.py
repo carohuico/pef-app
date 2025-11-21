@@ -395,8 +395,8 @@ def login_page():
 
                     # Ejecutar también la consulta de usuarios de prueba
                     try:
-                        df_test = fetch_df("SELECT TOP 1 usuario FROM usuarios;")
-                        st.write("**Resultado de SELECT TOP 1 usuario FROM usuarios;**")
+                        df_test = fetch_df("SELECT TOP 1 usuario FROM Usuario;")
+                        st.write("**Resultado de SELECT TOP 1 usuario FROM Usuario;**")
                         st.write(df_test)
                     except Exception as e:
                         st.error(f"Consulta de prueba falló: {e}")

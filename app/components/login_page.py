@@ -1,6 +1,6 @@
 import streamlit as st
 import services.auth as auth
-from services.db import fetch_df, get_db_info
+from services.db import fetch_df
 from services.queries.q_usuarios import UPDATE_ULTIMO_ACCESO, GET_USUARIO_BY_ID, GET_USUARIO_BY_USERNAME
 from pathlib import Path
 import base64
@@ -312,8 +312,9 @@ def login_page():
                                             st.success("Inicio de sesión exitoso")
                                         except Exception:
                                             pass
-                                except Exception as e:
-                                    print(e)
+                                except Exception:
+                                    # No mostrar errores de actualización de último acceso en UI
+                                    pass
                             else:
                                 if uname:
                                     try:
@@ -323,16 +324,16 @@ def login_page():
                                             uid2 = row.get("id_usuario")
                                             if uid2 is not None:
                                                 fetch_df(UPDATE_ULTIMO_ACCESO, {"id_usuario": uid2})
-                                    except Exception as e:
-                                        print(e)
+                                    except Exception:
+                                        pass
                         except Exception as e:
-                            print(e)
+                            pass
                         try:
                             if "usuarios_df" in st.session_state:
                                 del st.session_state["usuarios_df"]
-                                print("[login_page] eliminada cache 'usuarios_df' en session_state")
+                                # cache cleared silently
                         except Exception as e:
-                            print(e)
+                            pass
 
                         # Guardar en session state
                         st.session_state["jwt_token"] = token
@@ -376,30 +377,4 @@ def login_page():
             label = ":material/warning: Aviso de autenticación"
             st.warning(f"{label} {auth_err}")
 
-        # ===== PANEL DE DIAGNÓSTICO (temporal) =====
-        with st.expander("Diagnóstico DB (solo debugging)"):
-            if st.button("Ejecutar diagnóstico DB"):
-                try:
-                    info = get_db_info()
-                    if isinstance(info, dict) and info.get("error"):
-                        st.error(f"Error diagnóstico: {info.get('error')}")
-                    else:
-                        st.write("**Base de datos actual:**", info.get("current_db"))
-                        st.write("**Usuario de conexión:**", info.get("current_user"))
-                        st.write("**Tablas visibles (primeras 200):**")
-                        tables = info.get("tables")
-                        try:
-                            st.dataframe(tables.head(200) if hasattr(tables, 'head') else tables)
-                        except Exception:
-                            st.write(tables)
-
-                    # Ejecutar también la consulta de usuarios de prueba
-                    try:
-                        df_test = fetch_df("SELECT TOP 1 usuario FROM Usuario;")
-                        st.write("**Resultado de SELECT TOP 1 usuario FROM Usuario;**")
-                        st.write(df_test)
-                    except Exception as e:
-                        st.error(f"Consulta de prueba falló: {e}")
-
-                except Exception as e:
-                    st.error(f"Error ejecutando diagnóstico: {e}")
+        # Diagnostic helpers removed

@@ -31,11 +31,8 @@ def _auth_debug(msg: str):
             logs.append(f"{datetime.utcnow().isoformat()} - {msg}")
             st.session_state["auth_debug_logs"] = logs
     except Exception:
-        try:
-            # último recurso: imprimir
-            print("AUTH DEBUG:", msg)
-        except Exception:
-            pass
+        # fallback: no imprimir en producción
+        pass
 
 
 def _get_secret_key():
@@ -85,7 +82,7 @@ def create_token(username: str, role: str, id_usuario: int | None = None) -> str
     if id_usuario is not None:
         payload["id_usuario"] = int(id_usuario)
         _auth_debug(f"create_token: creando token para user={username} id_usuario={id_usuario}")
-        print(f"Creating token with id_usuario: {id_usuario}")
+        # debug print removed
     token = jwt.encode(payload, secret, algorithm="HS256")
     return token
 
@@ -223,16 +220,8 @@ def _test_direct_connection():
     Evita usar `pyodbc` directamente (que requiere controladores del sistema)
     y devuelve un mensaje legible para los logs.
     """
-    try:
-        # Intentar ejecutar una consulta simple vía fetch_df (SQLAlchemy)
-        df = fetch_df("SELECT TOP 1 usuario FROM Usuario;")
-        print(f"[auth] prueba conexión DB fetch_df result: {df}")
-        if df is None:
-            return "[ERROR] No se recibió resultado de la consulta de prueba"
-        return "[OK] Consulta de prueba ejecutada (SQLAlchemy)"
-    except Exception as e:
-        # Devolver el error para que el log muestre por qué falló (p. ej. falta de driver)
-        return f"[ERROR] fallo conexión DB vía SQLAlchemy: {e}"
+    # _test_direct_connection was used for debugging driver issues. Removed.
+    return "[INFO] conexión: test directo deshabilitado"
 
 
 def verify_user(username: str, password: str):
@@ -245,7 +234,6 @@ def verify_user(username: str, password: str):
 
     try:
         df = fetch_df(GET_USUARIO_BY_USERNAME, {"usuario": username})
-        st.write("DEBUG DF:", df)
     except Exception as exc:
         _auth_debug(f"verify_user: error conectando a DB para usuario={username}: {str(exc)}")
         st.error("Error al conectarse a la base de datos al verificar usuario.")
@@ -294,12 +282,9 @@ def verify_user(username: str, password: str):
         # Actualizar último acceso en la base de datos. No bloquear el login si falla.
         try:
             if id_usuario_val is not None:
-                print(f"[auth] intentando actualizar ultimo_acceso para id_usuario={id_usuario_val}")
                 fetch_df(UPDATE_ULTIMO_ACCESO, {"id_usuario": id_usuario_val})
-                print(f"[auth] UPDATE_ULTIMO_ACCESO ejecutado para id_usuario={id_usuario_val}")
                 _auth_debug(f"verify_user: actualizado ultimo_acceso para id_usuario={id_usuario_val}")
         except Exception as e:
-            print(f"[auth] error actualizando ultimo_acceso para id_usuario={id_usuario_val}: {e}")
             _auth_debug(f"verify_user: error actualizando ultimo_acceso para id_usuario={id_usuario_val}: {e}")
 
         return mapped
@@ -308,7 +293,6 @@ def verify_user(username: str, password: str):
 
 
 def is_logged_in() -> bool:
-    st.write(_test_direct_connection())
     """Verifica si hay sesión activa y token válido. Si expiró, hace logout y devuelve False."""
     token = st.session_state.get("jwt_token")
     _auth_debug(f"is_logged_in: token presente? {'si' if token else 'no'}")

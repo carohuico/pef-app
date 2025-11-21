@@ -147,7 +147,6 @@ def logout():
                 del st.session_state[k]
         except Exception as exc:
             _auth_debug(f"logout: error borrando clave {k}: {str(exc)}")
-    # Además limpiar caches relacionadas a vistas que dependen del usuario
     extra_caches = ["historial_df", "evaluados_df", "auth_debug_logs", "hist_delete_msg"]
     for k in extra_caches:
         try:
@@ -156,12 +155,10 @@ def logout():
                 _auth_debug(f"logout: eliminada cache {k}")
         except Exception as exc:
             _auth_debug(f"logout: fallo borrando cache {k}: {str(exc)}")
-    # Además eliminar claves relacionadas con subidas / media que pueden referenciar ids en memoria
     media_like = [
         "uploaded_file",
         "file_uploader",
         "agregar_file_uploader",
-        # posibles variantes internas
     ]
     try:
         for fk in media_like:
@@ -171,7 +168,6 @@ def logout():
                     _auth_debug(f"logout: eliminada clave de media conocida: {fk}")
                 except Exception as exc:
                     _auth_debug(f"logout: fallo eliminando clave de media {fk}: {str(exc)}")
-        # eliminar claves que contengan palabras relacionadas con archivos subidos (con cuidado)
         for k in list(st.session_state.keys()):
             low = k.lower()
             if "uploaded" in low or "file_uploader" in low or low.startswith("file_") or "_file" in low:
@@ -179,11 +175,9 @@ def logout():
                     del st.session_state[k]
                     _auth_debug(f"logout: eliminada clave de media heurística: {k}")
                 except Exception:
-                    # ignorar fallos individuales
                     pass
     except Exception:
         pass
-    # asegurar que user y jwt_token están eliminados
     for k in ("user", "jwt_token"):
         try:
             if k in st.session_state:
@@ -191,8 +185,7 @@ def logout():
         except Exception as exc:
             _auth_debug(f"logout: error borrando {k} en cleanup: {str(exc)}")
     _auth_debug(f"logout: borradas claves: {keys}")
-    # intentar forzar recarga/rerun en entornos que lo soporten
-    # Forzar recarga: probar st.rerun() (nueva), luego st.experimental_rerun(), luego st.stop()
+
     try:
         rerun_new = getattr(st, "rerun", None)
         if callable(rerun_new):
@@ -215,13 +208,6 @@ def logout():
     except Exception:
         pass
     
-def _test_direct_connection():
-    """Prueba simple de conexión a DB usando la capa `services.db`.
-    Evita usar `pyodbc` directamente (que requiere controladores del sistema)
-    y devuelve un mensaje legible para los logs.
-    """
-    # _test_direct_connection was used for debugging driver issues. Removed.
-    return "[INFO] conexión: test directo deshabilitado"
 
 
 def verify_user(username: str, password: str):

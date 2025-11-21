@@ -42,7 +42,7 @@ GET_USUARIO_BY_USERNAME = """
         password_hash,
         ultimo_acceso
     FROM Usuario
-    WHERE usuario = @usuario
+    WHERE usuario := @usuario
 """
 
 # Query para obtener un usuario por email

@@ -1,16 +1,11 @@
 import streamlit as st
 import pandas as pd
-from typing import List, Dict, Set
+from typing import List, Dict
 from pathlib import Path
-from services.db import fetch_df, get_engine
+from services.db import fetch_df
 from services.queries.q_individual import GET_RESULTADOS_POR_PRUEBA
 from services.exportar import render_export_popover
-from services.queries.q_historial import LISTADO_HISTORIAL_SQL, ELIMINAR_PRUEBAS, LISTADO_HISTORIAL_POR_ESPECIALISTA
-from services.queries.q_registro import GET_GRUPOS
-from sqlalchemy import text
-import datetime
-import time
-import threading
+from services.queries.q_historial import LISTADO_HISTORIAL_SQL, LISTADO_HISTORIAL_POR_ESPECIALISTA
 from components.loader import show_loader
 
 
@@ -36,8 +31,7 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
 
     col_yes, col_no = st.columns(2)
     with col_yes:
-        label = ":material/check: Sí, eliminar"
-        if st.button(label, width='stretch', type="primary", key="hist_confirmar_eliminar"):
+        if st.button(":material/check: Sí, eliminar", use_container_width=True, type="primary", key="hist_confirmar_eliminar"):
             try:
                 ids = []
                 orig_df = st.session_state.get('historial_df', pd.DataFrame())
@@ -65,15 +59,15 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
                 if not ids:
                     st.warning('No se pudieron resolver los ids seleccionados.')
                 else:
-                    ids_csv = ','.join(str(x) for x in ids)
                     try:
-                        with get_engine().begin() as conn:
-                            res = conn.execute(text(ELIMINAR_PRUEBAS), {"ids_csv": ids_csv})
-                            try:
-                                deleted_rows = res.fetchall()
-                                rows_deleted = len(deleted_rows)
-                            except Exception:
-                                rows_deleted = res.rowcount if hasattr(res, 'rowcount') and res.rowcount is not None else 0
+                        placeholders = ','.join(['%s'] * len(ids))
+
+                        sql_del_resultados = f"DELETE FROM dbo.Resultado WHERE id_prueba IN ({placeholders})"
+                        fetch_df(sql_del_resultados, tuple(ids))
+
+                        sql_del_pruebas = f"DELETE FROM dbo.Prueba OUTPUT DELETED.id_prueba AS id_prueba WHERE id_prueba IN ({placeholders})"
+                        fetch_df(sql_del_pruebas, tuple(ids))
+
                         if 'historial_df' in st.session_state:
                             try:
                                 del st.session_state['historial_df']
@@ -90,15 +84,13 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
             st.rerun()
 
     with col_no:
-        label = ":material/cancel: Cancelar"
-        if st.button(label, width='stretch', key="hist_cancelar_eliminar"):
+        if st.button(":material/cancel: Cancelar", use_container_width=True, key="hist_cancelar_eliminar"):
             st.rerun()
 
 
 @st.dialog(":material/filter_list: Filtros")
 def dialog_filtros():
     """Diálogo para filtrar datos por columnas."""
-        
     original_data = get_historial_data()
     df_original = pd.DataFrame(original_data)
     
@@ -169,7 +161,7 @@ def dialog_filtros():
     col1, col3 = st.columns(2)
     with col1:
         st.markdown("<br><br/>", unsafe_allow_html=True)
-        if st.button(":material/refresh: Limpiar", width='stretch', key="clear_filters"):
+        if st.button(":material/refresh: Limpiar", use_container_width=True, key="clear_filters"):
             st.session_state['active_historial_filters'] = {}
             st.session_state.historial_current_page = 1
             if 'historial_df' in st.session_state:
@@ -187,8 +179,8 @@ def dialog_filtros():
             st.rerun()
     
     with col3:
-        st.markdown("<br><br/>", unsafe_allow_html=True)  
-        if st.button(":material/check: Aplicar", width='stretch', type="primary", key="apply_filters"):
+        st.markdown("<br><br/>", unsafe_allow_html=True)
+        if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key="apply_filters"):
             filters = {}
             if evaluado_filter != "Todos":
                 filters['Evaluado'] = evaluado_filter
@@ -279,12 +271,6 @@ def get_historial_data() -> List[Dict]:
         if is_admin:
             df = fetch_df(LISTADO_HISTORIAL_SQL)
         elif is_especialista:
-            try:
-                logs = st.session_state.get('auth_debug_logs') or []
-                logs.append(f"get_historial_data: detected especialista; st.session_state.user={st.session_state.get('user')}")
-                st.session_state['auth_debug_logs'] = logs
-            except Exception:
-                pass
             user = st.session_state.get("user", {})
             id_usuario = user.get("id_usuario")
             if not id_usuario:
@@ -296,7 +282,7 @@ def get_historial_data() -> List[Dict]:
 
             df = fetch_df(LISTADO_HISTORIAL_POR_ESPECIALISTA, {"id_usuario": id_usuario})
             try:
-                ids_df = fetch_df("SELECT id_evaluado FROM Evaluado WHERE id_usuario = :id_usuario", {"id_usuario": int(id_usuario)})
+                ids_df = fetch_df("SELECT id_evaluado FROM Evaluado WHERE id_usuario = @id_usuario", {"id_usuario": int(id_usuario)})
                 if ids_df is None or ids_df.empty:
                     return []
                 assigned_ids = [int(x) for x in ids_df['id_evaluado'].tolist()]
@@ -333,20 +319,19 @@ def get_historial_data() -> List[Dict]:
 def historial():
     """Renderiza la vista de historial de evaluaciones/pruebas"""
     
-    # ---------- CONFIGURACIÓN ----------
+    # Configuración
     st.set_page_config(page_title="Rainly - Historial", layout="wide", initial_sidebar_state="auto")
     
-    # ---------- CSS (externo) ----------
-    _css_grupos = Path(__file__).parent.parent / 'assets' / 'grupos.css'  
-    _css_historial = Path(__file__).parent.parent / 'assets' / 'historial.css'      
+    # CSS
+    _css_grupos = Path(__file__).parent.parent / 'assets' / 'grupos.css'
+    _css_historial = Path(__file__).parent.parent / 'assets' / 'historial.css'
     
     try:
         with open(_css_grupos, 'r', encoding='utf-8') as _f:
             st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
         with open(_css_historial, 'r', encoding='utf-8') as _f:
             st.markdown(f"<style>{_f.read()}</style>", unsafe_allow_html=True)
-        
-    except Exception as _e:
+    except Exception:
         st.markdown("""
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
         """, unsafe_allow_html=True)
@@ -355,7 +340,6 @@ def historial():
     
     if 'historial_df' not in st.session_state:
         st.session_state['historial_df'] = pd.DataFrame(get_historial_data())
-    
     
     if st.session_state['historial_df'].empty:
         st.info(":material/info: No hay evaluaciones registradas.")
@@ -383,19 +367,16 @@ def historial():
         )
     
     with col_filtros:
-        button_label = ":material/filter_list: Filtros"
-        filtros_btn = st.button(button_label, width='stretch', type="secondary", key="historial_btn_filtros_top")
+        filtros_btn = st.button(":material/filter_list: Filtros", use_container_width=True, type="secondary", key="historial_btn_filtros_top")
     
     with col_exportar:
-        button_label = ":material/file_download: Exportar"
-        exportar_btn = st.button(button_label, width='stretch', type="secondary", key="historial_btn_exportar_top")
+        exportar_btn = st.button(":material/file_download: Exportar", use_container_width=True, type="secondary", key="historial_btn_exportar_top")
     
     with col_eliminar:
-        button_label = ":material/delete: Eliminar"
-        eliminar_btn = st.button(button_label, width='stretch', type="secondary", key="historial_btn_eliminar_top")
+        eliminar_btn = st.button(":material/delete: Eliminar", use_container_width=True, type="secondary", key="historial_btn_eliminar_top")
 
     with col_vermas:
-        ver_mas_btn = st.button("Ver resultados", type="primary", width='stretch', key="historial_btn_vermas_top")
+        ver_mas_btn = st.button("Ver resultados", type="primary", use_container_width=True, key="historial_btn_vermas_top")
     
     st.markdown("<br/>", unsafe_allow_html=True)
     
@@ -434,7 +415,7 @@ def historial():
     
     event = st.dataframe(
         df_display_page,
-        width='stretch',
+        use_container_width=True,
         hide_index=True,
         key=table_key,
         on_select="rerun",
@@ -478,7 +459,7 @@ def historial():
         col_prev, col_center, col_next = st.columns([1, 2, 1])
 
         with col_prev:
-            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state.historial_current_page == 1), key="btn_prev_page", type="tertiary", width='stretch'):
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state.historial_current_page == 1), key="btn_prev_page", type="tertiary", use_container_width=True):
                 st.session_state.historial_current_page -= 1
                 st.rerun()
 
@@ -489,7 +470,7 @@ def historial():
             )
 
         with col_next:
-            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state.historial_current_page == total_pages), key="btn_next_page", type="tertiary", width='stretch'):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state.historial_current_page == total_pages), key="btn_next_page", type="tertiary", use_container_width=True):
                 st.session_state.historial_current_page += 1
                 st.rerun()
 
@@ -510,8 +491,66 @@ def historial():
             """, unsafe_allow_html=True)
         else:
             try:
-                # Llamar al popover de exportación con las filas seleccionadas
-                render_export_popover(seleccionados)
+                # Construir lista de diccionarios con la info básica de cada evaluado seleccionado
+                info_list = []
+                for idx in seleccionados.index.tolist():
+                    try:
+                        row = df.loc[idx]
+                    except Exception:
+                        continue
+
+                    info = {
+                        "Fecha de evaluación": row.get('Fecha de evaluación', ''),
+                        "Fecha": row.get('Fecha de evaluación', ''),
+                        "Nombre": row.get('Nombre del evaluado', ''),
+                        "Nombre del evaluado": row.get('Nombre del evaluado', ''),
+                        "Edad": row.get('Edad', ''),
+                        "Sexo": row.get('Sexo', ''),
+                        "Grupo": row.get('Grupo', ''),
+                        "ruta_imagen": row.get('ruta_imagen', ''),
+                    }
+                    info_list.append(info)
+
+                if not info_list:
+                    st.warning(":material/warning: No se pudo resolver la información de las evaluaciones seleccionadas.")
+                else:
+                    # Construir lista de indicadores por fila consultando los resultados asociados a cada id_prueba
+                    indicadores_por_fila = []
+                    for idx in seleccionados.index.tolist():
+                        try:
+                            row = df.loc[idx]
+                        except Exception:
+                            indicadores_por_fila.append([])
+                            continue
+
+                        id_prueba = row.get('id_prueba', None)
+                        if id_prueba is None or pd.isna(id_prueba):
+                            indicadores_por_fila.append([])
+                            continue
+
+                        try:
+                            df_res = fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": int(id_prueba)})
+                            if df_res is None or df_res.empty:
+                                indicadores_por_fila.append([])
+                            else:
+                                lista_inds = []
+                                for _i, r in df_res.iterrows():
+                                    lista_inds.append({
+                                        "nombre": r.get('nombre_indicador') if 'nombre_indicador' in r else r.get('nombre') if 'nombre' in r else None,
+                                        "significado": r.get('significado') if 'significado' in r else None,
+                                        "confianza": r.get('confianza') if 'confianza' in r else None,
+                                        "id_indicador": r.get('id_indicador') if 'id_indicador' in r else None,
+                                        "id_categoria": r.get('id_categoria') if 'id_categoria' in r else None,
+                                        "categoria_nombre": r.get('categoria_nombre') if 'categoria_nombre' in r else None,
+                                        "categoria": r.get('categoria') if 'categoria' in r else None,
+                                    })
+                                indicadores_por_fila.append(lista_inds)
+                        except Exception:
+                            indicadores_por_fila.append([])
+
+                    # Si no se encontraron indicadores por fila, como fallback usar indicadores en sesión o lista vacía
+                    use_indicadores = indicadores_por_fila if any(len(x) for x in indicadores_por_fila) else st.session_state.get("indicadores", [])
+                    render_export_popover(info_list, use_indicadores)
             except Exception as e:
                 st.error(f":material/error: Error al preparar exportación: {e}")
 
@@ -526,7 +565,7 @@ def historial():
             </div>
             """, unsafe_allow_html=True)
         else:
-            confirmar_eliminacion_pruebas(seleccionados)            
+            confirmar_eliminacion_pruebas(seleccionados)
 
     if ver_mas_btn:
         if len(seleccionados) != 1:
@@ -549,4 +588,5 @@ def historial():
                 st.rerun()
             except Exception as e:
                 st.error(f":material/error: Error: {e}")
+    
     show_loader('show_historial_loader', min_seconds=1.0)

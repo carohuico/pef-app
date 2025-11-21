@@ -3,11 +3,11 @@ import pandas as pd
 from typing import List, Dict
 from pathlib import Path
 from services.exportar import render_export_popover
-from services.db import fetch_df, get_engine
+from services.db import fetch_df
 from services.queries.q_evaluados import LISTADO_EVALUADOS_SQL, ELIMINAR_EVALUADOS
 from services.queries.q_registro import GET_GRUPOS, CREAR_EVALUADO
 from services.queries.q_usuarios import GET_ESPECIALISTAS
-from sqlalchemy import text
+# sqlalchemy removed; use fetch_df
 import datetime
 
 
@@ -38,7 +38,7 @@ def confirmar_eliminacion_historial(selected_rows_df):
     with col_yes:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/check: Sí, eliminar"
-        if st.button(label, width='stretch', type="primary", key="hist_confirmar_eliminar"):
+        if st.button(label, use_container_width=True, type="primary", key="hist_confirmar_eliminar"):
             try:
                 ids = []
                 for v in selected_rows_df['id_evaluado'].tolist():
@@ -59,13 +59,15 @@ def confirmar_eliminacion_historial(selected_rows_df):
                 else:
                     ids_csv = ','.join(str(x) for x in ids)
                     try:
-                        with get_engine().begin() as conn:
-                            res = conn.execute(text(ELIMINAR_EVALUADOS), {"ids_csv": ids_csv})
-                            try:
-                                deleted_rows = res.fetchall()
-                                rows_deleted = len(deleted_rows)
-                            except Exception:
-                                rows_deleted = res.rowcount if hasattr(res, 'rowcount') and res.rowcount is not None else 0
+
+                        placeholders = ','.join(['%s'] * len(ids))
+                        sql_del = f"DELETE FROM Evaluado OUTPUT DELETED.id_evaluado AS deleted_id WHERE id_evaluado IN ({placeholders})"
+                        df_deleted = fetch_df(sql_del, tuple(ids))
+                        try:
+                            rows_deleted = len(df_deleted) if df_deleted is not None else 0
+                        except Exception:
+                            rows_deleted = 0
+
                         # Guardar el mensaje en session_state para mostrarlo fuera de la columna
                         st.session_state[msg_key] = f"Se eliminaron {rows_deleted} evaluado(s)."
                         # Actualizar datos en session_state
@@ -80,7 +82,7 @@ def confirmar_eliminacion_historial(selected_rows_df):
     with col_no:
         st.markdown("<br><br/>", unsafe_allow_html=True)
         label = ":material/cancel: Cancelar"
-        if st.button(label, width='stretch', key="hist_cancelar_eliminar"):
+        if st.button(label, use_container_width=True, key="hist_cancelar_eliminar"):
             # Si hay un mensaje previo de eliminación, eliminarlo al cancelar
             if msg_key in st.session_state:
                 try:
@@ -261,11 +263,11 @@ def dialog_crear_evaluado():
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("<br><br/>", unsafe_allow_html=True)
-            cancelar = st.form_submit_button(":material/cancel: Cancelar", width='stretch')
+            cancelar = st.form_submit_button(":material/cancel: Cancelar", use_container_width=True)
         
         with col2:
             st.markdown("<br><br/>", unsafe_allow_html=True)
-            submitted = st.form_submit_button(":material/check: Guardar", width='stretch', type="primary")
+            submitted = st.form_submit_button(":material/check: Guardar", use_container_width=True, type="primary")
         
         if cancelar:
             st.rerun()
@@ -288,27 +290,24 @@ def dialog_crear_evaluado():
                 st.error(":material/warning: El nombre solo debe contener letras alfabéticas y espacios")
                 st.stop()
             
-            # Crear evaluado en la base de datos
+            # Crear evaluado en la base de datos (usar fetch_df)
             try:
-                engine = get_engine()
-                
                 # Resolver id_grupo
                 id_grupo = None
                 if grupo not in ("Selecciona un grupo", "Sin grupo", ""):
                     try:
-                        with engine.begin() as conn:
-                            res_g = conn.execute(text("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = :grupo"), {"grupo": grupo})
-                            row_g = res_g.fetchone()
-                            if row_g is not None:
-                                id_grupo = row_g[0]
+                        res_g_df = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = @grupo", {"grupo": grupo})
+                        if res_g_df is not None and not res_g_df.empty:
+                            row_g = res_g_df.iloc[0]
+                            id_grupo = int(row_g[0]) if len(row_g) > 0 else None
                     except Exception:
                         pass
-                
+
                 # Preparar valores
                 estado_civil_val = None if estado_civil == "Selecciona una opción" else estado_civil
                 escolaridad_val = None if escolaridad == "Selecciona una opción" else escolaridad
                 ocupacion_val = None if ocupacion == "Selecciona una opción" else ocupacion
-                
+
                 try:
                     import services.auth as auth
                     is_esp = auth.is_especialista()
@@ -345,22 +344,27 @@ def dialog_crear_evaluado():
                     "id_grupo": id_grupo,
                     "id_usuario": params_id_usuario
                 }
-                
-                with engine.begin() as conn:
-                    res = conn.execute(text(CREAR_EVALUADO), params)
-                    row = res.fetchone()
-                    if row is not None:
+
+                # Ejecutar insert y obtener id_evaluado
+                sql_crear = CREAR_EVALUADO
+                df_new = fetch_df(sql_crear, params)
+                id_evaluado = None
+                if df_new is not None and not df_new.empty:
+                    try:
+                        id_evaluado = int(df_new.iloc[0].get('id_evaluado') or df_new.iloc[0].iloc[0])
+                    except Exception:
                         try:
-                            id_evaluado = int(row['id_evaluado'])
+                            id_evaluado = int(df_new.iloc[0].iloc[0])
                         except Exception:
-                            id_evaluado = int(row[0])
-                
+                            id_evaluado = None
+
                 st.success(f":material/check: Evaluado '{nombre}' creado exitosamente")
-                del st.session_state['evaluados_df']
+                if 'evaluados_df' in st.session_state:
+                    del st.session_state['evaluados_df']
                 import time
                 time.sleep(1)
                 st.rerun()
-                
+
             except Exception as e:
                 st.error(f":material/error: Error al crear evaluado: {e}")
 
@@ -516,11 +520,11 @@ def dialog_editar_evaluado(evaluado_data):
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("<br><br/>", unsafe_allow_html=True)
-            cancelar = st.form_submit_button(":material/cancel: Cancelar", width='stretch')
+            cancelar = st.form_submit_button(":material/cancel: Cancelar", use_container_width=True)
         
         with col2:
             st.markdown("<br><br/>", unsafe_allow_html=True)
-            submitted = st.form_submit_button(":material/check: Guardar Cambios", width='stretch', type="primary")
+            submitted = st.form_submit_button(":material/check: Guardar Cambios", use_container_width=True, type="primary")
         
         if cancelar:
             st.rerun()
@@ -543,65 +547,62 @@ def dialog_editar_evaluado(evaluado_data):
                 st.error(":material/warning: El sexo del evaluado es obligatorio")
                 st.stop()
             
-            # Actualizar en la base de datos
+            # Actualizar en la base de datos (usar fetch_df)
             try:
-                engine = get_engine()
                 id_evaluado = evaluado_data.get('id_evaluado')
-                
+
                 # Resolver id_grupo
                 id_grupo = None
                 if grupo not in ("Selecciona un grupo", "Sin grupo", ""):
                     try:
-                        with engine.begin() as conn:
-                            res_g = conn.execute(text("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = :grupo"), {"grupo": grupo})
-                            row_g = res_g.fetchone()
-                            if row_g is not None:
-                                id_grupo = row_g[0]
+                        res_g_df = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = @grupo", {"grupo": grupo})
+                        if res_g_df is not None and not res_g_df.empty:
+                            row_g = res_g_df.iloc[0]
+                            id_grupo = int(row_g[0]) if len(row_g) > 0 else None
                     except Exception:
                         pass
-                
+
                 # Preparar valores para actualización
                 estado_civil_val = None if estado_civil == "Selecciona una opción" else estado_civil
                 escolaridad_val = None if escolaridad == "Selecciona una opción" else escolaridad
                 ocupacion_val = None if ocupacion == "Selecciona una opción" else ocupacion
-                
+
                 update_query = """
                 UPDATE dbo.Evaluado
-                SET nombre = :nombre,
-                    apellido = :apellido,
-                    fecha_nacimiento = :fecha_nacimiento,
-                    sexo = :sexo,
-                    estado_civil = :estado_civil,
-                    escolaridad = :escolaridad,
-                    ocupacion = :ocupacion,
-                    id_grupo = :id_grupo,
-                    id_usuario = :id_usuario
-                WHERE id_evaluado = :id_evaluado
+                SET nombre = @nombre,
+                    apellido = @apellido,
+                    fecha_nacimiento = @fecha_nacimiento,
+                    sexo = @sexo,
+                    estado_civil = @estado_civil,
+                    escolaridad = @escolaridad,
+                    ocupacion = @ocupacion,
+                    id_grupo = @id_grupo,
+                    id_usuario = @id_usuario
+                WHERE id_evaluado = @id_evaluado
                 """
-                
-                with engine.begin() as conn:
-                    conn.execute(
-                        text(update_query),
-                        {
-                            "id_evaluado": id_evaluado,
-                            "nombre": nombre.strip(),
-                            "apellido": apellido.strip(),
-                            "fecha_nacimiento": fecha_nacimiento,
-                            "sexo": sexo,
-                            "estado_civil": estado_civil_val,
-                            "escolaridad": escolaridad_val,
-                            "ocupacion": ocupacion_val,
-                            "id_grupo": id_grupo,
-                            "id_usuario": int(id_usuario_selected) if id_usuario_selected is not None else None
-                        }
-                    )
-                
+
+                params_update = {
+                    "id_evaluado": id_evaluado,
+                    "nombre": nombre.strip(),
+                    "apellido": apellido.strip(),
+                    "fecha_nacimiento": fecha_nacimiento,
+                    "sexo": sexo,
+                    "estado_civil": estado_civil_val,
+                    "escolaridad": escolaridad_val,
+                    "ocupacion": ocupacion_val,
+                    "id_grupo": id_grupo,
+                    "id_usuario": int(id_usuario_selected) if id_usuario_selected is not None else None
+                }
+
+                fetch_df(update_query, params_update)
+
                 st.success(f":material/check: Evaluado '{nombre}' actualizado correctamente")
-                del st.session_state['evaluados_df']
+                if 'evaluados_df' in st.session_state:
+                    del st.session_state['evaluados_df']
                 import time
                 time.sleep(1)
                 st.rerun()
-                
+
             except Exception as e:
                 st.error(f":material/error: Error al actualizar evaluado: {e}")
 
@@ -684,7 +685,7 @@ def dialog_filtros(key_prefix: str = None):
 
     with col1:
         st.markdown("<br><br/>", unsafe_allow_html=True)
-        if st.button(":material/refresh: Limpiar", width='stretch', key=_k("clear_filters")):
+        if st.button(":material/refresh: Limpiar", use_container_width=True, key=_k("clear_filters")):
             st.session_state['active_filters'] = {}
             if 'evaluados_df' in st.session_state:
                 del st.session_state['evaluados_df']
@@ -693,7 +694,7 @@ def dialog_filtros(key_prefix: str = None):
     
     with col3:
         st.markdown("<br><br/>", unsafe_allow_html=True)
-        if st.button(":material/check: Aplicar", width='stretch', type="primary", key=_k("apply_filters")):
+        if st.button(":material/check: Aplicar", use_container_width=True, type="primary", key=_k("apply_filters")):
             # Guardar filtros activos
             filters = {}
             if sexo_filter != "Todos":
@@ -739,7 +740,7 @@ def dialog_filtros(key_prefix: str = None):
 
 def get_historial_data(user_id: int = None) -> List[Dict]:
     """Attempt to fetch historial data from the DB using the LISTADO_EVALUADOS_SQL.
-    If user_id is provided, tries to filter the query by e.id_usuario = :id_usuario.
+    If user_id is provided, tries to filter the query by e.id_usuario = @id_usuario.
     Falls back to client-side filtering if the query-based filtering fails.
     """
     try:
@@ -751,7 +752,7 @@ def get_historial_data(user_id: int = None) -> List[Dict]:
                     base_sql = LISTADO_EVALUADOS_SQL.strip().rstrip(';')
                     # If query already contains a WHERE, append with AND
                     if ' where ' in base_sql.lower():
-                        qry = base_sql + " AND e.id_usuario = :id_usuario"
+                        qry = base_sql + " AND e.id_usuario = @id_usuario"
                     else:
                         # If the base SQL contains an ORDER BY clause, insert the WHERE before ORDER BY
                         lower_base = base_sql.lower()
@@ -759,9 +760,9 @@ def get_historial_data(user_id: int = None) -> List[Dict]:
                         if order_idx != -1:
                             before_order = base_sql[:order_idx]
                             order_clause = base_sql[order_idx:]
-                            qry = before_order + " WHERE e.id_usuario = :id_usuario " + order_clause
+                            qry = before_order + " WHERE e.id_usuario = @id_usuario " + order_clause
                         else:
-                            qry = base_sql + " WHERE e.id_usuario = :id_usuario"
+                            qry = base_sql + " WHERE e.id_usuario = @id_usuario"
                     df = fetch_df(qry, {"id_usuario": int(user_id)})
             except Exception:
                 df = fetch_df(LISTADO_EVALUADOS_SQL)
@@ -774,7 +775,7 @@ def get_historial_data(user_id: int = None) -> List[Dict]:
                     df = df[df['id_usuario'].astype('Int64') == int(user_id)]
                 else:
                     try:
-                        ids_df = fetch_df("SELECT id_evaluado FROM Evaluado WHERE id_usuario = :id_usuario", {"id_usuario": int(user_id)})
+                        ids_df = fetch_df("SELECT id_evaluado FROM Evaluado WHERE id_usuario = @id_usuario", {"id_usuario": int(user_id)})
                         if ids_df is None or ids_df.empty:
                             df = df.iloc[0:0]
                         else:
@@ -864,7 +865,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
         col1, col2, col3 = st.columns([1, 5, 1])
         with col1:
             button_label = ":material/add: Crear"
-            if st.button(button_label, width='stretch', type="primary"):
+            if st.button(button_label, use_container_width=True, type="primary"):
                 dialog_crear_evaluado()
         
         st.info(":material/info: No hay evaluados registrados.")
@@ -910,19 +911,18 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
 
         with col_filtros:
             button_label = ":material/filter_list: Filtros"
-            filtros_btn = st.button(button_label, width='stretch', type="secondary", key=filtros_key)
+            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key=filtros_key)
 
         with col_editar:
             button_label = ":material/edit: Editar"
-            editar_btn = st.button(button_label, width='stretch', type="secondary", key=editar_key)
-
+            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key=editar_key)
         with col_eliminar:
             button_label = ":material/delete: Eliminar"
-            eliminar_btn = st.button(button_label, width='stretch', type="secondary", key=eliminar_key)
+            eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key=eliminar_key)
 
         with col_crear:
             button_label = ":material/add: Crear"
-            crear_btn = st.button(button_label, width='stretch', type="primary", key=crear_key)
+            crear_btn = st.button(button_label, use_container_width=True, type="primary", key=crear_key)
 
         st.markdown("<br/>", unsafe_allow_html=True)
         # Aplicar búsqueda si hay texto
@@ -951,15 +951,14 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
 
         with col_filtros:
             button_label = ":material/filter_list: Filtros"
-            filtros_btn = st.button(button_label, width='stretch', type="secondary", key=filtros_key)
-
+            filtros_btn = st.button(button_label, use_container_width=True, type="secondary", key=filtros_key)
         with col_editar:
             button_label = ":material/edit: Editar"
-            editar_btn = st.button(button_label, width='stretch', type="secondary", key=editar_key)
+            editar_btn = st.button(button_label, use_container_width=True, type="secondary", key=editar_key)
 
         with col_crear:
             button_label = ":material/add: Crear"
-            crear_btn = st.button(button_label, width='stretch', type="primary", key=crear_key)
+            crear_btn = st.button(button_label, use_container_width=True, type="primary", key=crear_key)
 
         st.markdown("<br/>", unsafe_allow_html=True)
         # Aplicar búsqueda si hay texto
@@ -992,7 +991,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
         df_display_page,
-        width='stretch',
+        use_container_width=True,
         hide_index=True,
         key=f"{key_prefix}__evaluados_table_editor",
         column_config={
@@ -1018,7 +1017,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
         col_prev, col_center, col_next = st.columns([1, 2, 1])
 
         with col_prev:
-            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key=f"{key_prefix}__btn_prev_page", type="tertiary", width='stretch'):
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key=f"{key_prefix}__btn_prev_page", type="tertiary", use_container_width=True):
                 st.session_state[page_key] -= 1
                 st.rerun()
 
@@ -1029,7 +1028,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
             )
 
         with col_next:
-            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key=f"{key_prefix}__btn_next_page", type="tertiary", width='stretch'):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key=f"{key_prefix}__btn_next_page", type="tertiary", use_container_width=True):
                 st.session_state[page_key] += 1
                 st.rerun()
 
@@ -1089,7 +1088,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
         ver_key = f"{key_prefix}__ver_expediente_btn"
-        ver_expediente_btn = st.button("Ver expediente", type="primary", width='stretch', key=ver_key)
+        ver_expediente_btn = st.button("Ver expediente", type="primary", use_container_width=True, key=ver_key)
 
         if ver_expediente_btn:
             if len(seleccionados) != 1:

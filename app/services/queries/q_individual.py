@@ -35,7 +35,7 @@ SELECT
         FOR JSON PATH
     ) AS resultados_json
 FROM dbo.Prueba p
-WHERE p.id_evaluado = :id_evaluado
+WHERE p.id_evaluado = @id_evaluado
 ORDER BY p.fecha ASC;
 """
 
@@ -62,6 +62,6 @@ SELECT
 FROM dbo.Resultado r
 LEFT JOIN dbo.Indicador i ON r.id_indicador = i.id_indicador
 LEFT JOIN dbo.Categoria c ON i.id_categoria = c.id_categoria
-WHERE r.id_prueba = :id_prueba
+WHERE r.id_prueba = @id_prueba
 ORDER BY r.id_resultado ASC;  
 """

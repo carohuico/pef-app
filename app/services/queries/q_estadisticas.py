@@ -50,7 +50,7 @@ SELECT
     DATENAME(MONTH, fecha) AS mes_nombre,
     COUNT(*) AS cantidad
 FROM dbo.Prueba
-WHERE YEAR(fecha) = :anio
+WHERE YEAR(fecha) = @anio
 GROUP BY DATEPART(MONTH, fecha), DATENAME(MONTH, fecha)
 ORDER BY mes_num;
 """
@@ -83,11 +83,11 @@ SELECT COUNT(*) AS total_evaluaciones
 FROM dbo.Prueba p
 INNER JOIN dbo.Evaluado e ON p.id_evaluado = e.id_evaluado
 WHERE 1=1
-    AND (:id_evaluado IS NULL OR e.id_evaluado = :id_evaluado)
-    AND (:sexo IS NULL OR e.sexo = :sexo)
-    AND (:id_grupo IS NULL OR e.id_grupo = :id_grupo)
-    AND (:fecha_inicio IS NULL OR p.fecha >= :fecha_inicio)
-    AND (:fecha_fin IS NULL OR p.fecha <= :fecha_fin);
+    AND (@id_evaluado IS NULL OR e.id_evaluado = @id_evaluado)
+    AND (@sexo IS NULL OR e.sexo = @sexo)
+    AND (@id_grupo IS NULL OR e.id_grupo = @id_grupo)
+    AND (@fecha_inicio IS NULL OR p.fecha >= @fecha_inicio)
+    AND (@fecha_fin IS NULL OR p.fecha <= @fecha_fin);
 """
 
 GET_CANTIDAD_EVALUADOS_FILTERED = """
@@ -101,12 +101,12 @@ SELECT COUNT(DISTINCT e.id_evaluado) AS cantidad_evaluados
 FROM dbo.Evaluado e
 LEFT JOIN dbo.Prueba p ON e.id_evaluado = p.id_evaluado
 WHERE 1=1
-    AND (:id_evaluado IS NULL OR e.id_evaluado = :id_evaluado)
-    AND (:sexo IS NULL OR e.sexo = :sexo)
-    AND (:id_grupo IS NULL OR e.id_grupo = :id_grupo)
+    AND (@id_evaluado IS NULL OR e.id_evaluado = @id_evaluado)
+    AND (@sexo IS NULL OR e.sexo = @sexo)
+    AND (@id_grupo IS NULL OR e.id_grupo = @id_grupo)
     AND (
-        (:fecha_inicio IS NULL AND :fecha_fin IS NULL) 
-        OR (p.fecha >= :fecha_inicio AND p.fecha <= :fecha_fin)
+        (@fecha_inicio IS NULL AND @fecha_fin IS NULL) 
+        OR (p.fecha >= @fecha_inicio AND p.fecha <= @fecha_fin)
         OR (p.id_prueba IS NULL)
     );
 """
@@ -125,12 +125,12 @@ SELECT
     END AS promedio_evaluaciones
 FROM dbo.Evaluado e
 LEFT JOIN dbo.Prueba p ON e.id_evaluado = p.id_evaluado
-    AND (:fecha_inicio IS NULL OR p.fecha >= :fecha_inicio)
-    AND (:fecha_fin IS NULL OR p.fecha <= :fecha_fin)
+    AND (@fecha_inicio IS NULL OR p.fecha >= @fecha_inicio)
+    AND (@fecha_fin IS NULL OR p.fecha <= @fecha_fin)
 WHERE 1=1
-    AND (:id_evaluado IS NULL OR e.id_evaluado = :id_evaluado)
-    AND (:sexo IS NULL OR e.sexo = :sexo)
-    AND (:id_grupo IS NULL OR e.id_grupo = :id_grupo);
+    AND (@id_evaluado IS NULL OR e.id_evaluado = @id_evaluado)
+    AND (@sexo IS NULL OR e.sexo = @sexo)
+    AND (@id_grupo IS NULL OR e.id_grupo = @id_grupo);
 """
 
 GET_EVALUACIONES_POR_MES_FILTERED = """
@@ -146,10 +146,10 @@ SELECT
     COUNT(*) AS cantidad
 FROM dbo.Prueba p
 INNER JOIN dbo.Evaluado e ON p.id_evaluado = e.id_evaluado
-WHERE YEAR(p.fecha) = :anio
-    AND (:id_evaluado IS NULL OR e.id_evaluado = :id_evaluado)
-    AND (:sexo IS NULL OR e.sexo = :sexo)
-    AND (:id_grupo IS NULL OR e.id_grupo = :id_grupo)
+WHERE YEAR(p.fecha) = @anio
+    AND (@id_evaluado IS NULL OR e.id_evaluado = @id_evaluado)
+    AND (@sexo IS NULL OR e.sexo = @sexo)
+    AND (@id_grupo IS NULL OR e.id_grupo = @id_grupo)
 GROUP BY DATEPART(MONTH, p.fecha), DATENAME(MONTH, p.fecha)
 ORDER BY mes_num;
 """
@@ -167,11 +167,11 @@ SELECT
 FROM dbo.Prueba p
 INNER JOIN dbo.Evaluado e ON p.id_evaluado = e.id_evaluado
 WHERE 1=1
-    AND (:id_evaluado IS NULL OR e.id_evaluado = :id_evaluado)
-    AND (:sexo IS NULL OR e.sexo = :sexo)
-    AND (:id_grupo IS NULL OR e.id_grupo = :id_grupo)
-    AND (:fecha_inicio IS NULL OR p.fecha >= :fecha_inicio)
-    AND (:fecha_fin IS NULL OR p.fecha <= :fecha_fin)
+    AND (@id_evaluado IS NULL OR e.id_evaluado = @id_evaluado)
+    AND (@sexo IS NULL OR e.sexo = @sexo)
+    AND (@id_grupo IS NULL OR e.id_grupo = @id_grupo)
+    AND (@fecha_inicio IS NULL OR p.fecha >= @fecha_inicio)
+    AND (@fecha_fin IS NULL OR p.fecha <= @fecha_fin)
 GROUP BY YEAR(p.fecha)
 ORDER BY anio;
 """
@@ -281,5 +281,5 @@ INNER JOIN dbo.Indicador i ON i.id_indicador = r.id_indicador
 GROUP BY i.id_indicador, i.nombre, i.significado
 ORDER BY apariciones DESC
 OFFSET 0 ROWS
-FETCH NEXT :top_n ROWS ONLY;
+FETCH NEXT @top_n ROWS ONLY;
 """

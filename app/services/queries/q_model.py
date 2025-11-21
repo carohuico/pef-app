@@ -21,7 +21,7 @@ GET_INDICADORES_POR_IDS = """
 SELECT id_indicador, nombre, significado
 FROM Indicador
 WHERE id_indicador IN (
-    SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(:ids_csv, ',')
+    SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@ids_csv, ',')
 );
 """
 

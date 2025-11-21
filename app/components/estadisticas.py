@@ -17,7 +17,7 @@ from services.queries.q_estadisticas import (
     GET_EVALUACIONES_POR_MES,
     GET_EVALUACIONES_POR_ANIO,
 )
-from services.db import get_engine, fetch_df
+from services.db import fetch_df
 import streamlit as st
 import pandas as pd
 import datetime
@@ -164,7 +164,7 @@ def modal_filtros():
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
-        if st.button('Limpiar filtros', width='stretch', key='btn_limpiar'):
+        if st.button('Limpiar filtros', use_container_width=True, key='btn_limpiar'):
             st.session_state.filtros_aplicados = {
                 'id_evaluado': None,
                 'sexo': None,
@@ -179,7 +179,7 @@ def modal_filtros():
             st.rerun()
     
     with col_btn2:
-        if st.button('Aplicar filtros', width='stretch', type='primary', key='btn_aplicar'):
+        if st.button('Aplicar filtros', use_container_width=True, key='btn_aplicar'):
             if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
                 st.error("La fecha 'Hasta' no puede ser anterior a la fecha 'Desde'.")
                 st.stop()
@@ -408,7 +408,7 @@ def estadisticas():
             .properties(height=250)
         )
 
-        st.altair_chart(chart, width='stretch')
+        st.altair_chart(chart, use_container_width=True)
     
     with col_right:
         st.markdown('<div class="chart-title">Evaluaciones por año</div>', unsafe_allow_html=True)
@@ -435,7 +435,7 @@ def estadisticas():
                 y='Evaluaciones',
                 color='#FFD751',
                 height=250,
-                width='stretch'
+                use_container_width=True
             )
 
             stop_loader(_loader_handle, min_seconds=1.0)

@@ -1,9 +1,8 @@
 from services.queries.q_individual import GET_PRUEBAS_POR_EVALUADO, GET_RESULTADOS_POR_PRUEBA
 from services.agregar_dibujo import agregar_dibujo
-from services.db import fetch_df, get_engine
+from services.db import fetch_df
 from services.queries.q_historial import ELIMINAR_PRUEBAS
 from components.bounding_boxes import _convert_bbox_from_meta, _to_pixel_coords
-from sqlalchemy import text
 from components.historial import confirmar_eliminacion_pruebas
 import pandas as pd
 import streamlit as st
@@ -36,7 +35,7 @@ def get_info(id: str):
             e.id_grupo
         FROM dbo.Evaluado e
         LEFT JOIN dbo.Grupo g ON e.id_grupo = g.id_grupo
-        WHERE e.id_evaluado = :id_evaluado
+        WHERE e.id_evaluado = @id_evaluado
         """, {"id_evaluado": id_int})
 
         if df is None or df.empty:
@@ -67,7 +66,6 @@ def get_info(id: str):
     return info
 
 def get_pruebas_data(id: str):
-    print(f"Fetching pruebas for evaluado ID: {id}")
     """Obtiene las pruebas del evaluado"""
     try:
         if id is None:
@@ -116,7 +114,7 @@ def encode_image_to_base64(image_path):
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
     except Exception as e:
-        print(f"Error al leer imagen {image_path}: {e}")
+        # Do not print debug output in UI
         return None
 
 def individual(id_evaluado: str = None):
@@ -180,7 +178,7 @@ def individual(id_evaluado: str = None):
             boton_regresar, col_nombre = st.columns([1, 6])
             with boton_regresar:
                 button_label = ":material/arrow_back:"
-                if st.button(button_label, width='stretch', type="tertiary"):
+                if st.button(button_label, use_container_width=True, type="tertiary"):
                     if 'from_ajustes' in st.session_state and st.session_state['from_ajustes']:
                         st.session_state['from_ajustes'] = False
                         st.session_state['active_view'] = 'ajustes'
@@ -197,12 +195,12 @@ def individual(id_evaluado: str = None):
         with col2:
             button_label = ":material/delete: Eliminar prueba"
             # No hay pruebas, al pulsar simplemente mostrar aviso
-            if st.button(button_label, width='stretch', type="secondary", key="btn_delete_drawing_noexp"):
+            if st.button(button_label, use_container_width=True, type="secondary", key="btn_delete_drawing_noexp"):
                 st.warning(":material/warning: No hay pruebas para eliminar.")
 
         with col3:
             button_label = ":material/add: Agregar dibujo"
-            if st.button(button_label, width='stretch', type="primary", key="btn_add_drawing_noexp"):
+            if st.button(button_label, use_container_width=True, type="primary", key="btn_add_drawing_noexp"):
                 st.session_state['add_drawing'] = True
                 st.session_state['_agregar_dialog_open_requested'] = True
 
@@ -348,10 +346,8 @@ def individual(id_evaluado: str = None):
                         enriched.append(r)
             
                 resultados_data.append(enriched)
-            except Exception as e:
-                print(f"Error processing resultados_json: {e}")
-                import traceback
-                traceback.print_exc()
+            except Exception:
+                # Silently ignore per-item parsing errors (avoid debug prints)
                 resultados_data.append([])
         else:
             resultados_data.append([])
@@ -1613,7 +1609,7 @@ def individual(id_evaluado: str = None):
         boton_regresar, col_nombre = st.columns([1, 6])
         with boton_regresar:
             button_label = ":material/arrow_back:"
-            if st.button(button_label, width='stretch', type="tertiary"):
+            if st.button(button_label, use_container_width=True, type="tertiary"):
                 if 'from_ajustes' in st.session_state and st.session_state['from_ajustes']:
                     st.session_state['from_ajustes'] = False
                     st.session_state['active_view'] = 'ajustes'
@@ -1629,7 +1625,7 @@ def individual(id_evaluado: str = None):
     
     with col2:
         button_label = ":material/delete: Eliminar prueba"
-        if st.button(button_label, width='stretch', type="secondary", key="btn_delete_drawing"):
+        if st.button(button_label, use_container_width=True, type="secondary", key="btn_delete_drawing"):
             try:
                 id_prueba = current_prueba.get('id_prueba')
             except Exception:
@@ -1656,7 +1652,7 @@ def individual(id_evaluado: str = None):
     
     with col3:
         button_label = ":material/add: Agregar dibujo"
-        if st.button(button_label, width='stretch', type="primary", key="btn_add_drawing"):
+        if st.button(button_label, use_container_width=True, type="primary", key="btn_add_drawing"):
             st.session_state['add_drawing'] = True
             st.session_state['_agregar_dialog_open_requested'] = True
 

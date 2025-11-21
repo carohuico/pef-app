@@ -33,6 +33,6 @@ ELIMINAR_EVALUADOS = """
 DELETE FROM Evaluado
 OUTPUT DELETED.id_evaluado AS deleted_id
 WHERE id_evaluado IN (
-    SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(:ids_csv, ',')
+    SELECT TRY_CAST(value AS INT) FROM STRING_SPLIT(@ids_csv, ',')
 );
 """

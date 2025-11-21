@@ -6,14 +6,13 @@ from services.exportar import render_export_popover
 import bootstrap
 from streamlit_js_eval import streamlit_js_eval
 
-from config.settings import ALLOWED_EXTENSIONS, TEMP_DIR, ORIGINALS_DIR
+from config.settings import TEMP_DIR, ORIGINALS_DIR
 from services.image_preprocess import estandarizar_imagen
 from services.indicadores import simular_resultado
-from services.db import get_engine, fetch_df
+from services.db import fetch_df
 from services.queries.q_registro import CREAR_EVALUADO, GET_GRUPOS, POST_PRUEBA, POST_RESULTADO 
 from services.queries.q_usuarios import GET_ESPECIALISTAS
 from components.bounding_boxes import imagen_bboxes
-from sqlalchemy import text
 import streamlit as st
 from PIL import Image
 import datetime
@@ -343,7 +342,7 @@ def cargar_imagen_component():
                         boxes.append(box)
                         
                     preview = imagen_bboxes(original, boxes)
-                    st.image(preview, width='stretch')
+                    st.image(preview, use_column_width=True)
 
             with col2:
                 with st.container(): 
@@ -364,10 +363,10 @@ def cargar_imagen_component():
                         if 'Confianza' in df.columns:
                             df['Confianza'] = df['Confianza'].round(2)
                         # Intentar mostrar con data_editor y configurar ancho de columnas.
-                        try:
-                            st.data_editor(
-                                df,
-                                width='stretch',
+                            try:
+                                st.data_editor(
+                                    df,
+                                    use_container_width=True,
                                 hide_index=True,
                                 key="cargar_indicadores_table",
                                 column_config={
@@ -377,13 +376,13 @@ def cargar_imagen_component():
                                 },
                                 disabled=["Indicador", "Descripción", "Confianza"],
                             )
-                        except Exception:
-                            # Fallback simple cuando data_editor no está disponible
-                            def style_dataframe(df):
-                                return df.style.set_properties(**{'border-radius': '10px', 'border': '1px solid #ddd', 'margin-left': '20px',
-                                              'text-align': 'center', 'background-color': "#ffffff", 'color': "#000000", 'height': '40px', 'font-family': 'Poppins'})
-                            styled_df = style_dataframe(df)
-                            st.dataframe(styled_df, width='stretch')
+                            except Exception:
+                                # Fallback simple cuando data_editor no está disponible
+                                def style_dataframe(df):
+                                    return df.style.set_properties(**{'border-radius': '10px', 'border': '1px solid #ddd', 'margin-left': '20px',
+                                                    'text-align': 'center', 'background-color': "#ffffff", 'color': "#000000", 'height': '40px', 'font-family': 'Poppins'})
+                                styled_df = style_dataframe(df)
+                                st.dataframe(styled_df, use_container_width=True)
 
         # ---------- LÓGICA DE PASOS ----------
         if step == 1 and st.session_state["already_registered"] == False:
@@ -464,7 +463,7 @@ def cargar_imagen_component():
                             st.error("No se encontró el ID del evaluado en la sesión.")
                             return
                         df_evaluado = fetch_df(
-                            "SELECT nombre, apellido, fecha_nacimiento, sexo, estado_civil, escolaridad, ocupacion, id_grupo FROM Evaluado WHERE id_evaluado = :id",
+                            "SELECT nombre, apellido, fecha_nacimiento, sexo, estado_civil, escolaridad, ocupacion, id_grupo FROM Evaluado WHERE id_evaluado = @id",
                             {"id": id_evaluado},
                         )
                         info_evaluado = {
@@ -477,9 +476,9 @@ def cargar_imagen_component():
                             "ocupacion": df_evaluado.at[0, "ocupacion"] if not df_evaluado.empty else "",
                             "grupo": (
                                 (
-                                    fetch_df(
-                                        "SELECT nombre FROM Grupo WHERE id_grupo = :id",
-                                        {"id": int(df_evaluado.at[0, "id_grupo"])}
+                                        fetch_df(
+                                        "SELECT nombre FROM Grupo WHERE id_grupo = @id",
+                                        {"id": int(df_evaluado.at[0, "id_grupo"]) }
                                     ).at[0, "nombre"]
                                     if not pd.isna(df_evaluado.at[0, "id_grupo"]) else ""
                                 ) if not df_evaluado.empty else ""
@@ -619,35 +618,34 @@ def cargar_imagen_component():
                                 "id_usuario": st.session_state.get('assigned_id_usuario', None),
                             }
                             try:
-                                engine = get_engine()
                                 st.session_state['created_ok'] = False
-                                with engine.begin() as conn:
-                                    # Resolver id_grupo si se proporcionó nombre de grupo
-                                    id_grupo = None
-                                    if grupo:
-                                        try:
-                                            res_g = conn.execute(text("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = :grupo"), {"grupo": grupo})
-                                            row_g = res_g.fetchone()
-                                            if row_g is not None:
-                                                id_grupo = row_g[0] if len(row_g) > 0 else None
-                                        except Exception:
-                                            id_grupo = None
-
-                                    params["id_grupo"] = id_grupo
-                                    # Asegurar que id_usuario sea nativo (no numpy types) o None
+                                # Resolver id_grupo si se proporcionó nombre de grupo
+                                id_grupo = None
+                                if grupo:
                                     try:
-                                        if params.get("id_usuario") is not None:
-                                            params["id_usuario"] = int(params["id_usuario"])
+                                        df_g = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = @grupo", {"grupo": grupo})
+                                        if not df_g.empty:
+                                            id_grupo = int(df_g.at[0, 'id_grupo'])
                                     except Exception:
-                                        params["id_usuario"] = None
+                                        id_grupo = None
 
-                                    res = conn.execute(text(CREAR_EVALUADO), params)
-                                    row = res.fetchone()
-                                    if row is not None:
-                                        try:
-                                            st.session_state['id_evaluado'] = int(row['id_evaluado'])
-                                        except Exception:
-                                            st.session_state['id_evaluado'] = int(row[0])
+                                params["id_grupo"] = id_grupo
+                                # Asegurar que id_usuario sea nativo (no numpy types) o None
+                                try:
+                                    if params.get("id_usuario") is not None:
+                                        params["id_usuario"] = int(params["id_usuario"])
+                                except Exception:
+                                    params["id_usuario"] = None
+
+                                # Ejecutar CREAR_EVALUADO (query already uses @ placeholders)
+                                sql_crear = CREAR_EVALUADO
+                                df_row = fetch_df(sql_crear, params)
+                                if not df_row.empty:
+                                    try:
+                                        st.session_state['id_evaluado'] = int(df_row.at[0, 'id_evaluado'])
+                                    except Exception:
+                                        st.session_state['id_evaluado'] = int(df_row.iloc[0, 0])
+
                                 st.session_state['created_ok'] = True
                             except Exception as e:
                                 st.error(f"Error al crear evaluado en la base de datos: {e}")
@@ -658,71 +656,75 @@ def cargar_imagen_component():
                                 return
 
                         try:
-                            engine = get_engine()
                             id_evaluado = st.session_state.get('id_evaluado')
                             if id_evaluado is not None:
                                 nombre_archivo = st.session_state["uploaded_file"].name
                                 ruta_imagen = str(Path(ORIGINALS_DIR) / nombre_archivo)
-                                print("ruta_imagen:", ruta_imagen)
                                 formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
                                 fecha_actual = datetime.datetime.now()
 
-                                with engine.begin() as conn:
-                                    id_prueba = conn.execute(
-                                        text(POST_PRUEBA),
-                                        {
-                                            "id_evaluado": id_evaluado,
-                                            "nombre_archivo": nombre_archivo,
-                                            "ruta_imagen": ruta_imagen,
-                                            "formato": formato,
-                                            "fecha": fecha_actual
-                                        }
-                                    ).fetchone()["id_prueba"]
+                                params_prueba = {
+                                    "id_evaluado": id_evaluado,
+                                    "nombre_archivo": nombre_archivo,
+                                    "ruta_imagen": ruta_imagen,
+                                    "formato": formato,
+                                    "fecha": fecha_actual,
+                                }
+
+                                sql_prueba = POST_PRUEBA
+                                df_prueba = fetch_df(sql_prueba, params_prueba)
+                                if not df_prueba.empty:
+                                    try:
+                                        id_prueba = int(df_prueba.at[0, "id_prueba"])
+                                    except Exception:
+                                        id_prueba = int(df_prueba.iloc[0, 0])
+                                else:
+                                    raise Exception("No se obtuvo id_prueba al insertar la prueba")
                         except Exception as e:
                             st.error(f"Error al registrar la prueba en la base de datos: {e}")
                             return
 
                         # SUBIR RESULTADOS
                         try:
-                            with engine.begin() as conn:
-                                indicadores = st.session_state.get("indicadores", [])
-                                try:
-                                    img_for_norm = Image.open(ruta_imagen)
-                                    img_w, img_h = img_for_norm.size
-                                except Exception:
-                                    img_w, img_h = None, None
+                            indicadores = st.session_state.get("indicadores", [])
+                            try:
+                                img_for_norm = Image.open(ruta_imagen)
+                                img_w, img_h = img_for_norm.size
+                            except Exception:
+                                img_w, img_h = None, None
 
-                                for ind in indicadores:
-                                    iid = ind.get("id_indicador") or ind.get("id")
-                                    x_min = float(ind.get("x_min", 0))
-                                    x_max = float(ind.get("x_max", 0))
-                                    y_min = float(ind.get("y_min", 0))
-                                    y_max = float(ind.get("y_max", 0))
-                                    confianza = float(ind.get("confianza", 0.0))
+                            for ind in indicadores:
+                                iid = ind.get("id_indicador") or ind.get("id")
+                                x_min = float(ind.get("x_min", 0))
+                                x_max = float(ind.get("x_max", 0))
+                                y_min = float(ind.get("y_min", 0))
+                                y_max = float(ind.get("y_max", 0))
+                                confianza = float(ind.get("confianza", 0.0))
 
-                                    if img_w and img_h and img_w > 0 and img_h > 0:
-                                        x_min_norm = x_min / img_w
-                                        y_min_norm = y_min / img_h
-                                        w_norm = (x_max - x_min) / img_w
-                                        h_norm = (y_max - y_min) / img_h
-                                    else:
-                                        x_min_norm = x_min
-                                        y_min_norm = y_min
-                                        w_norm = (x_max - x_min)
-                                        h_norm = (y_max - y_min)
+                                if img_w and img_h and img_w > 0 and img_h > 0:
+                                    x_min_norm = x_min / img_w
+                                    y_min_norm = y_min / img_h
+                                    w_norm = (x_max - x_min) / img_w
+                                    h_norm = (y_max - y_min) / img_h
+                                else:
+                                    x_min_norm = x_min
+                                    y_min_norm = y_min
+                                    w_norm = (x_max - x_min)
+                                    h_norm = (y_max - y_min)
 
-                                    conn.execute(
-                                        text(POST_RESULTADO),
-                                        {
-                                            "id_prueba": id_prueba,
-                                            "id_indicador": iid,
-                                            "x_min": x_min_norm,
-                                            "y_min": y_min_norm,
-                                            "x_max": w_norm,
-                                            "y_max": h_norm,
-                                            "confianza": confianza
-                                        }
-                                    )
+                                params_res = {
+                                    "id_prueba": id_prueba,
+                                    "id_indicador": iid,
+                                    "x_min": x_min_norm,
+                                    "y_min": y_min_norm,
+                                    "x_max": w_norm,
+                                    "y_max": h_norm,
+                                    "confianza": confianza,
+                                }
+
+                                sql_res = POST_RESULTADO
+                                # Ejecutar INSERT de resultado (fetch_df manejará commit)
+                                fetch_df(sql_res, params_res)
                         except Exception as e:
                             st.error(f"Error al registrar los resultados en la base de datos: {e}")
                             return

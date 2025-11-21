@@ -1,6 +1,5 @@
 from services.queries.q_model import GET_INDICADORES, GET_INDICADORES_POR_IDS
-from services.db import get_engine
-from sqlalchemy import text
+from services.db import fetch_df
 import json
 
 def simular_resultado(image_name: str) -> list:
@@ -71,20 +70,18 @@ def simular_resultado(image_name: str) -> list:
         return []
     # consultar la BD por los ids y construir un mapa id -> (nombre, descripcion)
     ids = [item['id_indicador'] for item in indicadores]
-    print(f"Consultando indicadores para ids: {ids}")  
     ids_csv = ','.join(str(i) for i in ids)
-    #fetch_df
-    engine = get_engine()
-    with engine.connect() as conn:
-        result = conn.execute(text(GET_INDICADORES_POR_IDS), {"ids_csv": ids_csv})
-        rows = result.fetchall()
-        print(f"Filas obtenidas de BD: {len(rows)}")
-        id_map = {}
-        for row in rows:
-            id_indicador = row['id_indicador']
-            nombre = row['nombre']
-            significado = row['significado']
-            id_map[int(id_indicador)] = (nombre, significado)
+    df = fetch_df(GET_INDICADORES_POR_IDS, {"ids_csv": ids_csv})
+    id_map = {}
+    if df is not None and not df.empty:
+        for _, row in df.iterrows():
+            id_indicador = row.get('id_indicador')
+            nombre = row.get('nombre')
+            significado = row.get('significado')
+            try:
+                id_map[int(id_indicador)] = (nombre, significado)
+            except Exception:
+                continue
     resultados = []
     for p in indicadores:
         iid = p['id_indicador']

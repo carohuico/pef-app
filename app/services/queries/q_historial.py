@@ -37,7 +37,7 @@ FROM
     INNER JOIN dbo.Evaluado e ON p.id_evaluado = e.id_evaluado
     LEFT JOIN dbo.Grupo g ON e.id_grupo = g.id_grupo
 WHERE
-    e.id_usuario = :id_usuario
+    e.id_usuario = @id_usuario
 ORDER BY 
     p.fecha DESC, p.id_prueba DESC;
 """
@@ -48,7 +48,7 @@ DECLARE @ids_table TABLE (id INT);
 
 INSERT INTO @ids_table (id)
 SELECT value 
-FROM STRING_SPLIT(:ids_csv, ',');
+FROM STRING_SPLIT(@ids_csv, ',');
 
 -- Primero eliminar los resultados asociados
 DELETE FROM dbo.Resultado
@@ -84,7 +84,7 @@ FROM
     INNER JOIN dbo.Evaluado e ON p.id_evaluado = e.id_evaluado
     LEFT JOIN dbo.Grupo g ON e.id_grupo = g.id_grupo
 WHERE 
-    p.id_prueba = :id_prueba;
+    p.id_prueba = @id_prueba;
 """
 
 # Query para obtener los resultados de una prueba
@@ -103,7 +103,7 @@ FROM
     dbo.Resultado r
     INNER JOIN dbo.Indicador i ON r.id_indicador = i.id_indicador
 WHERE 
-    r.id_prueba = :id_prueba
+    r.id_prueba = @id_prueba
 ORDER BY 
     r.confianza DESC;
 """
@@ -125,7 +125,7 @@ ORDER BY
 
 # Query para obtener evaluaciones recientes (últimas N)
 GET_EVALUACIONES_RECIENTES = """
-SELECT TOP :n
+SELECT TOP @n
     p.id_prueba,
     p.id_evaluado,
     CONCAT(e.nombre, ' ', e.apellido) AS nombre_evaluado,

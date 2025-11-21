@@ -4,12 +4,11 @@ from PIL import Image
 import datetime
 import os
 import pandas as pd
-from sqlalchemy import text
 
 from config.settings import TEMP_DIR, ORIGINALS_DIR
 from services.image_preprocess import estandarizar_imagen
 from services.indicadores import simular_resultado
-from services.db import get_engine, fetch_df
+from services.db import fetch_df
 from services.queries.q_registro import POST_PRUEBA, POST_RESULTADO
 from components.bounding_boxes import imagen_bboxes
 from services.exportar import render_export_popover
@@ -149,7 +148,7 @@ def agregar_dibujo(info_obj):
                     boxes.append(box)
                 
                 preview = imagen_bboxes(original, boxes)
-                st.image(preview, width='stretch')
+                st.image(preview, use_column_width=True)
 
             with col2:
                 st.markdown("### Indicadores detectados")
@@ -180,7 +179,7 @@ def agregar_dibujo(info_obj):
                     try:
                         st.data_editor(
                             df,
-                            width='stretch',
+                            use_container_width=True,
                             hide_index=True,
                             key="agregar_indicadores_table",
                             height=200,
@@ -193,7 +192,7 @@ def agregar_dibujo(info_obj):
                         )
                     except Exception:
                         # Fallback: si data_editor no está disponible, usar st.dataframe simple
-                        st.dataframe(df, width='stretch', hide_index=True)
+                        st.dataframe(df, use_container_width=True, hide_index=True)
 
     elif step == 3:
         df = pd.DataFrame([{
@@ -223,7 +222,7 @@ def agregar_dibujo(info_obj):
                 "ruta_imagen": str(Path(ORIGINALS_DIR) / st.session_state.get("agregar_uploaded_file").name) if st.session_state.get("agregar_uploaded_file") is not None else ""
             }
             st.markdown("<style>[data-testid=\"stBaseButton-tertiary\"]:not([data-testid=\"stSidebar\"] *) { background: #FFFFFF; border:none; color: #000000; margin-top: 1rem; padding: 16px 24px; display: inline-block; text-decoration: underline;  cursor: pointer; }</style>", unsafe_allow_html=True)
-            if st.button("Exportar prueba", width='stretch', key="agregar_export", type="tertiary"):
+            if st.button("Exportar prueba", use_container_width=True, key="agregar_export", type="tertiary"):
                 indicadores = st.session_state.get("agregar_indicadores", [])
                 render_export_popover(info_evaluado, indicadores)
 
@@ -234,11 +233,11 @@ def agregar_dibujo(info_obj):
     with col_back:
         if step > 1:
             button_label = "Atrás"
-            if st.button(button_label, width='stretch', key="agregar_back"):
+            if st.button(button_label, use_container_width=True, key="agregar_back"):
                 st.session_state["agregar_step"] = max(1, step - 1)
                 st.rerun()
         else:
-            if st.button("Cancelar", width='stretch', key="agregar_cancel"):
+            if st.button("Cancelar", use_container_width=True, key="agregar_cancel"):
                 st.session_state["agregar_step"] = 1
                 st.session_state["agregar_uploaded_file"] = None
                 st.session_state["agregar_indicadores"] = None
@@ -250,7 +249,7 @@ def agregar_dibujo(info_obj):
         # PASO 1 -> PASO 2
         if step == 1:
             button_label = "Siguiente"
-            if st.button(button_label, type="primary", width='stretch', disabled=(st.session_state["agregar_uploaded_file"] is None), key="agregar_next_step1"):
+            if st.button(button_label, type="primary", use_container_width=True, disabled=(st.session_state["agregar_uploaded_file"] is None), key="agregar_next_step1"):
                 if st.session_state["agregar_uploaded_file"] is None:
                     label = ":material/warning: Por favor, sube una imagen para continuar"
                     st.error(label)
@@ -272,93 +271,95 @@ def agregar_dibujo(info_obj):
         # PASO 2 -> PASO 3
         elif step == 2:
             button_label = "Siguiente :material/arrow_forward:"
-            if st.button(button_label, type="primary", width='stretch', key="agregar_next_step2"):
+            if st.button(button_label, type="primary", use_container_width=True, key="agregar_next_step2"):
                 st.session_state["agregar_step"] = 3
                 st.rerun(scope="fragment")
         
         # PASO 3: GUARDAR
         elif step == 3:
-            if st.button("Guardar prueba", type="primary", width='stretch', key="agregar_save"):
+            if st.button("Guardar prueba", type="primary", use_container_width=True, key="agregar_save"):
                 with st.spinner("Guardando..."):
                     try:
-                        engine = get_engine()
-                        
-                        # Insertar prueba
+                        # Insertar prueba usando fetch_df (pymssql)
                         nombre_archivo = st.session_state["agregar_uploaded_file"].name
                         ruta_imagen = str(Path(ORIGINALS_DIR) / nombre_archivo)
                         formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
                         fecha_actual = datetime.datetime.now()
 
-                        with engine.begin() as conn:
-                            # Insertar la prueba
-                            id = info_obj.get("id_evaluado")
-                            print("ID Evaluado:", id)
-                            params_prueba = {
-                                "id_evaluado": id,
-                                "nombre_archivo": nombre_archivo,
-                                "ruta_imagen": ruta_imagen,
-                                "formato": formato,
-                                "fecha": fecha_actual
+                        id_evaluado = info_obj.get("id_evaluado")
+                        params_prueba = {
+                            "id_evaluado": id_evaluado,
+                            "nombre_archivo": nombre_archivo,
+                            "ruta_imagen": ruta_imagen,
+                            "formato": formato,
+                            "fecha": fecha_actual
+                        }
+                        params_prueba = _normalize_params(params_prueba)
+                        sql_prueba = POST_PRUEBA
+                        df_prueba = fetch_df(sql_prueba, params_prueba)
+                        if df_prueba is None or df_prueba.empty:
+                            raise Exception("No se obtuvo id_prueba al insertar la prueba")
+                        try:
+                            id_prueba = int(df_prueba.iloc[0]["id_prueba"])
+                        except Exception:
+                            id_prueba = df_prueba.iloc[0].get("id_prueba")
+
+                        # Insertar resultados
+                        indicadores = st.session_state.get("agregar_indicadores", [])
+                        try:
+                            img_for_norm = Image.open(ruta_imagen)
+                            img_w, img_h = img_for_norm.size
+                        except Exception:
+                            img_w, img_h = None, None
+
+                        sql_resultado = POST_RESULTADO
+                        for ind in indicadores:
+                            iid = ind.get("id_indicador") or ind.get("id")
+                            x_min = float(ind.get("x_min", 0))
+                            x_max = float(ind.get("x_max", 0))
+                            y_min = float(ind.get("y_min", 0))
+                            y_max = float(ind.get("y_max", 0))
+                            confianza = float(ind.get("confianza", 0.0))
+
+                            if img_w and img_h and img_w > 0 and img_h > 0:
+                                x_min_norm = x_min / img_w
+                                y_min_norm = y_min / img_h
+                                w_norm = (x_max - x_min) / img_w
+                                h_norm = (y_max - y_min) / img_h
+                            else:
+                                x_min_norm = x_min
+                                y_min_norm = y_min
+                                w_norm = (x_max - x_min)
+                                h_norm = (y_max - y_min)
+
+                            params_result = {
+                                "id_prueba": id_prueba,
+                                "id_indicador": iid,
+                                "x_min": x_min_norm,
+                                "y_min": y_min_norm,
+                                "x_max": w_norm,
+                                "y_max": h_norm,
+                                "confianza": confianza
                             }
-                            params_prueba = _normalize_params(params_prueba)
-                            id_prueba = conn.execute(text(POST_PRUEBA), params_prueba).fetchone()["id_prueba"]
-                            
-                            # Insertar resultados
-                            indicadores = st.session_state.get("agregar_indicadores", [])
-                            
-                            try:
-                                img_for_norm = Image.open(ruta_imagen)
-                                img_w, img_h = img_for_norm.size
-                            except Exception:
-                                img_w, img_h = None, None
+                            params_result = _normalize_params(params_result)
+                            # execute insert (no result expected)
+                            fetch_df(sql_resultado, params_result)
 
-                            for ind in indicadores:
-                                iid = ind.get("id_indicador") or ind.get("id")
-                                x_min = float(ind.get("x_min", 0))
-                                x_max = float(ind.get("x_max", 0))
-                                y_min = float(ind.get("y_min", 0))
-                                y_max = float(ind.get("y_max", 0))
-                                confianza = float(ind.get("confianza", 0.0))
+                        # Store the newly created prueba id so the individual view can open it
+                        try:
+                            st.session_state['open_prueba_id'] = id_prueba
+                        except Exception:
+                            pass
 
-                                if img_w and img_h and img_w > 0 and img_h > 0:
-                                    x_min_norm = x_min / img_w
-                                    y_min_norm = y_min / img_h
-                                    w_norm = (x_max - x_min) / img_w
-                                    h_norm = (y_max - y_min) / img_h
-                                else:
-                                    x_min_norm = x_min
-                                    y_min_norm = y_min
-                                    w_norm = (x_max - x_min)
-                                    h_norm = (y_max - y_min)
-
-                                params_result = {
-                                    "id_prueba": id_prueba,
-                                    "id_indicador": iid,
-                                    "x_min": x_min_norm,
-                                    "y_min": y_min_norm,
-                                    "x_max": w_norm,
-                                    "y_max": h_norm,
-                                    "confianza": confianza
-                                }
-                                params_result = _normalize_params(params_result)
-                                conn.execute(text(POST_RESULTADO), params_result)
-
-                            # Store the newly created prueba id so the individual view can open it
-                            try:
-                                st.session_state['open_prueba_id'] = id_prueba
-                            except Exception:
-                                pass
-
-                            # Limpiar y cerrar
+                        # Limpiar y cerrar
                         st.session_state["agregar_step"] = 1
                         st.session_state["agregar_uploaded_file"] = None
                         st.session_state["agregar_indicadores"] = None
                         st.session_state['add_drawing'] = False
                         # Limpiar la solicitud de apertura del diálogo
                         st.session_state['_agregar_dialog_open_requested'] = False
-                        
+
                         st.balloons()
                         st.rerun()
-                        
                     except Exception as e:
                         st.error(f"❌ Error: {e}")

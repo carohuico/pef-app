@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import pymssql
+import os
 
 
 def get_connection():
@@ -8,11 +9,25 @@ def get_connection():
     Conexión a SQL Server (Cloud SQL - GCP) usando pymssql,
     compatible con Streamlit Cloud (sin drivers ODBC).
     """
-    server = st.secrets["DB_HOST"]
-    port = int(st.secrets["DB_PORT"])
-    user = st.secrets["DB_USER"]
-    password = st.secrets["DB_PASS"]
-    database = st.secrets["DB_NAME"]
+    # Preferir st.secrets en producción (Streamlit Cloud). En desarrollo local
+    # usar variables de entorno y, si no están definidas, caer a valores
+    # por defecto para facilitar pruebas (estos valores se pueden eliminar
+    # o reemplazar por variables de entorno en tu máquina).
+    def _get(key: str, default: str | None = None) -> str | None:
+        try:
+            if hasattr(st, "secrets"):
+                val = st.secrets.get(key)
+                if val:
+                    return val
+        except Exception:
+            pass
+        return os.environ.get(key, default)
+
+    server = _get("DB_HOST", "34.55.82.47")
+    port = int(_get("DB_PORT", "1433") or 1433)
+    user = _get("DB_USER", "streamlit_user")
+    password = _get("DB_PASS", "pbll_pwd")
+    database = _get("DB_NAME", "PBLL")
 
     return pymssql.connect(
         server=server,
@@ -60,7 +75,18 @@ def fetch_df(sql: str, params: dict | None = None):
         if cursor.description:
             columns = [c[0] for c in cursor.description]
             rows = cursor.fetchall()
-            return pd.DataFrame(rows, columns=columns)
+            df = pd.DataFrame(rows, columns=columns)
+
+            try:
+                sql_start = sql.lstrip().split(None, 1)[0].lower()
+            except Exception:
+                sql_start = ""
+            if sql_start not in ("select",):
+                try:
+                    conn.commit()
+                except Exception:
+                    pass
+            return df
 
         conn.commit()
         return pd.DataFrame()

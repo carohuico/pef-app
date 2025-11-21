@@ -246,7 +246,7 @@ def estadisticas():
         st.markdown('<div class="page-header">Estadísticas</div>', unsafe_allow_html=True)
     with col2:
         button_label = ":material/filter_list: Filtros"
-        if st.button(button_label, width='stretch'):
+        if st.button(button_label, use_container_width=True):
             modal_filtros()
 
     # ---------- VERIFICAR SI HAY FILTROS ACTIVOS ----------

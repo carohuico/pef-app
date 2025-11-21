@@ -71,10 +71,10 @@ def agregar_usuario_dialog():
         col_btn1, col_btn2 = st.columns([1, 1])
         with col_btn2:
             label = ":material/check: Guardar"
-            submitted = st.form_submit_button(label, width='stretch', type="primary")
+            submitted = st.form_submit_button(label, use_container_width=True, type="primary")
         with col_btn1:
             label = ":material/cancel: Cancelar"
-            cancelar = st.form_submit_button(label, width='stretch')
+            cancelar = st.form_submit_button(label, use_container_width=True)
         
         if cancelar:
             st.rerun()
@@ -180,10 +180,10 @@ def editar_usuario_dialog(usuario_data):
         col_btn1, col_btn2 = st.columns([1, 1])
         with col_btn2:
             button_label = ":material/check: Guardar Cambios"
-            submitted = st.form_submit_button(button_label, width='stretch', type="primary")
+            submitted = st.form_submit_button(button_label, use_container_width=True, type="primary")
         with col_btn1:
             button_label = ":material/cancel: Cancelar"
-            cancelar = st.form_submit_button(button_label, width='stretch')
+            cancelar = st.form_submit_button(button_label, use_container_width=True)
         
         if cancelar:
             st.rerun()
@@ -285,7 +285,7 @@ def confirmar_eliminacion_dialog(usuarios_seleccionados):
     col_conf1, col_conf2 = st.columns(2)
     with col_conf2:
         label = ":material/check: Sí, eliminar"
-        if st.button(label, width='stretch', type="primary", key="usuarios_confirmar_eliminar_modal"):
+        if st.button(label, use_container_width=True, type="primary", key="usuarios_confirmar_eliminar_modal"):
             try:
                 eliminar_usuarios_seleccionados(usuarios_seleccionados)
             except Exception as e:
@@ -293,7 +293,7 @@ def confirmar_eliminacion_dialog(usuarios_seleccionados):
             st.rerun()
     with col_conf1:
         label = ":material/cancel: Cancelar"
-        if st.button(label, width='stretch', key="usuarios_cancelar_eliminar_modal"):
+        if st.button(label, use_container_width=True, key="usuarios_cancelar_eliminar_modal"):
             st.rerun()
 
 def usuarios():
@@ -309,7 +309,7 @@ def usuarios():
         col1, col2, col3 = st.columns([1, 5, 1])
         with col1:
             button_label = ":material/add: Crear"
-            if st.button(button_label, width='stretch', type="primary"):
+            if st.button(button_label, use_container_width=True, type="primary"):
                 agregar_usuario_dialog()
         
         label = ":material/info: No hay usuarios registrados."
@@ -345,15 +345,15 @@ def usuarios():
     
     with col_editar:
         button_label = ":material/edit: Editar"
-        editar_btn = st.button(button_label, width='stretch', type="secondary", key="usuarios_btn_editar_top")
+        editar_btn = st.button(button_label, use_container_width=True, type="secondary", key="usuarios_btn_editar_top")
     
     with col_eliminar:
         button_label = ":material/delete: Eliminar"
-        eliminar_btn = st.button(button_label, width='stretch', type="secondary", key="usuarios_btn_eliminar_top")
+        eliminar_btn = st.button(button_label, use_container_width=True, type="secondary", key="usuarios_btn_eliminar_top")
     
     with col_crear:
         button_label = ":material/add: Crear"
-        crear_btn = st.button(button_label, width='stretch', type="primary", key="usuarios_btn_crear_top")
+        crear_btn = st.button(button_label, use_container_width=True, type="primary", key="usuarios_btn_crear_top")
     st.markdown("<br/>", unsafe_allow_html=True)
     # Aplicar búsqueda si hay texto
     if buscar:
@@ -382,7 +382,7 @@ def usuarios():
     # Mostrar tabla con checkboxes
     edited_df = st.data_editor(
         df_display_page,
-        width='stretch',
+        use_container_width=True,
         hide_index=True,
         key="usuarios_table_editor",
         column_config={
@@ -426,13 +426,13 @@ def usuarios():
     if total_pages > 1:
         col_prev, col_center, col_next = st.columns([1, 2, 1])
         with col_prev:
-            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key="usuarios_btn_prev", type="tertiary", width='stretch'):
+            if st.button(":material/arrow_back: Anterior", disabled=(st.session_state[page_key] == 1), key="usuarios_btn_prev", type="tertiary", use_container_width=True):
                 st.session_state[page_key] -= 1
                 st.rerun()
         with col_center:
             st.markdown(f"<div style='text-align: center; padding-top: 6px;'><strong>Página {st.session_state[page_key]} de {total_pages}</strong></div>", unsafe_allow_html=True)
         with col_next:
-            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key="usuarios_btn_next", type="tertiary", width='stretch'):
+            if st.button("Siguiente :material/arrow_forward:", disabled=(st.session_state[page_key] == total_pages), key="usuarios_btn_next", type="tertiary", use_container_width=True):
                 st.session_state[page_key] += 1
                 st.rerun()
         st.markdown("<br/>", unsafe_allow_html=True)

@@ -86,12 +86,14 @@ def get_db_info():
     - tables: DataFrame con los schemas y tablas visibles
     """
     try:
-        df_db = fetch_df("SELECT DB_NAME() AS current_db, SUSER_SNAME() AS current_user;")
+        # Avoid aliasing to SQL keywords like CURRENT_USER; use safe alias name
+        df_db = fetch_df("SELECT DB_NAME() AS current_db, SUSER_SNAME() AS connection_user;")
         current_db = None
         current_user = None
         if df_db is not None and not df_db.empty:
             current_db = df_db.iloc[0].get("current_db")
-            current_user = df_db.iloc[0].get("current_user")
+            # map to expected key name for compatibility
+            current_user = df_db.iloc[0].get("connection_user")
 
         df_tables = fetch_df(
             "SELECT s.name AS schema_name, t.name AS table_name "

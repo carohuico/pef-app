@@ -547,7 +547,6 @@ def dialog_editar_evaluado(evaluado_data):
                 st.error(":material/warning: El sexo del evaluado es obligatorio")
                 st.stop()
             
-            # Actualizar en la base de datos (usar fetch_df)
             try:
                 id_evaluado = evaluado_data.get('id_evaluado')
 
@@ -1097,7 +1096,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
-                <span>:material/warning: Selecciona un solo evaluado para ver el expediente</span>
+                <span>Selecciona un solo evaluado para ver el expediente</span>
                 </div>
                 """, unsafe_allow_html=True)
             else:

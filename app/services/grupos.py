@@ -8,6 +8,17 @@ from services.queries.q_grupos import (
     UPDATE_GRUPO, DELETE_SUBGRUPOS, DELETE_GRUPO, UPDATE_EVALUADOS_A_INDIVIDUALES
 )
 
+
+# Cached loaders for grupos and municipios
+@st.cache_data(ttl=300, max_entries=64)
+def load_grupos_cache():
+    return fetch_df(GET_GRUPOS)
+
+
+@st.cache_data(ttl=600, max_entries=32)
+def load_municipios_cache():
+    return fetch_df('SELECT id_municipio, nombre FROM Municipio')
+
 def grupos():
     # Cargar CSS
     _css_grupos = Path(__file__).parent.parent / 'assets' / 'grupos.css'
@@ -17,12 +28,12 @@ def grupos():
     except Exception as _e:
         st.error(f"Error loading CSS: {_e}")
     
-    # Cargar datos
+    # Cargar datos (cached)
     if 'grupos_df' not in st.session_state:
-        st.session_state.grupos_df = fetch_df(GET_GRUPOS)
-    
-    # Cargar municipios
-    municipios_df = fetch_df('SELECT id_municipio, nombre FROM Municipio')
+        st.session_state.grupos_df = load_grupos_cache()
+
+    # Cargar municipios (cached)
+    municipios_df = load_municipios_cache()
     municipios_dict = dict(zip(municipios_df['nombre'], municipios_df['id_municipio']))
     
     # Filtrar solo grupos principales
@@ -210,7 +221,12 @@ def mostrar_dialogo_crear_grupo(municipios_list, municipios_dict):
                 label = f":material/check: Grupo '{nombre}'"
                 st.success(f"{label} creado exitosamente")
                 time.sleep(1)
-                st.session_state.grupos_df = fetch_df(GET_GRUPOS)
+                # invalidate cached grupos and reload
+                try:
+                    load_grupos_cache.clear()
+                except Exception:
+                    pass
+                st.session_state.grupos_df = load_grupos_cache()
                 st.rerun()
             except Exception as e:
                 st.error(f"Error al crear grupo: {str(e)}")
@@ -243,7 +259,11 @@ def mostrar_dialogo_editar_grupo(grupo, municipios_list, municipios_dict):
                 label = f":material/check: Grupo '{grupo['Nombre']}'"
                 st.success(f"{label} actualizado exitosamente")
                 time.sleep(1)
-                st.session_state.grupos_df = fetch_df(GET_GRUPOS)
+                try:
+                    load_grupos_cache.clear()
+                except Exception:
+                    pass
+                st.session_state.grupos_df = load_grupos_cache()
                 st.rerun()
             except Exception as e:
                 st.error(f"Error al actualizar grupo: {str(e)}")
@@ -384,8 +404,12 @@ def eliminar_grupos_seleccionados(grupos_seleccionados):
             else:
                 eliminados.append(f"{label} eliminado")
 
-        # Actualizar cache de grupos pero NO hacer rerun aquí: el llamador (diálogo) decide cuándo refrescar.
-        st.session_state.grupos_df = fetch_df(GET_GRUPOS)
+        # Invalidate cache of grupos and reload fresh data for the session state.
+        try:
+            load_grupos_cache.clear()
+        except Exception:
+            pass
+        st.session_state.grupos_df = load_grupos_cache()
         return eliminados
     except Exception as e:
         # Devolver error como mensaje para que el llamador lo muestre debajo de los botones
@@ -549,7 +573,11 @@ def mostrar_dialogo_crear_subgrupo(id_grupo_padre, municipios_list, municipios_d
                 })
                 st.success(f"Subgrupo '{nombre}' creado exitosamente")
                 time.sleep(1)
-                st.session_state.grupos_df = fetch_df(GET_GRUPOS)
+                try:
+                    load_grupos_cache.clear()
+                except Exception:
+                    pass
+                st.session_state.grupos_df = load_grupos_cache()
                 st.rerun()
             except Exception as e:
                 st.error(f"Error al crear subgrupo: {str(e)}")
@@ -582,7 +610,11 @@ def mostrar_dialogo_editar_subgrupo(subgrupo, id_grupo_padre, municipios_list, m
                 label = f":material/check: Subgrupo '{nombre}'"
                 st.success(f"{label} actualizado exitosamente")
                 time.sleep(1)
-                st.session_state.grupos_df = fetch_df(GET_GRUPOS)
+                try:
+                    load_grupos_cache.clear()
+                except Exception:
+                    pass
+                st.session_state.grupos_df = load_grupos_cache()
                 st.rerun()
             except Exception as e:
                 st.error(f"Error al actualizar subgrupo: {str(e)}")
@@ -602,8 +634,11 @@ def eliminar_subgrupos_seleccionados(subgrupos_seleccionados):
 
             eliminados.append(f":material/check: Subgrupo '{subgrupo['Nombre']}' eliminado. Evaluados ahora son individuales.")
 
-        # Actualizar cache de grupos pero NO hacer rerun aquí: el llamador (diálogo) decide cuándo refrescar.
-        st.session_state.grupos_df = fetch_df(GET_GRUPOS)
+        try:
+            load_grupos_cache.clear()
+        except Exception:
+            pass
+        st.session_state.grupos_df = load_grupos_cache()
         return eliminados
     except Exception as e:
         return [f"Error al eliminar subgrupos: {str(e)}"]

@@ -10,6 +10,21 @@ from services.queries.q_usuarios import GET_ESPECIALISTAS
 # sqlalchemy removed; use fetch_df
 import datetime
 
+# Cached loaders for heavy read queries
+@st.cache_data(ttl=300, max_entries=128)
+def load_especialistas():
+    return fetch_df(GET_ESPECIALISTAS)
+
+
+@st.cache_data(ttl=300, max_entries=128)
+def load_grupos_cache():
+    return fetch_df(GET_GRUPOS)
+
+
+@st.cache_data(ttl=300, max_entries=64)
+def load_listado_evaluados_base():
+    return fetch_df(LISTADO_EVALUADOS_SQL)
+
 
 @st.dialog(":material/warning: Confirmar Eliminación")
 def confirmar_eliminacion_historial(selected_rows_df):
@@ -70,6 +85,13 @@ def confirmar_eliminacion_historial(selected_rows_df):
 
                         # Guardar el mensaje en session_state para mostrarlo fuera de la columna
                         st.session_state[msg_key] = f"Se eliminaron {rows_deleted} evaluado(s)."
+                        # Invalidate cached read results so next view shows fresh data
+                        try:
+                            load_listado_evaluados_base.clear()
+                            load_grupos_cache.clear()
+                            load_especialistas.clear()
+                        except Exception:
+                            pass
                         # Actualizar datos en session_state
                         st.session_state['evaluados_df'] = pd.DataFrame(get_historial_data())
                         st.session_state['historial_selection'] = {'rows': []}
@@ -125,9 +147,9 @@ def dialog_crear_evaluado():
             is_admin = False
             is_esp = False
 
-        # Obtener lista de especialistas
+        # Obtener lista de especialistas (cached)
         try:
-            df_esp = fetch_df(GET_ESPECIALISTAS)
+            df_esp = load_especialistas()
             esp_options = df_esp['nombre_completo'].tolist() if not df_esp.empty else []
             esp_ids = df_esp['id_usuario'].tolist() if not df_esp.empty else []
         except Exception:
@@ -244,7 +266,7 @@ def dialog_crear_evaluado():
         
         with col2:
             try:
-                df_groups = fetch_df(GET_GRUPOS)
+                df_groups = load_grupos_cache()
                 group_names = [str(x) for x in df_groups['nombre'].fillna('')]
                 if not group_names:
                     group_options = ["Sin grupo"]
@@ -361,6 +383,13 @@ def dialog_crear_evaluado():
                 st.success(f":material/check: Evaluado '{nombre}' creado exitosamente")
                 if 'evaluados_df' in st.session_state:
                     del st.session_state['evaluados_df']
+                # Invalidate cached read results so next view shows fresh data
+                try:
+                    load_listado_evaluados_base.clear()
+                    load_grupos_cache.clear()
+                    load_especialistas.clear()
+                except Exception:
+                    pass
                 import time
                 time.sleep(1)
                 st.rerun()
@@ -465,7 +494,7 @@ def dialog_editar_evaluado(evaluado_data):
         
         with col2:
             try:
-                df_groups = fetch_df(GET_GRUPOS)
+                df_groups = load_grupos_cache()
                 group_names = [str(x) for x in df_groups['nombre'].fillna('')]
                 if not group_names:
                     group_options = ["Sin grupo"]
@@ -485,7 +514,7 @@ def dialog_editar_evaluado(evaluado_data):
 
         # Selector de especialista (permitir reasignar al editar)
         try:
-            df_esp = fetch_df(GET_ESPECIALISTAS)
+            df_esp = load_especialistas()
             if df_esp is None or df_esp.empty:
                 esp_map = {}
                 esp_ids = [None]
@@ -598,6 +627,13 @@ def dialog_editar_evaluado(evaluado_data):
                 st.success(f":material/check: Evaluado '{nombre}' actualizado correctamente")
                 if 'evaluados_df' in st.session_state:
                     del st.session_state['evaluados_df']
+                # Invalidate cached read results so next view shows fresh data
+                try:
+                    load_listado_evaluados_base.clear()
+                    load_grupos_cache.clear()
+                    load_especialistas.clear()
+                except Exception:
+                    pass
                 import time
                 time.sleep(1)
                 st.rerun()
@@ -744,7 +780,8 @@ def get_historial_data(user_id: int = None) -> List[Dict]:
     """
     try:
         if user_id is None:
-            df = fetch_df(LISTADO_EVALUADOS_SQL)
+            # prefer cached base listado when available
+            df = load_listado_evaluados_base()
         else:
             # Try server-side filtering first by appending WHERE on the base SQL
             try:
@@ -881,7 +918,7 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     # Asegurar columna Especialista (proviene de la query que une con Usuario)
     if 'Especialista' not in df.columns and 'id_usuario' in df.columns:
         try:
-            df_esp = fetch_df(GET_ESPECIALISTAS)
+            df_esp = load_especialistas()
             esp_map = dict(zip(df_esp['id_usuario'], df_esp['nombre_completo'])) if not df_esp.empty else {}
             df['Especialista'] = df['id_usuario'].apply(lambda x: esp_map.get(int(x), '') if pd.notna(x) and x != '' else '')
         except Exception:

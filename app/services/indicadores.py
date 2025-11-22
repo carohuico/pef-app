@@ -2,6 +2,13 @@ from services.queries.q_model import GET_INDICADORES, GET_INDICADORES_POR_IDS
 from services.db import fetch_df
 import json
 
+
+# Cached loader for indicadores by ids_csv
+import streamlit as st
+@st.cache_data(ttl=300, max_entries=256)
+def load_indicadores_por_ids(ids_csv: str):
+    return fetch_df(GET_INDICADORES_POR_IDS, {"ids_csv": ids_csv})
+
 def simular_resultado(image_name: str) -> list:
     """Lee el JSON de metadata con múltiples imágenes, busca la entrada cuya
     `image_filename` coincida con `image_name` (exacto, con normalización mínima)
@@ -71,7 +78,7 @@ def simular_resultado(image_name: str) -> list:
     # consultar la BD por los ids y construir un mapa id -> (nombre, descripcion)
     ids = [item['id_indicador'] for item in indicadores]
     ids_csv = ','.join(str(i) for i in ids)
-    df = fetch_df(GET_INDICADORES_POR_IDS, {"ids_csv": ids_csv})
+    df = load_indicadores_por_ids(ids_csv)
     id_map = {}
     if df is not None and not df.empty:
         for _, row in df.iterrows():

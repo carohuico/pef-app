@@ -12,6 +12,7 @@ import json
 import os
 
 
+@st.cache_data(ttl=300, max_entries=256)
 def get_info(id: str):
     """Obtiene la información demográfica del evaluado"""
     try:
@@ -43,7 +44,6 @@ def get_info(id: str):
 
         info = df.iloc[0].to_dict()
 
-        # Compute Edad from fecha_nacimiento if available (expecting YYYY-MM-DD)
         try:
             fn = info.get('fecha_nacimiento')
             if fn and str(fn).strip():
@@ -65,8 +65,8 @@ def get_info(id: str):
         info = {}
     return info
 
+@st.cache_data(ttl=300, max_entries=256)
 def get_pruebas_data(id: str):
-    print(f"Fetching pruebas for evaluado ID: {id}")
     """Obtiene las pruebas del evaluado"""
     try:
         if id is None:
@@ -146,9 +146,13 @@ def individual(id_evaluado: str = None):
         pass
 
     # ---------- CONFIGURACIÓN ----------
-    st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
+    if not st.session_state.get('_page_configured'):
+        try:
+            st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
+        except Exception:
+            pass
+        st.session_state['_page_configured'] = True
     
-    # Inicializar estado
     if 'current_image_index' not in st.session_state:
         st.session_state.current_image_index = 0
     if 'add_drawing' not in st.session_state:

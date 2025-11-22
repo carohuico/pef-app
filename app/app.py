@@ -65,3 +65,6 @@ elif st.session_state["active_view"] == "estadisticas":
 
 elif st.session_state["active_view"] == "salir":
     auth.logout()
+
+
+st.markdown('<script> window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;")); </script> ', unsafe_allow_html=True)

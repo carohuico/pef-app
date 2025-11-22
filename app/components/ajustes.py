@@ -8,8 +8,6 @@ import pandas as pd
 from components.loader import show_loader
 
 def ajustes():
-    # ---------- CONFIGURACIÓN ----------
-    st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
     # ---------- CSS (externo) ----------
     _css_general = Path(__file__).parent.parent / 'assets' / 'general.css'   
     _sidebar = Path(__file__).parent.parent / 'assets' / 'sidebar_component.css'   

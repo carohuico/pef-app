@@ -8,8 +8,6 @@ import pandas as pd
 from components.loader import show_loader
 
 def inicio():
-    # ---------- CONFIGURACIÓN ----------
-    st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
     # ---------- CSS (externo) ----------
     _css_general = Path(__file__).parent.parent / 'assets' / 'general.css'
     _css_sidebar = Path(__file__).parent.parent / 'assets' / 'sidebar_component.css'
@@ -33,7 +31,6 @@ def inicio():
         st.markdown("¿A qué evaluado deseas agregar el dibujo?")
         
         try:
-            # Si el usuario es especialista, listar solo sus evaluados
             try:
                 import services.auth as auth
                 is_esp = auth.is_especialista()

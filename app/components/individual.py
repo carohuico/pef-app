@@ -1,7 +1,6 @@
 from services.queries.q_individual import GET_PRUEBAS_POR_EVALUADO, GET_RESULTADOS_POR_PRUEBA
 from services.agregar_dibujo import agregar_dibujo
 from services.queries.q_historial import ELIMINAR_PRUEBAS
-from components.bounding_boxes import _convert_bbox_from_meta, _to_pixel_coords
 from services.db import fetch_df
 from components.historial import confirmar_eliminacion_pruebas
 import pandas as pd

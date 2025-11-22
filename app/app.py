@@ -10,6 +10,8 @@ from components.ajustes import ajustes
 import services.auth as auth
 import components.login_page as login_page
 
+st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
+
 _css_general = Path(__file__).parent / 'assets' / 'general.css'
 _css_registrar = Path(__file__).parent / 'assets' / '1_registrar.css'
 with open(_css_general, encoding="utf-8") as f:
@@ -67,4 +69,3 @@ elif st.session_state["active_view"] == "salir":
     auth.logout()
 
 
-st.markdown('<script> window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;")); </script> ', unsafe_allow_html=True)

@@ -9,6 +9,22 @@ from services.queries.q_historial import LISTADO_HISTORIAL_SQL, LISTADO_HISTORIA
 from components.loader import show_loader
 
 
+# Cached loaders for historial
+@st.cache_data(ttl=300, max_entries=64)
+def load_historial_base():
+    return fetch_df(LISTADO_HISTORIAL_SQL)
+
+
+@st.cache_data(ttl=300, max_entries=256)
+def load_historial_por_especialista(id_usuario: int):
+    return fetch_df(LISTADO_HISTORIAL_POR_ESPECIALISTA, {"id_usuario": int(id_usuario)})
+
+
+@st.cache_data(ttl=300, max_entries=512)
+def load_resultados_por_prueba(id_prueba: int):
+    return fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": int(id_prueba)})
+
+
 @st.dialog(":material/warning: Confirmar Eliminación")
 def confirmar_eliminacion_pruebas(selected_rows_df):
     """Dialogo para confirmar eliminación de pruebas/evaluaciones."""
@@ -67,6 +83,14 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
 
                         sql_del_pruebas = f"DELETE FROM dbo.Prueba OUTPUT DELETED.id_prueba AS id_prueba WHERE id_prueba IN ({placeholders})"
                         fetch_df(sql_del_pruebas, tuple(ids))
+
+                        # Invalidate cached historial data so UI shows fresh results
+                        try:
+                            load_historial_base.clear()
+                            load_historial_por_especialista.clear()
+                            load_resultados_por_prueba.clear()
+                        except Exception:
+                            pass
 
                         if 'historial_df' in st.session_state:
                             try:
@@ -269,7 +293,7 @@ def get_historial_data() -> List[Dict]:
             is_especialista = False
 
         if is_admin:
-            df = fetch_df(LISTADO_HISTORIAL_SQL)
+            df = load_historial_base()
         elif is_especialista:
             user = st.session_state.get("user", {})
             id_usuario = user.get("id_usuario")
@@ -280,7 +304,7 @@ def get_historial_data() -> List[Dict]:
             except Exception:
                 return []
 
-            df = fetch_df(LISTADO_HISTORIAL_POR_ESPECIALISTA, {"id_usuario": id_usuario})
+            df = load_historial_por_especialista(id_usuario)
             try:
                 ids_df = fetch_df("SELECT id_evaluado FROM Evaluado WHERE id_usuario = @id_usuario", {"id_usuario": int(id_usuario)})
                 if ids_df is None or ids_df.empty:
@@ -296,7 +320,7 @@ def get_historial_data() -> List[Dict]:
             except Exception:
                 return []
         else:
-            df = fetch_df(LISTADO_HISTORIAL_SQL)
+            df = load_historial_base()
 
         if df is None or df.empty:
             return []
@@ -529,7 +553,10 @@ def historial():
                             continue
 
                         try:
-                            df_res = fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": int(id_prueba)})
+                            try:
+                                df_res = load_resultados_por_prueba(int(id_prueba))
+                            except Exception:
+                                df_res = fetch_df(GET_RESULTADOS_POR_PRUEBA, {"id_prueba": int(id_prueba)})
                             if df_res is None or df_res.empty:
                                 indicadores_por_fila.append([])
                             else:

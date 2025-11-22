@@ -8,6 +8,12 @@ from services.db import fetch_df
 from services.queries.q_usuarios import *
 from components.evaluados import evaluados
 
+
+# Cached loader for all usuarios list
+@st.cache_data(ttl=300, max_entries=16)
+def load_all_usuarios():
+    return fetch_df(GET_ALL_USUARIOS)
+
 def hash_password(password):
     """Genera un hash de la contraseña"""
     return hashlib.sha256(password.encode()).hexdigest()
@@ -130,7 +136,15 @@ def agregar_usuario_dialog():
                 label = f":material/check: Usuario '{usuario}'"
                 st.success(f"{label} creado exitosamente")
                 time.sleep(1)
-                del st.session_state.usuarios_df
+                try:
+                    load_all_usuarios.clear()
+                except Exception:
+                    pass
+                if 'usuarios_df' in st.session_state:
+                    try:
+                        del st.session_state.usuarios_df
+                    except Exception:
+                        pass
                 st.rerun()
                 
             except Exception as e:
@@ -246,7 +260,15 @@ def editar_usuario_dialog(usuario_data):
                 label = f":material/check: Usuario '{usuario}'"
                 st.success(f"{label} actualizado exitosamente")
                 time.sleep(1)
-                del st.session_state.usuarios_df
+                try:
+                    load_all_usuarios.clear()
+                except Exception:
+                    pass
+                if 'usuarios_df' in st.session_state:
+                    try:
+                        del st.session_state.usuarios_df
+                    except Exception:
+                        pass
                 st.rerun()
                 
             except Exception as e:
@@ -266,7 +288,15 @@ def eliminar_usuarios_seleccionados(usuarios_seleccionados):
             st.success(msg)
         
         time.sleep(1)
-        del st.session_state.usuarios_df
+        try:
+            load_all_usuarios.clear()
+        except Exception:
+            pass
+        if 'usuarios_df' in st.session_state:
+            try:
+                del st.session_state.usuarios_df
+            except Exception:
+                pass
         st.rerun()
     except Exception as e:
         label = ":material/error: Error"
@@ -299,9 +329,9 @@ def confirmar_eliminacion_dialog(usuarios_seleccionados):
 def usuarios():
     """Renderiza la vista de administración de usuarios"""
         
-    # Cargar datos
+    # Cargar datos (cached)
     if 'usuarios_df' not in st.session_state:
-        st.session_state.usuarios_df = fetch_df(GET_ALL_USUARIOS)
+        st.session_state.usuarios_df = load_all_usuarios()
     
     # Verificar si hay usuarios
     if st.session_state.usuarios_df.empty:

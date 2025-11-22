@@ -13,6 +13,18 @@ import json
 import os
 import mimetypes
 
+
+# Cached loader for indicador names used during export
+@st.cache_data(ttl=3600, max_entries=1)
+def load_indicadores_nombres():
+    df = fetch_df("SELECT nombre FROM dbo.Indicador ORDER BY id_indicador ASC")
+    if df is None or df.empty:
+        return []
+    try:
+        return df['nombre'].tolist()
+    except Exception:
+        return []
+
    
 def render_export_popover(info_evaluado=None, indicadores=None):
     def to_dataframe(obj):
@@ -31,7 +43,7 @@ def render_export_popover(info_evaluado=None, indicadores=None):
 
     df_info = to_dataframe(info_evaluado)
 
-    indicadores_nombres = fetch_df("SELECT nombre FROM dbo.Indicador ORDER BY id_indicador ASC")['nombre'].tolist()
+    indicadores_nombres = load_indicadores_nombres()
 
     indicadores_per_row = []
     if isinstance(indicadores, list):

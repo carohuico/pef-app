@@ -208,9 +208,6 @@ def modal_filtros():
 
 
 def estadisticas():
-    # ---------- CONFIGURACIÓN ----------
-    st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
-    # Mostrar loader antes de cualquier trabajo pesado (si fue activado desde sidebar)
     _loader_handle = start_loader('show_estadisticas_loader')
     
     # ---------- CSS (externo) ----------

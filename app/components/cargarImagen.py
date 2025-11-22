@@ -342,7 +342,7 @@ def cargar_imagen_component():
                         boxes.append(box)
                         
                     preview = imagen_bboxes(original, boxes)
-                    st.image(preview, use_column_width=True)
+                    st.image(preview, use_container_width=True)
 
             with col2:
                 with st.container(): 
@@ -588,10 +588,23 @@ def cargar_imagen_component():
                             nombre = st.session_state["uploaded_file"].name
                             temp_path = Path(TEMP_DIR) / nombre
                             orig_path = Path(ORIGINALS_DIR) / nombre
-                            # Save original image (no forced resize)
-                            estandarizar_imagen(imagen, orig_path)
-                            # keep a temp copy as before
-                            imagen.save(temp_path)
+                            # Ensure parent directories exist before saving
+                            try:
+                                temp_path.parent.mkdir(parents=True, exist_ok=True)
+                            except Exception:
+                                pass
+                            try:
+                                orig_path.parent.mkdir(parents=True, exist_ok=True)
+                            except Exception:
+                                pass
+                            try:
+                                estandarizar_imagen(imagen, orig_path)
+                            except Exception as e:
+                                st.error(f"Error saving original image: {e}")
+                            try:
+                                imagen.save(temp_path)
+                            except Exception as e:
+                                st.warning(f"No se pudo guardar copia temporal de la imagen: {e}")
                             st.session_state["current_step"] = min(3, step + 1)
                             st.rerun()
                     elif step == 3:

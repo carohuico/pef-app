@@ -70,8 +70,36 @@ def _get_storage_client_from_secrets() -> 'storage.Client':
         raise RuntimeError("No GCP service account JSON found in 'GCP_SA_KEY_JSON' (env) or Streamlit secrets")
 
     try:
+        # Normalize private_key newlines if they were escaped (common when storing JSON in env/secrets)
+        try:
+            pk = parsed.get('private_key')
+            if isinstance(pk, str) and "\\n" in pk:
+                parsed = dict(parsed)
+                parsed['private_key'] = pk.replace('\\n', '\n')
+        except Exception:
+            # if normalization fails, continue and let from_service_account_info raise
+            pass
+
         from google.oauth2 import service_account
         creds = service_account.Credentials.from_service_account_info(parsed)
+
+        # Quick proactive refresh test to surface signature/invalid-key errors early.
+        try:
+            from google.auth.transport.requests import Request
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                # Log a safe debug message with key id (do NOT log private_key)
+                logging.exception(
+                    "Service account credential refresh failed for private_key_id=%s: %s",
+                    parsed.get('private_key_id'), str(e)
+                )
+                raise
+        except Exception:
+            # If the transport package isn't available or refresh fails, we still proceed
+            # to create the storage client and let the caller observe runtime errors.
+            pass
+
         client = storage.Client(credentials=creds, project=parsed.get('project_id'))
         return client
     except Exception:

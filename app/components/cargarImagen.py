@@ -302,11 +302,17 @@ def cargar_imagen_component():
                     
         def resultados_component():
             #nombre archivo pero .txt
+            raw_indicadores = []
             if st.session_state.get("uploaded_file") is not None:
                 filename = st.session_state["uploaded_file"].name
-                raw_indicadores = simular_resultado(filename)
-            else:
-                raw_indicadores = []
+                try:
+                    raw_indicadores = simular_resultado(filename)
+                except RuntimeError as e:
+                    st.error(f"Error al consultar el servicio de inferencia: {e}")
+                    raw_indicadores = []
+                except Exception as e:
+                    st.error(f"Error inesperado al procesar la imagen: {e}")
+                    raw_indicadores = []
 
             indicadores = []
             for ind in (raw_indicadores or []):

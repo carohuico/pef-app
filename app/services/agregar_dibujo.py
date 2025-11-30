@@ -133,7 +133,6 @@ def agregar_dibujo(info_obj):
                     st.session_state["agregar_indicadores"] = indicadores
                     try:
                         for ind in (indicadores or []):
-                            # simular_resultado populates 'ruta_imagen' for each indicator
                             ruta = None
                             if isinstance(ind, dict):
                                 ruta = ind.get('ruta_imagen') or ind.get('ruta_gcs')
@@ -387,9 +386,21 @@ def agregar_dibujo(info_obj):
 
                         # Insertar resultados
                         indicadores = st.session_state.get("agregar_indicadores", [])
+                        # Prefer using the locally saved original image to obtain
+                        # width/height for normalization. If not available, fall
+                        # back to ruta_imagen (may be a GCS path and fail).
+                        img_w, img_h = None, None
                         try:
-                            img_for_norm = Image.open(ruta_imagen)
-                            img_w, img_h = img_for_norm.size
+                            orig_path = Path(ORIGINALS_DIR) / nombre_archivo
+                            if orig_path.is_file():
+                                img_for_norm = Image.open(orig_path)
+                                img_w, img_h = img_for_norm.size
+                            else:
+                                try:
+                                    img_for_norm = Image.open(ruta_imagen)
+                                    img_w, img_h = img_for_norm.size
+                                except Exception:
+                                    img_w, img_h = None, None
                         except Exception:
                             img_w, img_h = None, None
 
@@ -425,6 +436,62 @@ def agregar_dibujo(info_obj):
                             params_result = _normalize_params(params_result)
                             # execute insert (no result expected)
                             fetch_df(sql_resultado, params_result)
+
+                        # After inserting individual Resultado rows, also save a
+                        # JSON representation on the Prueba row (`resultados_json`)
+                        # so the individual view can read bounding boxes directly
+                        # from the prueba record. Build a normalized list where
+                        # x_min,y_min are fractions and x_max,y_max are width/height
+                        try:
+                            resultados_to_store = []
+                            for ind in indicadores:
+                                try:
+                                    iid = ind.get("id_indicador") or ind.get("id")
+                                    xi = float(ind.get("x_min", 0))
+                                    yi = float(ind.get("y_min", 0))
+                                    xj = float(ind.get("x_max", 0))
+                                    yj = float(ind.get("y_max", 0))
+
+                                    if img_w and img_h and img_w > 0 and img_h > 0:
+                                        x_min_norm = xi / img_w
+                                        y_min_norm = yi / img_h
+                                        w_norm = (xj - xi) / img_w
+                                        h_norm = (yj - yi) / img_h
+                                    else:
+                                        # If we couldn't determine dimensions, store
+                                        # values as-is (best-effort). Individual view
+                                        # may skip conversion if unable to parse.
+                                        x_min_norm = xi
+                                        y_min_norm = yi
+                                        w_norm = (xj - xi)
+                                        h_norm = (yj - yi)
+
+                                    resultado_record = {
+                                        "id_indicador": int(iid) if iid is not None else None,
+                                        "nombre_indicador": ind.get('nombre', None) or ind.get('nombre_indicador', None),
+                                        "confianza": float(ind.get('confianza', 0.0)) if ind.get('confianza') is not None else None,
+                                        "x_min": x_min_norm,
+                                        "y_min": y_min_norm,
+                                        "x_max": w_norm,
+                                        "y_max": h_norm,
+                                        "ruta_imagen": ind.get('ruta_imagen') or ind.get('ruta_gcs') or ruta_imagen
+                                    }
+                                    resultados_to_store.append(resultado_record)
+                                except Exception:
+                                    continue
+
+                            try:
+                                import json as _json
+                                sql_update = "UPDATE dbo.Prueba SET resultados_json = @resultados_json WHERE id_prueba = @id_prueba"
+                                params_upd = {
+                                    "resultados_json": _json.dumps(resultados_to_store, ensure_ascii=False),
+                                    "id_prueba": id_prueba
+                                }
+                                fetch_df(sql_update, params_upd)
+                            except Exception:
+                                pass
+                        except Exception:
+                            pass
 
                         # Invalidate Individual caches so the individual view reloads with the new prueba.
                         # Try several import paths to reach the same module object that Streamlit uses

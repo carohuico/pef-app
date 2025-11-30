@@ -713,8 +713,9 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                                     const catId = (ind && ind.id_categoria !== undefined && ind.id_categoria !== null) ? String(ind.id_categoria) : '0';
                                     const catName = (ind && (ind.categoria_nombre || ind.categoria)) ? (ind.categoria_nombre || ind.categoria) : ('Categoría ' + catId);
                                     if (!catMap[catId]) catMap[catId] = {{ name: catName, indicadores: [] }};
-                                    const nombre = ind && (ind.nombre || ind.Indicador || ind.indicador);
-                                    if (nombre) catMap[catId].indicadores.push(String(nombre));
+                                    // Mostrar el 'significado' (oración) del indicador en lugar del nombre
+                                    const significado = ind && (ind.significado || ind.descripcion || ind.descripcion_corta || ind.meaning || ind.nombre || ind.Indicador || ind.indicador);
+                                    if (significado) catMap[catId].indicadores.push(String(significado));
                                 }});
 
                                 // Preparar dos sub-columnas dentro de la columna de resultados

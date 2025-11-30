@@ -1,3 +1,4 @@
+import re
 import streamlit as st
 import pandas as pd
 from pathlib import Path
@@ -100,19 +101,36 @@ def agregar_usuario_dialog():
                 campos_vacios.append("Contraseña")
             
             if campos_vacios:
-                st.error(f"⚠️ Los siguientes campos son obligatorios: {', '.join(campos_vacios)}")
+                st.error(f"Los siguientes campos son obligatorios: {', '.join(campos_vacios)}")
                 st.stop()
             
+            #!validaciones de contraseña
             if len(password) < 12:
-                st.error("⚠️ La contraseña debe tener al menos 12 caracteres")
+                st.error("La contraseña debe tener al menos 12 caracteres")
                 st.stop()
-            #! aqui irían otras validaciones de contraseña si se requieren
+            #si la contraseña no tiene al menos una mayuscula, una minuscula, un numero y un caracter especial
+            elif re.search(r'[A-Z]', password):
+                st.error("La contraseña debe contener al menos una letra mayúscula")
+                st.stop()
+
+            elif not re.search(r'[0-9]', password):
+                st.error("La contraseña debe contener al menos un número")
+                st.stop()
+            elif re.search(r'[\W_]', password):
+                st.error("La contraseña debe contener al menos un carácter especial")
+                st.stop()
+            
             
             if telefono and len(telefono) != 10:
-                st.error("⚠️ El teléfono debe tener exactamente 10 dígitos")
+                st.error("El teléfono debe tener exactamente 10 dígitos")
                 st.stop()
-            
-            # Verificar unicidad
+
+            # Validar formato de correo (ej: nombre@dominio.com)
+            email_pattern = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+            if not re.match(email_pattern, email.strip()):
+                st.error("El correo debe tener el formato nombre@dominio.com")
+                st.stop()
+
             es_unico, mensaje = verificar_usuario_unico(usuario, email)
             if not es_unico:
                 label = ":material/warning:"
@@ -120,10 +138,8 @@ def agregar_usuario_dialog():
                 st.stop()
             
             try:
-                # Hash de la contraseña
                 password_hash = hash_password(password)
                 
-                # Insertar usuario
                 fetch_df(INSERT_USUARIO, {
                     "usuario": usuario.strip(),
                     "nombre_completo": nombre_completo.strip(),
@@ -229,7 +245,14 @@ def editar_usuario_dialog(usuario_data):
                 label = ":material/warning:"
                 st.error(f"{label} El teléfono debe tener exactamente 10 dígitos")
                 st.stop()
-            
+
+            # Validar formato de correo (ej: nombre@dominio.com)
+            email_pattern = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+            if not re.match(email_pattern, email.strip()):
+                label = ":material/warning:"
+                st.error(f"{label} El correo debe tener el formato nombre@dominio.com")
+                st.stop()
+
             # Verificar unicidad (excluyendo el usuario actual)
             es_unico, mensaje = verificar_usuario_unico(
                 usuario, email, usuario_data["id_usuario"]

@@ -51,26 +51,37 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
             try:
                 ids = []
                 orig_df = st.session_state.get('historial_df', pd.DataFrame())
-                for idx in selected_rows_df.index.tolist():
-                    id_val = None
-                    if 'id_prueba' in selected_rows_df.columns:
+                try:
+                    for _, row in selected_rows_df.iterrows():
+                        id_val = row.get('id_prueba', None) if 'id_prueba' in selected_rows_df.columns else None
+                        if id_val is None or (isinstance(id_val, float) and pd.isna(id_val)):
+                            continue
                         try:
-                            id_val = selected_rows_df.loc[idx].get('id_prueba', None)
-                        except Exception:
-                            id_val = None
-
-                    if (id_val is None or (isinstance(id_val, float) and pd.isna(id_val))) and not orig_df.empty:
-                        try:
-                            row = orig_df.loc[idx]
-                            id_val = row.get('id_prueba', None)
-                        except Exception:
-                            id_val = None
-
-                    try:
-                        if id_val is not None and not (isinstance(id_val, float) and pd.isna(id_val)):
                             ids.append(int(id_val))
-                    except Exception:
-                        continue
+                        except Exception:
+                            continue
+                except Exception:
+                    # Fallback: original logic (index-based) if iteration fails for some reason
+                    for idx in selected_rows_df.index.tolist():
+                        id_val = None
+                        if 'id_prueba' in selected_rows_df.columns:
+                            try:
+                                id_val = selected_rows_df.loc[idx].get('id_prueba', None)
+                            except Exception:
+                                id_val = None
+
+                        if (id_val is None or (isinstance(id_val, float) and pd.isna(id_val))) and not orig_df.empty:
+                            try:
+                                row = orig_df.loc[idx]
+                                id_val = row.get('id_prueba', None)
+                            except Exception:
+                                id_val = None
+
+                        try:
+                            if id_val is not None and not (isinstance(id_val, float) and pd.isna(id_val)):
+                                ids.append(int(id_val))
+                        except Exception:
+                            continue
 
                 if not ids:
                     st.warning('No se pudieron resolver los ids seleccionados.')
@@ -89,6 +100,20 @@ def confirmar_eliminacion_pruebas(selected_rows_df):
                             load_historial_base.clear()
                             load_historial_por_especialista.clear()
                             load_resultados_por_prueba.clear()
+                        except Exception:
+                            pass
+
+                        # Also clear cached data used by the individual view so it refreshes
+                        try:
+                            from components import individual as _individual
+                            try:
+                                _individual.get_pruebas_data.clear()
+                            except Exception:
+                                pass
+                            try:
+                                _individual.get_info.clear()
+                            except Exception:
+                                pass
                         except Exception:
                             pass
 

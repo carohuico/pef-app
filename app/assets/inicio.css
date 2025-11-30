@@ -94,3 +94,31 @@ h5 {
         opacity: 0;
     }
 }
+
+/* Steps grid: desktop 2 columns, mobile single column keeping order 1..4 */
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    align-items: start;
+}
+
+.step-card {
+    background: transparent;
+}
+
+.step-card h4 {
+    margin: 0 0 8px 0;
+}
+
+.step-desc {
+    color: #6c6c6c;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .steps-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}

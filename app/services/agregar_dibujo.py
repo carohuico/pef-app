@@ -12,7 +12,6 @@ from services.db import fetch_df
 from services.queries.q_registro import POST_PRUEBA, POST_RESULTADO
 from components.bounding_boxes import imagen_bboxes
 from services.exportar import render_export_popover
-# specialist list not needed here; avoid changing assigned user during adding a drawing
 try:
     import numpy as _np
 except Exception:
@@ -93,10 +92,6 @@ def agregar_dibujo(info_obj):
         is_admin = False
         is_esp = False
 
-    # No mostrar selección de especialista en este modal.
-    # Mantener la asignación existente si la hay; si el que abre es especialista,
-    # asignamos automáticamente la prueba al especialista actual (comportamiento previo).
-    current_assigned = st.session_state.get('assigned_id_usuario', None)
     if is_esp:
         user = st.session_state.get('user', {})
         uid = user.get('id_usuario')
@@ -125,10 +120,48 @@ def agregar_dibujo(info_obj):
         if st.session_state.get("agregar_uploaded_file") is not None:
             filename = st.session_state["agregar_uploaded_file"].name
             
-            # Obtener indicadores
-            with st.spinner("Analizando imagen..."):
-                indicadores = simular_resultado(filename)
-                st.session_state["agregar_indicadores"] = indicadores
+            prev_uploaded = st.session_state.get('uploaded_file', None)
+            try:
+                st.session_state['uploaded_file'] = st.session_state.get('agregar_uploaded_file')
+            except Exception:
+                pass
+
+            id_evaluado = info_obj.get('id_evaluado')
+            if st.session_state.get("agregar_indicadores") is None:
+                try:
+                    indicadores = simular_resultado(id_evaluado, show_overlay=True)
+                    st.session_state["agregar_indicadores"] = indicadores
+                    try:
+                        for ind in (indicadores or []):
+                            # simular_resultado populates 'ruta_imagen' for each indicator
+                            ruta = None
+                            if isinstance(ind, dict):
+                                ruta = ind.get('ruta_imagen') or ind.get('ruta_gcs')
+                            if ruta:
+                                st.session_state['last_ruta_gcs'] = ruta
+                                break
+                    except Exception:
+                        pass
+                except RuntimeError as e:
+                    st.error(f"Error al consultar el servicio de inferencia: {e}")
+                    st.session_state["agregar_indicadores"] = []
+                except Exception as e:
+                    st.error(f"Error inesperado al procesar la imagen: {e}")
+                    st.session_state["agregar_indicadores"] = []
+            else:
+                indicadores = st.session_state.get("agregar_indicadores", [])
+
+            # restore previous uploaded_file (if any)
+            try:
+                if prev_uploaded is not None:
+                    st.session_state['uploaded_file'] = prev_uploaded
+                else:
+                    try:
+                        del st.session_state['uploaded_file']
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
             col1, col2 = st.columns([1, 2])
 
@@ -148,51 +181,92 @@ def agregar_dibujo(info_obj):
                     boxes.append(box)
                 
                 preview = imagen_bboxes(original, boxes)
-                st.image(preview, use_column_width=True)
+                st.image(preview, use_container_width=True)
 
             with col2:
                 st.markdown("### Indicadores detectados")
                 if not indicadores:
-                    st.info("No se encontraron indicadores en la imagen.")
+                    # Custom inline message with pulsing dots (avoid st.info/st.alert)
+                    st.markdown(
+                        """
+                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;background:transparent;">
+                            <div style="font-family: Poppins, sans-serif; font-weight:600; font-size:1rem; color:#333;margin-bottom:8px;">No se encontraron indicadores en la imagen.</div>
+                            <style>
+                                @keyframes smallLoaderJump { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+                                .small-loader-dots { display:flex; gap:8px; justify-content:center; align-items:center; }
+                                .small-loader-dots span { width:10px; height:10px; background:#CCCCCC; border-radius:50%; display:inline-block; animation:smallLoaderJump 0.8s infinite ease-in-out; }
+                                .small-loader-dots span:nth-child(2) { animation-delay: 0.12s; }
+                                .small-loader-dots span:nth-child(3) { animation-delay: 0.24s; }
+                            </style>
+                            <div class="small-loader-dots"><span></span><span></span><span></span></div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
                 else:
                     rows = []
                     for ind in indicadores:
                         nombre = ind.get('nombre', '')
-                        significado = ind.get('significado', '')
+                        significado = ind.get('significado', '') or ''
+                        try:
+                            sig_str = significado.strip() if isinstance(significado, str) else str(significado).strip()
+                        except Exception:
+                            sig_str = ''
+                        if sig_str == '' or sig_str == '-':
+                            continue
                         confianza = ind.get('confianza', None)
                         try:
                             conf_val = float(confianza)
                         except Exception:
                             conf_val = None
                         rows.append({
-                            "Indicador": nombre, 
-                            "Descripción": significado, 
+                            "Indicador": nombre,
+                            "Descripción": significado,
                             "Confianza": conf_val
                         })
                     
-                    df = pd.DataFrame(rows)
-                    if 'Confianza' in df.columns:
-                        df['Confianza'] = df['Confianza'].round(2)
-
-                    # Mostrar DataFrame en modo sólo lectura usando data_editor
-                    # y configurar el ancho de columnas solicitadas a "small".
-                    try:
-                        st.data_editor(
-                            df,
-                            use_container_width=True,
-                            hide_index=True,
-                            key="agregar_indicadores_table",
-                            height=200,
-                            column_config={
-                                "Indicador": st.column_config.TextColumn("Indicador", width="small"),
-                                "Descripción": st.column_config.TextColumn("Descripción", width="small"),
-                                "Confianza": st.column_config.NumberColumn("Confianza", width="small"),
-                            },
-                            disabled=["Indicador", "Descripción", "Confianza"],
+                    # If filtering removed all rows, show informational message (custom markup)
+                    if not rows:
+                        st.markdown(
+                            """
+                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;background:transparent;">
+                                <div style="font-family: Poppins, sans-serif; font-weight:600; font-size:1rem; color:#333;margin-bottom:8px;">No se encontraron indicadores con descripción disponible.</div>
+                                <style>
+                                    @keyframes smallLoaderJump { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+                                    .small-loader-dots { display:flex; gap:8px; justify-content:center; align-items:center; }
+                                    .small-loader-dots span { width:10px; height:10px; background:#CCCCCC; border-radius:50%; display:inline-block; animation:smallLoaderJump 0.8s infinite ease-in-out; }
+                                    .small-loader-dots span:nth-child(2) { animation-delay: 0.12s; }
+                                    .small-loader-dots span:nth-child(3) { animation-delay: 0.24s; }
+                                </style>
+                                <div class="small-loader-dots"><span></span><span></span><span></span></div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
                         )
-                    except Exception:
-                        # Fallback: si data_editor no está disponible, usar st.dataframe simple
-                        st.dataframe(df, use_container_width=True, hide_index=True)
+                    else:
+                        df = pd.DataFrame(rows)
+                        if 'Confianza' in df.columns:
+                            df['Confianza'] = df['Confianza'].round(2)
+
+                        # Mostrar DataFrame en modo sólo lectura usando data_editor
+                        # y configurar el ancho de columnas solicitadas a "small".
+                        try:
+                            st.data_editor(
+                                df,
+                                use_container_width=True,
+                                hide_index=True,
+                                key="agregar_indicadores_table",
+                                height=200,
+                                column_config={
+                                    "Indicador": st.column_config.TextColumn("Indicador", width="small"),
+                                    "Descripción": st.column_config.TextColumn("Descripción", width="small"),
+                                    "Confianza": st.column_config.NumberColumn("Confianza", width="small"),
+                                },
+                                disabled=["Indicador", "Descripción", "Confianza"],
+                            )
+                        except Exception:
+                            # Fallback: si data_editor no está disponible, usar st.dataframe simple
+                            st.dataframe(df, use_container_width=True, hide_index=True)
 
     elif step == 3:
         df = pd.DataFrame([{
@@ -207,6 +281,12 @@ def agregar_dibujo(info_obj):
         }])
         col1 = st.columns(1)[0]
         with col1:
+            ruta_imagen = None
+            indicadores = st.session_state.get("agregar_indicadores", [])
+            for ind in indicadores:
+                if 'ruta_imagen' in ind and ind.get('ruta_imagen'):
+                    ruta_imagen = ind.get('ruta_imagen')
+                    break
             # Preparar info del evaluado para el exportador (puede aceptar dict o lista de dicts)
             info_evaluado = {
                 "Fecha de evaluación": info_obj.get("Fecha de evaluación", ""),
@@ -219,7 +299,7 @@ def agregar_dibujo(info_obj):
                 "Escolaridad": info_obj.get("Escolaridad", "N/A"),
                 "Ocupación": info_obj.get("Ocupación", "N/A"),
                 "Grupo": info_obj.get("Grupo", "N/A"),
-                "ruta_imagen": str(Path(ORIGINALS_DIR) / st.session_state.get("agregar_uploaded_file").name) if st.session_state.get("agregar_uploaded_file") is not None else ""
+                "ruta_imagen": ruta_imagen
             }
             st.markdown("<style>[data-testid=\"stBaseButton-tertiary\"]:not([data-testid=\"stSidebar\"] *) { background: #FFFFFF; border:none; color: #000000; margin-top: 1rem; padding: 16px 24px; display: inline-block; text-decoration: underline;  cursor: pointer; }</style>", unsafe_allow_html=True)
             if st.button("Exportar prueba", use_container_width=True, key="agregar_export", type="tertiary"):
@@ -278,11 +358,12 @@ def agregar_dibujo(info_obj):
         # PASO 3: GUARDAR
         elif step == 3:
             if st.button("Guardar prueba", type="primary", use_container_width=True, key="agregar_save"):
-                with st.spinner("Guardando..."):
                     try:
                         # Insertar prueba usando fetch_df (pymssql)
                         nombre_archivo = st.session_state["agregar_uploaded_file"].name
-                        ruta_imagen = str(Path(ORIGINALS_DIR) / nombre_archivo)
+                        # Prefer storing the GCS path returned by the inference service when available
+                        last_gcs = st.session_state.get('last_ruta_gcs', None)
+                        ruta_imagen = last_gcs if last_gcs else str(Path(ORIGINALS_DIR) / nombre_archivo)
                         formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
                         fecha_actual = datetime.datetime.now()
 
@@ -345,6 +426,31 @@ def agregar_dibujo(info_obj):
                             # execute insert (no result expected)
                             fetch_df(sql_resultado, params_result)
 
+                        # Invalidate Individual caches so the individual view reloads with the new prueba.
+                        # Try several import paths to reach the same module object that Streamlit uses
+                        try:
+                            import importlib
+                            module_names = [
+                                'app.components.individual',
+                                'components.individual',
+                            ]
+                            for mod_name in module_names:
+                                try:
+                                    mod = importlib.import_module(mod_name)
+                                except Exception:
+                                    mod = None
+                                if mod is not None:
+                                    try:
+                                        mod.get_pruebas_data.clear()
+                                    except Exception:
+                                        pass
+                                    try:
+                                        mod.get_info.clear()
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+
                         # Store the newly created prueba id so the individual view can open it
                         try:
                             st.session_state['open_prueba_id'] = id_prueba
@@ -359,7 +465,6 @@ def agregar_dibujo(info_obj):
                         # Limpiar la solicitud de apertura del diálogo
                         st.session_state['_agregar_dialog_open_requested'] = False
 
-                        st.balloons()
                         st.rerun()
                     except Exception as e:
                         st.error(f"❌ Error: {e}")

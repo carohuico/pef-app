@@ -7,12 +7,7 @@
   --color-gray: #C0C0C0;
 }
 
-/* ======= TIPOGRAFÍA ======= */
-html, body, [class*="st-"] {
-  font-family: 'Poppins', sans-serif;
-  color: var(--color-dark);
-  background-color: var(--color-bg);
-}
+
 
 /* ======= TITULOS ======= */
 h1 { font-size: 36px; font-weight: 700; }

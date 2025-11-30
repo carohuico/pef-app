@@ -64,6 +64,9 @@ def cargar_imagen_component():
     if "form_grupo" not in st.session_state:
         st.session_state["form_grupo"] = ""
 
+    if "_saving_in_progress" not in st.session_state:
+        st.session_state["_saving_in_progress"] = False
+
 
 
     with st.container():
@@ -302,17 +305,82 @@ def cargar_imagen_component():
                     
         def resultados_component():
             #nombre archivo pero .txt
-            raw_indicadores = []
             if st.session_state.get("uploaded_file") is not None:
-                filename = st.session_state["uploaded_file"].name
-                try:
-                    raw_indicadores = simular_resultado(filename)
-                except RuntimeError as e:
-                    st.error(f"Error al consultar el servicio de inferencia: {e}")
+                # Ensure evaluado exists: if not, try to create from form data
+                id_evaluado = st.session_state.get('id_evaluado')
+                if id_evaluado is None:
+                    # Attempt to create evaluado automatically using form fields (if present)
+                    nombre_value = st.session_state.get("nombre", "").strip()
+                    apellido_value = st.session_state.get("apellido", "").strip()
+                    fecha_nacimiento = st.session_state.get("fecha_nacimiento_widget", st.session_state.get("form_fecha_nacimiento", ""))
+                    sexo_value = st.session_state.get("sexo", "")
+
+                    if nombre_value and fecha_nacimiento and sexo_value and sexo_value != "Selecciona una opción":
+                        try:
+                            grupo = st.session_state.get("form_grupo", "")
+                            params = {
+                                "nombre": nombre_value,
+                                "apellido": apellido_value,
+                                "fecha_nacimiento": fecha_nacimiento,
+                                "sexo": sexo_value,
+                                "estado_civil": st.session_state.get("form_estado_civil", None) if st.session_state.get("form_estado_civil", "") not in ("", "Selecciona una opción") else None,
+                                "escolaridad": st.session_state.get("form_escolaridad", None) if st.session_state.get("form_escolaridad", "") not in ("", "Selecciona una opción") else None,
+                                "ocupacion": st.session_state.get("form_ocupacion", None) if st.session_state.get("form_ocupacion", "") not in ("", "Selecciona una opción") else None,
+                                "id_usuario": st.session_state.get('assigned_id_usuario', None),
+                            }
+                            id_grupo = None
+                            if grupo:
+                                try:
+                                    df_g = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = @grupo", {"grupo": grupo})
+                                    if not df_g.empty:
+                                        id_grupo = int(df_g.at[0, 'id_grupo'])
+                                except Exception:
+                                    id_grupo = None
+                            params["id_grupo"] = id_grupo
+                            try:
+                                if params.get("id_usuario") is not None:
+                                    params["id_usuario"] = int(params["id_usuario"])
+                            except Exception:
+                                params["id_usuario"] = None
+
+                            sql_crear = CREAR_EVALUADO
+                            df_row = fetch_df(sql_crear, params)
+                            if not df_row.empty:
+                                try:
+                                    st.session_state['id_evaluado'] = int(df_row.at[0, 'id_evaluado'])
+                                except Exception:
+                                    st.session_state['id_evaluado'] = int(df_row.iloc[0, 0])
+                                st.session_state['already_registered'] = True
+                                id_evaluado = st.session_state.get('id_evaluado')
+                        except Exception as e:
+                            st.error(f"No se pudo crear el evaluado automáticamente: {e}")
+
+                raw_indicadores = []
+                if id_evaluado is None:
+                    st.error("No se encontró el ID del evaluado. Completa el registro antes de obtener resultados.")
                     raw_indicadores = []
-                except Exception as e:
-                    st.error(f"Error inesperado al procesar la imagen: {e}")
-                    raw_indicadores = []
+                else:
+                    # Only run inference when we purposely advanced to the results step
+                    # or when there's no cached raw result in session state.
+                    if not st.session_state.get('_saving_in_progress', False):
+                        should_run = st.session_state.get('_run_inference_on_results', False)
+                        cached = st.session_state.get('raw_indicadores', None)
+                        if should_run or cached is None:
+                            raw_indicadores = simular_resultado(id_evaluado, show_overlay=True)
+                            try:
+                                st.session_state['_run_inference_on_results'] = False
+                            except Exception:
+                                pass
+                            try:
+                                st.session_state['raw_indicadores'] = raw_indicadores
+                            except Exception:
+                                pass
+                        else:
+                            raw_indicadores = cached or []
+                    else:
+                        raw_indicadores = st.session_state.get('raw_indicadores', []) or []
+            else:
+                raw_indicadores = []
 
             indicadores = []
             for ind in (raw_indicadores or []):
@@ -460,7 +528,6 @@ def cargar_imagen_component():
                             "escolaridad": st.session_state.get("escolaridad", ""),
                             "ocupacion": st.session_state.get("ocupacion", ""),
                             "grupo": st.session_state.get("form_grupo", ""),
-                            "ruta_imagen": str(Path(ORIGINALS_DIR) / st.session_state.get("uploaded_file").name) if st.session_state.get("uploaded_file") is not None else ""
                         }
                         render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
                     else:
@@ -489,7 +556,6 @@ def cargar_imagen_component():
                                     if not pd.isna(df_evaluado.at[0, "id_grupo"]) else ""
                                 ) if not df_evaluado.empty else ""
                             ),
-                            "ruta_imagen": str(Path(ORIGINALS_DIR) / st.session_state.get("uploaded_file").name) if st.session_state.get("uploaded_file") is not None else ""
                         }
                         render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
                         
@@ -577,6 +643,50 @@ def cargar_imagen_component():
                             st.session_state["form_ocupacion"] = "" if ocupacion_value == "Selecciona una opción" else ocupacion_value
                             st.session_state["form_grupo"] = grupo_value
 
+                            # Si el evaluado aún no está registrado, crear ahora para que al llegar al paso 2
+                            # el registro exista y se pueda enviar id_evaluado al endpoint.
+                            if not st.session_state.get('already_registered', False):
+                                try:
+                                    grupo = st.session_state.get("form_grupo", "")
+                                    params = {
+                                        "nombre": nombre_value,
+                                        "apellido": apellido_value,
+                                        "fecha_nacimiento": fecha_nacimiento,
+                                        "sexo": sexo_value,
+                                        "estado_civil": st.session_state.get("form_estado_civil", None) if st.session_state.get("form_estado_civil", "") not in ("", "Selecciona una opción") else None,
+                                        "escolaridad": st.session_state.get("form_escolaridad", None) if st.session_state.get("form_escolaridad", "") not in ("", "Selecciona una opción") else None,
+                                        "ocupacion": st.session_state.get("form_ocupacion", None) if st.session_state.get("form_ocupacion", "") not in ("", "Selecciona una opción") else None,
+                                        "id_usuario": st.session_state.get('assigned_id_usuario', None),
+                                    }
+                                    id_grupo = None
+                                    if grupo:
+                                        try:
+                                            df_g = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = @grupo", {"grupo": grupo})
+                                            if not df_g.empty:
+                                                id_grupo = int(df_g.at[0, 'id_grupo'])
+                                        except Exception:
+                                            id_grupo = None
+                                    params["id_grupo"] = id_grupo
+                                    try:
+                                        if params.get("id_usuario") is not None:
+                                            params["id_usuario"] = int(params["id_usuario"])
+                                    except Exception:
+                                        params["id_usuario"] = None
+
+                                    sql_crear = CREAR_EVALUADO
+                                    df_row = fetch_df(sql_crear, params)
+                                    if not df_row.empty:
+                                        try:
+                                            st.session_state['id_evaluado'] = int(df_row.at[0, 'id_evaluado'])
+                                        except Exception:
+                                            st.session_state['id_evaluado'] = int(df_row.iloc[0, 0])
+                                    st.session_state['already_registered'] = True
+                                except Exception as e:
+                                    st.error(f"Error al crear evaluado al avanzar al paso 2: {e}")
+                                    return
+
+                            # mark that we should run inference when showing results
+                            st.session_state['_run_inference_on_results'] = True
                             st.session_state["current_step"] = min(3, step + 1)
                             st.rerun()
                     elif step == 2:
@@ -590,6 +700,25 @@ def cargar_imagen_component():
                                 </div>
                             """, unsafe_allow_html=True)
                         else:
+                            # Validate extension before any processing
+                            try:
+                                allowed_exts = {"png", "jpg", "jpeg", "heic"}
+                                uploaded_name = getattr(st.session_state.get("uploaded_file"), "name", "") or ""
+                                uploaded_ext = os.path.splitext(uploaded_name)[1].lstrip('.').lower()
+                            except Exception:
+                                uploaded_ext = ""
+
+                            if uploaded_ext not in allowed_exts:
+                                st.markdown(f"""
+                                    <div class="warning">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                    </svg>
+                                    <span>Extensión no permitida: {uploaded_ext}. Extensiones válidas: {', '.join(sorted(allowed_exts))}.</span>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                return
+
                             imagen = Image.open(st.session_state["uploaded_file"])
                             nombre = st.session_state["uploaded_file"].name
                             temp_path = Path(TEMP_DIR) / nombre
@@ -611,6 +740,66 @@ def cargar_imagen_component():
                                 imagen.save(temp_path)
                             except Exception as e:
                                 st.warning(f"No se pudo guardar copia temporal de la imagen: {e}")
+
+                            # Si el evaluado NO está registrado aún, intentar crear uno ahora
+                            if not st.session_state.get("already_registered", False):
+                                nombre_value = st.session_state.get("nombre", "").strip()
+                                apellido_value = st.session_state.get("apellido", "").strip()
+                                fecha_nacimiento = st.session_state.get("fecha_nacimiento_widget", st.session_state.get("form_fecha_nacimiento", ""))
+                                sexo_value = st.session_state.get("sexo", "")
+
+                                # Validaciones mínimas requeridas para crear evaluado
+                                if not nombre_value or not fecha_nacimiento or not sexo_value or sexo_value == "Selecciona una opción":
+                                    st.markdown("""
+                                        <div class="warning">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                        </svg>
+                                        <span>Completa los datos obligatorios del evaluado (nombre, fecha de nacimiento y sexo) antes de continuar.</span>
+                                        </div>
+                                    """, unsafe_allow_html=True)
+                                    return
+
+                                # Preparar parámetros y crear evaluado en BD
+                                try:
+                                    grupo = st.session_state.get("form_grupo", "")
+                                    params = {
+                                        "nombre": nombre_value,
+                                        "apellido": apellido_value,
+                                        "fecha_nacimiento": fecha_nacimiento,
+                                        "sexo": sexo_value,
+                                        "estado_civil": st.session_state.get("form_estado_civil", None) if st.session_state.get("form_estado_civil", "") not in ("", "Selecciona una opción") else None,
+                                        "escolaridad": st.session_state.get("form_escolaridad", None) if st.session_state.get("form_escolaridad", "") not in ("", "Selecciona una opción") else None,
+                                        "ocupacion": st.session_state.get("form_ocupacion", None) if st.session_state.get("form_ocupacion", "") not in ("", "Selecciona una opción") else None,
+                                        "id_usuario": st.session_state.get('assigned_id_usuario', None),
+                                    }
+                                    id_grupo = None
+                                    if grupo:
+                                        try:
+                                            df_g = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE nombre = @grupo", {"grupo": grupo})
+                                            if not df_g.empty:
+                                                id_grupo = int(df_g.at[0, 'id_grupo'])
+                                        except Exception:
+                                            id_grupo = None
+                                    params["id_grupo"] = id_grupo
+                                    try:
+                                        if params.get("id_usuario") is not None:
+                                            params["id_usuario"] = int(params["id_usuario"])
+                                    except Exception:
+                                        params["id_usuario"] = None
+
+                                    sql_crear = CREAR_EVALUADO
+                                    df_row = fetch_df(sql_crear, params)
+                                    if not df_row.empty:
+                                        try:
+                                            st.session_state['id_evaluado'] = int(df_row.at[0, 'id_evaluado'])
+                                        except Exception:
+                                            st.session_state['id_evaluado'] = int(df_row.iloc[0, 0])
+                                    st.session_state['already_registered'] = True
+                                except Exception as e:
+                                    st.error(f"No se pudo crear el evaluado antes de avanzar: {e}")
+                                    return
+
                             st.session_state["current_step"] = min(3, step + 1)
                             st.rerun()
                     elif step == 3:
@@ -656,7 +845,6 @@ def cargar_imagen_component():
                                 except Exception:
                                     params["id_usuario"] = None
 
-                                # Ejecutar CREAR_EVALUADO (query already uses @ placeholders)
                                 sql_crear = CREAR_EVALUADO
                                 df_row = fetch_df(sql_crear, params)
                                 if not df_row.empty:
@@ -678,7 +866,16 @@ def cargar_imagen_component():
                             id_evaluado = st.session_state.get('id_evaluado')
                             if id_evaluado is not None:
                                 nombre_archivo = st.session_state["uploaded_file"].name
-                                ruta_imagen = str(Path(ORIGINALS_DIR) / nombre_archivo)
+                                raw_ind = st.session_state.get('raw_indicadores', None)
+                                ruta_imagen = None
+                                if isinstance(raw_ind, dict):
+                                    ruta_imagen = raw_ind.get('ruta_imagen', None)
+                                elif isinstance(raw_ind, list):
+                                    for item in raw_ind:
+                                        if isinstance(item, dict) and 'ruta_imagen' in item and item.get('ruta_imagen'):
+                                            ruta_imagen = item.get('ruta_imagen')
+                                            break
+                                    
                                 formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
                                 fecha_actual = datetime.datetime.now()
 
@@ -707,7 +904,7 @@ def cargar_imagen_component():
                         try:
                             indicadores = st.session_state.get("indicadores", [])
                             try:
-                                img_for_norm = Image.open(ruta_imagen)
+                                img_for_norm = Image.open(st.session_state["uploaded_file"])
                                 img_w, img_h = img_for_norm.size
                             except Exception:
                                 img_w, img_h = None, None
@@ -765,6 +962,12 @@ def cargar_imagen_component():
                         st.session_state["form_grupo"] = ""
                         st.session_state["uploaded_file"] = None
                         st.session_state["indicadores"] = None
+                        # Clear cached raw indicators used to avoid re-running inference
+                        if 'raw_indicadores' in st.session_state:
+                            try:
+                                del st.session_state['raw_indicadores']
+                            except Exception:
+                                st.session_state['raw_indicadores'] = None
                         # Limpiar asignación temporal de especialista si existe
                         if 'assigned_id_usuario' in st.session_state:
                             try:

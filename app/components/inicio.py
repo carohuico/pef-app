@@ -57,9 +57,9 @@ def inicio():
                     # Insertar filtro WHERE antes de ORDER BY si existe
                     if "ORDER BY" in base_stripped.upper():
                         idx = base_stripped.upper().rfind("ORDER BY")
-                        filtered_sql = base_stripped[:idx] + "\nWHERE id_usuario = :id_usuario\n" + base_stripped[idx:]
+                        filtered_sql = base_stripped[:idx] + "\nWHERE id_usuario = @id_usuario\n" + base_stripped[idx:]
                     else:
-                        filtered_sql = base_stripped + "\nWHERE id_usuario = :id_usuario"
+                        filtered_sql = base_stripped + "\nWHERE id_usuario = @id_usuario"
                     df_evaluados = fetch_df(filtered_sql, {"id_usuario": id_usuario})
             else:
                 df_evaluados = fetch_df(GET_EVALUADOS_EXISTENTES)
@@ -168,39 +168,29 @@ def inicio():
     with col1:
         st.markdown('<div class="page-header">Evaluaciones</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns([2, 1])
-
     with col1:
-        c1, c2 = st.columns(2)
-        with c1:
-                st.markdown("""
-                <div style="margin-bottom: 20px;">
-                    <h4>01<br>Registrar</h4>
-                    <p style="color:  #6c6c6c">Registra los datos de la persona a evaluar.</p><br>
-                </div>
-                """, unsafe_allow_html=True)
-
-                st.markdown("""
-                <div style="margin-bottom: 20px;">
-                    <br>
-                    <h4>03<br>Resultados</h4>
-                    <p style="color:  #6c6c6c">Descubre los resultados del dibujo que subiste.</p>
-                </div>
-                """, unsafe_allow_html=True)
-        with c2:
-                st.markdown("""
-                <div style="margin-bottom: 20px; margin-right: 20px;">
-                    <h4>02<br>Subir dibujo</h4>
-                    <p style="color:  #6c6c6c">Sube tu dibujo como archivo de imagen o desde una cámara.</p><br>
-                </div>
-                """, unsafe_allow_html=True)
-
-                st.markdown("""
-                <div style="margin-bottom: 20px;">
-                    <h4>04<br>Exportar</h4>
-                    <p style="color:  #6c6c6c">Descarga tus resultados en un documento CSV o PDF.</p>
-                </div>
-                """, unsafe_allow_html=True)
+        # Render steps using a responsive grid: 2 columns on desktop, 1 column on mobile
+        steps_html = """
+        <div class="steps-grid">
+            <div class="step-card">
+                <h4>01<br>Registrar</h4>
+                <p class="step-desc">Registra los datos de la persona a evaluar.</p>
+            </div>
+            <div class="step-card">
+                <h4>02<br>Subir dibujo</h4>
+                <p class="step-desc">Sube tu dibujo como archivo de imagen o desde una cámara.</p>
+            </div>
+            <div class="step-card">
+                <h4>03<br>Resultados</h4>
+                <p class="step-desc">Descubre los resultados del dibujo que subiste.</p>
+            </div>
+            <div class="step-card">
+                <h4>04<br>Exportar</h4>
+                <p class="step-desc">Descarga tus resultados en un documento CSV o PDF.</p>
+            </div>
+        </div>
+        """
+        st.markdown(steps_html, unsafe_allow_html=True)
 
     with col2:
 
@@ -237,9 +227,9 @@ def inicio():
                         base_sql = GET_RECIENTES
                         if "ORDER BY" in base_sql.upper():
                             idx = base_sql.upper().rfind("ORDER BY")
-                            filtered_sql = base_sql[:idx] + "\nWHERE e.id_usuario = :id_usuario\n" + base_sql[idx:]
+                            filtered_sql = base_sql[:idx] + "\nWHERE e.id_usuario = @id_usuario\n" + base_sql[idx:]
                         else:
-                            filtered_sql = base_sql + "\nWHERE e.id_usuario = :id_usuario"
+                            filtered_sql = base_sql + "\nWHERE e.id_usuario = @id_usuario"
                         recientes = fetch_df(filtered_sql, {"id_usuario": id_usuario})
                 else:
                     recientes = fetch_df(GET_RECIENTES)

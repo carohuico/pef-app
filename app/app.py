@@ -33,6 +33,10 @@ if "active_view" not in st.session_state:
     st.session_state["active_view"] = "inicio"
 
 if not auth.is_logged_in():
+    st.markdown(
+        "<style>#MainMenu, header, footer { visibility: hidden !important; }</style>",
+        unsafe_allow_html=True,
+    )
     login_page.login_page()
     try:
         st.stop()

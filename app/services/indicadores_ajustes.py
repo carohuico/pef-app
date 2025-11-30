@@ -8,11 +8,19 @@ from services.queries.q_indicadores import *
 
 def verificar_indicador_unico(nombre, id_indicador=None):
     """Verifica que el nombre del indicador sea único"""
-    result = fetch_df(GET_INDICADOR_BY_NOMBRE, {"nombre": nombre})
-    
-    if not result.empty and (id_indicador is None or result.iloc[0]['id_indicador'] != id_indicador):
-        return False, "El nombre del indicador ya está en uso"
-    
+    # Hacer verificación case-insensitive para evitar duplicados con diferente capitalización
+    all_ind = fetch_df(GET_ALL_INDICADORES)
+    if all_ind is not None and not all_ind.empty:
+        for _, row in all_ind.iterrows():
+            try:
+                existing_id = row.get('id_indicador')
+                existing_name = (row.get('nombre') or '').strip().lower()
+                if existing_name == (nombre or '').strip().lower():
+                    if id_indicador is None or int(existing_id) != int(id_indicador):
+                        return False, "El nombre del indicador ya está en uso"
+            except Exception:
+                continue
+
     return True, ""
 
 label = ":material/add: Agregar Indicador"
@@ -77,6 +85,10 @@ def agregar_indicador_dialog():
             
             if campos_vacios:
                 st.error(f"⚠️ Los siguientes campos son obligatorios: {', '.join(campos_vacios)}")
+                st.stop()
+            # Validar que los dos indicadores seleccionados no sean el mismo
+            if indicador_1.strip() and indicador_2.strip() and indicador_1.strip() == indicador_2.strip():
+                st.error("El Primer Indicador no puede ser igual al Segundo Indicador")
                 st.stop()
             
             # Verificar unicidad
@@ -180,6 +192,12 @@ def editar_indicador_dialog(indicador_data):
             if campos_vacios:
                 label = ":material/warning: Campos obligatorios"
                 st.error(f"{label}: {', '.join(campos_vacios)}")
+                st.stop()
+
+            # Validar que los dos indicadores seleccionados no sean el mismo
+            if indicador_1.strip() and indicador_2.strip() and indicador_1.strip() == indicador_2.strip():
+                label = ":material/warning:"
+                st.error(f"{label} El Primer Indicador no puede ser igual al Segundo Indicador")
                 st.stop()
             
             # Verificar unicidad (excluyendo el indicador actual)

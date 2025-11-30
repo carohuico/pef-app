@@ -240,7 +240,6 @@ def login_page():
 
     # ===== COLUMNA DERECHA - FORMULARIO =====
     with col_right:
-        # Logo negro usando HTML puro (controlado por CSS para móvil)
         try:
             logo_path = Path(__file__).parent.parent / 'assets' / 'logo_black.png'
             if logo_path.is_file():
@@ -252,7 +251,6 @@ def login_page():
         except Exception:
             img_src = "assets/logo_black.png"
 
-        # Usar st.markdown en lugar de st.html para evitar problemas
         st.markdown(
             f'<img src="{img_src}" class="logo-black" alt="Rainly Logo">',
             unsafe_allow_html=True
@@ -308,12 +306,7 @@ def login_page():
                                     df_user = fetch_df(GET_USUARIO_BY_ID, {"id_usuario": uid})
                                     if df_user is not None and not df_user.empty:
                                         ua = df_user.iloc[0].get("ultimo_acceso")
-                                        try:
-                                            st.success("Inicio de sesión exitoso")
-                                        except Exception:
-                                            pass
                                 except Exception:
-                                    # No mostrar errores de actualización de último acceso en UI
                                     pass
                             else:
                                 if uname:

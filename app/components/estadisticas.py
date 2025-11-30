@@ -313,7 +313,7 @@ def estadisticas():
             <div class="stat-icon">{users_icon}</div>
             <div class="stat-content">
                 <div class="stat-number">{cantidad_evaluados}</div>
-                <div class="stat-label">Cantidad de evaluados</div>
+                <div class="stat-label">Cantidad de personas evaluadas</div>
             </div>
         </div>
         """, unsafe_allow_html=True)

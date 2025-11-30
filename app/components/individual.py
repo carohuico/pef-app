@@ -3,12 +3,14 @@ from services.agregar_dibujo import agregar_dibujo
 from services.queries.q_historial import ELIMINAR_PRUEBAS
 from services.db import fetch_df
 from components.historial import confirmar_eliminacion_pruebas
+from PIL import Image as _PILImage
 import pandas as pd
 import streamlit as st
 from pathlib import Path
 import base64
 import json
 import os
+from services.gcs import get_image_local_path, get_image_data_uri
 
 
 @st.cache_data(ttl=300, max_entries=256)
@@ -149,7 +151,8 @@ def individual(id_evaluado: str = None):
         st.session_state.current_image_index = 0
     if 'add_drawing' not in st.session_state:
         st.session_state['add_drawing'] = False
-    st.session_state['_agregar_dialog_opened'] = False
+    if '_agregar_dialog_opened' not in st.session_state:
+        st.session_state['_agregar_dialog_opened'] = False
     if '_agregar_dialog_open_requested' not in st.session_state:
         st.session_state['_agregar_dialog_open_requested'] = False
         
@@ -191,7 +194,6 @@ def individual(id_evaluado: str = None):
 
         with col2:
             button_label = ":material/delete: Eliminar prueba"
-            # No hay pruebas, al pulsar simplemente mostrar aviso
             if st.button(button_label, width='stretch', type="secondary", key="btn_delete_drawing_noexp"):
                 st.warning(":material/warning: No hay pruebas para eliminar.")
 
@@ -201,7 +203,6 @@ def individual(id_evaluado: str = None):
                 st.session_state['add_drawing'] = True
                 st.session_state['_agregar_dialog_open_requested'] = True
 
-        # Si el usuario solicitó agregar dibujo, abrir el diálogo
         if (
             st.session_state.get('add_drawing', False)
             and st.session_state.get('_agregar_dialog_open_requested', False)
@@ -221,12 +222,10 @@ def individual(id_evaluado: str = None):
     current_prueba = expediente[current_index]
     fecha = current_prueba.get("fecha", "N/A")
     
-    # Preparar todos los datos del expediente
     images_data = []
     fechas_data = []
     ids_prueba = []
     resultados_data = []
-    # intentar cargar metadata (si existe) para obtener dimensiones del modelo/meta por imagen
     metadata_map = {}
     try:
         meta_path = Path(__file__).parent / 'uploads' / 'udem' / 'metadata.json'
@@ -255,30 +254,80 @@ def individual(id_evaluado: str = None):
     
     for idx, prueba in enumerate(expediente):
         img_rel = prueba.get('ruta_imagen', '')
-        img_rel_clean = img_rel.lstrip('/').lstrip('\\')
-        img_path = (Path(__file__).parent / img_rel_clean).resolve()
-        b64 = encode_image_to_base64(str(img_path))
-        
-        # Debug: print natural size of the image file used for the carousel
+        img_rel_str = str(img_rel) if img_rel is not None else ''
+        img_rel_norm = img_rel_str.replace('\\', '/').replace('\\\\', '/')
+
+        is_gs = False
+        gcs_uri = None
+        if img_rel_norm.startswith('gs://'):
+            is_gs = True
+            gcs_uri = img_rel_norm
+        elif img_rel_norm.startswith('gs:/'):
+            is_gs = True
+            gcs_uri = 'gs://' + img_rel_norm.split(':', 1)[1].lstrip('/')
+        elif img_rel_norm.startswith('gs:'):
+            is_gs = True
+            gcs_uri = 'gs://' + img_rel_norm.split(':', 1)[1].lstrip('/')
+
+        nw, nh = None, None
+        b64 = None
+        data_uri = None
+        src_to_use = None
+
         try:
-            from PIL import Image as _PILImage
-            if os.path.isfile(img_path):
-                with _PILImage.open(img_path) as _tmpim:
-                    nw, nh = _tmpim.size
-                    prueba['_natural_w'] = nw
-                    prueba['_natural_h'] = nh
-        except Exception as _e:
-            nw, nh = None, None
-            
-        if b64:
-            mime = 'jpeg' if prueba.get('formato', '').lower() in ('jpg', 'jpeg') else prueba.get('formato', 'png')
-            data_uri = f"data:image/{mime};base64,{b64}" 
-            prueba['_data_uri'] = data_uri 
-            images_data.append(data_uri) 
-        else:
-            prueba['_data_uri'] = img_rel
-            images_data.append(img_rel)
-        
+            if is_gs and gcs_uri:
+                # Prefer a downloaded local file so we can read natural size
+                local_path = get_image_local_path(gcs_uri)
+                if local_path and os.path.exists(local_path):
+                    try:
+                        img_path = Path(local_path)
+                        b64 = encode_image_to_base64(str(img_path))
+                        try:
+                            with _PILImage.open(img_path) as _tmpim:
+                                nw, nh = _tmpim.size
+                                prueba['_natural_w'] = nw
+                                prueba['_natural_h'] = nh
+                        except Exception:
+                            nw, nh = None, None
+                    except Exception:
+                        b64 = None
+                else:
+                    # Try building a data URI directly from GCS
+                    data_uri = get_image_data_uri(gcs_uri)
+                    if data_uri:
+                        src_to_use = data_uri
+            else:
+                # Local or relative path: construct path relative to this file
+                img_rel_clean = img_rel_str.lstrip('/').lstrip('\\')
+                img_path = (Path(__file__).parent / img_rel_clean).resolve()
+                if os.path.isfile(img_path):
+                    try:
+                        b64 = encode_image_to_base64(str(img_path))
+                        try:
+                            with _PILImage.open(img_path) as _tmpim:
+                                nw, nh = _tmpim.size
+                                prueba['_natural_w'] = nw
+                                prueba['_natural_h'] = nh
+                        except Exception:
+                            nw, nh = None, None
+                    except Exception:
+                        b64 = None
+
+            # Build final source to append
+            if b64:
+                mime = 'jpeg' if prueba.get('formato', '').lower() in ('jpg', 'jpeg') else prueba.get('formato', 'png')
+                data_uri = f"data:image/{mime};base64,{b64}"
+                src_to_use = data_uri
+
+            if src_to_use is None:
+                src_to_use = gcs_uri if (is_gs and gcs_uri) else img_rel_str
+
+            prueba['_data_uri'] = src_to_use
+            images_data.append(src_to_use)
+        except Exception:
+            prueba['_data_uri'] = img_rel_str
+            images_data.append(img_rel_str)
+
         fechas_data.append(prueba.get('fecha', 'N/A'))
         ids_prueba.append(prueba.get('id_prueba'))
         
@@ -366,7 +415,6 @@ def individual(id_evaluado: str = None):
         </div>
         """
     
-    # Actualiza la sección de los SVGs (alrededor de la línea donde defines svg_expand)
 
     svg_expand = '''<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8v-4h-4M4 16v4h4M20 16v4h-4" />
@@ -1642,8 +1690,20 @@ def individual(id_evaluado: str = None):
                                 'Fecha de evaluación': current_prueba.get('fecha', '')
                             }
                         ])
+                        # Ensure the DataFrame index does not collide with any external
+                        # historial index logic used by the confirmation dialog. Use
+                        # the prueba id as the index so the dialog can resolve IDs
+                        # reliably without falling back to the global historial DataFrame.
+                        try:
+                            selected_df.index = [int(id_prueba)]
+                        except Exception:
+                            pass
                     except Exception:
                         selected_df = pd.DataFrame([{'id_prueba': id_prueba}])
+                        try:
+                            selected_df.index = [int(id_prueba)]
+                        except Exception:
+                            pass
 
                     confirmar_eliminacion_pruebas(selected_df)
                 except Exception as e:

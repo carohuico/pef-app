@@ -212,6 +212,15 @@ def mostrar_dialogo_crear_grupo(municipios_list, municipios_dict):
                 return
             
             try:
+                try:
+                    nombre_clean = nombre.strip()
+                except Exception:
+                    nombre_clean = nombre
+                dup = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE LOWER(nombre) = LOWER(@nombre)", {"nombre": nombre_clean})
+                if dup is not None and not dup.empty:
+                    st.error(f"Ya existe un grupo con el nombre '{nombre_clean}'. Elige otro nombre.")
+                    return
+
                 id_municipio = municipios_dict.get(municipio)
                 fetch_df(CREATE_GRUPO, {
                     'id_municipio': id_municipio,
@@ -221,7 +230,6 @@ def mostrar_dialogo_crear_grupo(municipios_list, municipios_dict):
                 label = f":material/check: Grupo '{nombre}'"
                 st.success(f"{label} creado exitosamente")
                 time.sleep(1)
-                # invalidate cached grupos and reload
                 try:
                     load_grupos_cache.clear()
                 except Exception:
@@ -248,6 +256,22 @@ def mostrar_dialogo_editar_grupo(grupo, municipios_list, municipios_dict):
                 return
             
             try:
+                try:
+                    nombre_clean = nombre.strip()
+                except Exception:
+                    nombre_clean = nombre
+                try:
+                    current_id = int(grupo['ID'])
+                except Exception:
+                    current_id = None
+                if current_id is not None:
+                    dup = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE LOWER(nombre) = LOWER(@nombre) AND id_grupo <> @id_grupo", {"nombre": nombre_clean, "id_grupo": current_id})
+                else:
+                    dup = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE LOWER(nombre) = LOWER(@nombre)", {"nombre": nombre_clean})
+                if dup is not None and not dup.empty:
+                    st.error(f"Ya existe otro grupo con el nombre '{nombre_clean}'. Elige otro nombre.")
+                    return
+
                 id_municipio = municipios_dict.get(municipio)
                 fetch_df(UPDATE_GRUPO, {
                     'nombre': nombre,
@@ -564,6 +588,16 @@ def mostrar_dialogo_crear_subgrupo(id_grupo_padre, municipios_list, municipios_d
                 return
             
             try:
+                # Prevent duplicate subgrupo name (case-insensitive)
+                try:
+                    nombre_clean = nombre.strip()
+                except Exception:
+                    nombre_clean = nombre
+                dup = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE LOWER(nombre) = LOWER(@nombre)", {"nombre": nombre_clean})
+                if dup is not None and not dup.empty:
+                    st.error(f"Ya existe un grupo/subgrupo con el nombre '{nombre_clean}'. Elige otro nombre.")
+                    return
+
                 id_municipio = municipios_dict.get(municipio)
                 fetch_df(CREATE_SUBGRUPO, {
                     'parent_id': id_grupo_padre,
@@ -599,6 +633,23 @@ def mostrar_dialogo_editar_subgrupo(subgrupo, id_grupo_padre, municipios_list, m
                 return
             
             try:
+                # Prevent duplicate subgrupo name on update (case-insensitive), excluding current subgrupo
+                try:
+                    nombre_clean = nombre.strip()
+                except Exception:
+                    nombre_clean = nombre
+                try:
+                    current_id = int(subgrupo['ID'])
+                except Exception:
+                    current_id = None
+                if current_id is not None:
+                    dup = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE LOWER(nombre) = LOWER(@nombre) AND id_grupo <> @id_grupo", {"nombre": nombre_clean, "id_grupo": current_id})
+                else:
+                    dup = fetch_df("SELECT TOP 1 id_grupo FROM Grupo WHERE LOWER(nombre) = LOWER(@nombre)", {"nombre": nombre_clean})
+                if dup is not None and not dup.empty:
+                    st.error(f"Ya existe otro grupo/subgrupo con el nombre '{nombre_clean}'. Elige otro nombre.")
+                    return
+
                 id_municipio = municipios_dict.get(municipio)
                 fetch_df(UPDATE_GRUPO, {
                     'nombre': nombre,

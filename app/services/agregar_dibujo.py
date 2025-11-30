@@ -360,19 +360,9 @@ def agregar_dibujo(info_obj):
                     try:
                         # Insertar prueba usando fetch_df (pymssql)
                         nombre_archivo = st.session_state["agregar_uploaded_file"].name
-                        # Prefer a local preview produced by the inference service (so
-                        # the individual view can read natural image dimensions and
-                        # draw bounding boxes). Fallback to the GCS path if no local
-                        # preview exists, then fall back to the original local file.
-                        last_preview = st.session_state.get('last_preview_local', None)
+                        # Prefer storing the GCS path returned by the inference service when available
                         last_gcs = st.session_state.get('last_ruta_gcs', None)
-
-                        if last_preview and isinstance(last_preview, str) and os.path.exists(last_preview):
-                            ruta_imagen = str(Path(last_preview))
-                        elif last_gcs:
-                            ruta_imagen = last_gcs
-                        else:
-                            ruta_imagen = str(Path(ORIGINALS_DIR) / nombre_archivo)
+                        ruta_imagen = last_gcs if last_gcs else str(Path(ORIGINALS_DIR) / nombre_archivo)
                         formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
                         fecha_actual = datetime.datetime.now()
 

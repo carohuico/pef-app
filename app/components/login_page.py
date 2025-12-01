@@ -4,7 +4,6 @@ from services.db import fetch_df
 from services.queries.q_usuarios import UPDATE_ULTIMO_ACCESO, GET_USUARIO_BY_ID, GET_USUARIO_BY_USERNAME
 from pathlib import Path
 import base64
-from datetime import datetime, timedelta
 
 
 def login_page():
@@ -332,38 +331,24 @@ def login_page():
                         # Guardar en session state
                         st.session_state["jwt_token"] = token
                         st.session_state["user"] = user
+                        # Try to set a cookie if the Streamlit runtime exposes the API.
+                        # Many Streamlit versions don't expose experimental_set_cookie,
+                        # so guard the call to avoid AttributeError.
                         try:
-                            from streamlit_cookies_controller import CookieController
-                            controller = CookieController()
-
-                            expires_dt = datetime.utcnow() + timedelta(days=7)
-
-                            controller.set(
-                                "jwt_token",
-                                token,
-                                expires=expires_dt,
-                                path="/"
-                            )
-
-                        except Exception as e:
-                                print("No se pudo guardar la cookie:", e)
+                            set_cookie_fn = getattr(st, "experimental_set_cookie", None)
+                            if callable(set_cookie_fn):
+                                try:
+                                    set_cookie_fn(
+                                        "jwt_token",
+                                        token,
+                                        max_age=60*60*24*7,  # 7 días
+                                        path="/"
+                                    )
+                                except Exception as e:
+                                    print("No se pudo guardar la cookie:", e)
                         except Exception:
-                            try:
-                                set_cookie_fn = getattr(st, "experimental_set_cookie", None)
-                                if callable(set_cookie_fn):
-                                    try:
-                                        set_cookie_fn(
-                                            "jwt_token",
-                                            token,
-                                            max_age=60*60*24*7,  # 7 días
-                                            path="/"
-                                        )
-                                    except Exception as e:
-                                        print("No se pudo guardar la cookie:", e)
-                            except Exception:
-                                # Defensive: ignore any unexpected failures
-                                pass
-                                pass
+                            # Defensive: ignore any unexpected failures
+                            pass
 
                         # Persist token in browser localStorage so the app can restore it on reload.
                         try:
@@ -414,3 +399,5 @@ def login_page():
         if auth_err:
             label = ":material/warning: Aviso de autenticación"
             st.warning(f"{label} {auth_err}")
+
+        # Diagnostic helpers removed

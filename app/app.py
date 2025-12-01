@@ -1,31 +1,18 @@
 import streamlit as st
-from streamlit_cookies_controller import CookieController
-
-st.set_page_config(page_title="Rainly", layout="wide")
-
-# ========================================================
-# RESTAURAR TOKEN (solo después de que Streamlit montó el DOM)
-# ========================================================
-
-controller = CookieController()
-
-# Leer cookie
-if "jwt_token" not in st.session_state:
-    token = controller.get("jwt_token")
-    if token:
-        st.session_state["jwt_token"] = token
-
-# Leer localStorage como backup
-if "jwt_token" not in st.session_state:
-    from streamlit_js_eval import get_local_storage
-    token = get_local_storage("jwt_token")
-    if token:
-        st.session_state["jwt_token"] = token
-        st.rerun()
 
 
+# Try to restore token from Streamlit experimental cookie API if available (guarded)
+try:
+    get_cookie_fn = getattr(st, "experimental_get_cookie", None)
+    if callable(get_cookie_fn):
+        cookie_token = get_cookie_fn("jwt_token")
+        if cookie_token and "jwt_token" not in st.session_state:
+            st.session_state["jwt_token"] = cookie_token
+except Exception:
+    print("No se pudo obtener el token de la cookie")
+    pass
 
-# 2. Intentar restaurar token desde localStorage (JS) como último recurso
+# 2. Intentar restaurar token desde localStorage (JS)
 try:
     if "jwt_token" not in st.session_state:
         from streamlit_js_eval import get_local_storage

@@ -384,11 +384,6 @@ def cargar_imagen_component():
             else:
                 raw_indicadores = []
 
-            # If the current user is an operator, they should not see the
-            # detailed results. We still run inference above and keep the
-            # results in session so the existing save/finalize flow persists
-            # them later, but we hide the UI output and show a concise
-            # success message.
             try:
                 import services.auth as auth
                 is_op = auth.is_operador()

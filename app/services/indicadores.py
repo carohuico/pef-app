@@ -122,9 +122,6 @@ def find_and_download_latest_for_id(id_evaluado: int, bucket_name: str = 'bucket
     try:
         client = _get_storage_client_from_secrets()
     except Exception:
-        # Attempt ADC fallback but avoid letting low-level exceptions create noisy
-        # stack traces at this level. If ADC isn't available, raise a RuntimeError
-        # so callers can handle gracefully.
         try:
             client = storage.Client()
         except Exception as e:

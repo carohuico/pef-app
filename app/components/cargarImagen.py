@@ -99,9 +99,11 @@ def cargar_imagen_component():
                 import services.auth as auth
                 is_admin = auth.is_admin()
                 is_esp = auth.is_especialista()
+                is_op = auth.is_operador()
             except Exception:
                 is_admin = False
                 is_esp = False
+                is_op = False
 
             # Obtener lista de especialistas para el selectbox
             try:
@@ -382,6 +384,45 @@ def cargar_imagen_component():
             else:
                 raw_indicadores = []
 
+            # If the current user is an operator, they should not see the
+            # detailed results. We still run inference above and keep the
+            # results in session so the existing save/finalize flow persists
+            # them later, but we hide the UI output and show a concise
+            # success message.
+            try:
+                import services.auth as auth
+                is_op = auth.is_operador()
+            except Exception:
+                is_op = False
+
+            if is_op:
+                indicadores = []
+                for ind in (raw_indicadores or []):
+                    try:
+                        sig = ind.get('significado', None)
+                    except Exception:
+                        sig = None
+                    if sig is None:
+                        continue
+                    if isinstance(sig, str) and sig.strip() == "":
+                        continue
+                    if isinstance(sig, str) and sig.strip() == "-":
+                        continue
+                    indicadores.append(ind)
+
+                # store for later saving but do not render details
+                try:
+                    st.session_state['raw_indicadores'] = raw_indicadores
+                except Exception:
+                    pass
+                try:
+                    st.session_state['indicadores'] = indicadores
+                except Exception:
+                    pass
+
+                st.success("Análisis generado correctamente")
+                return
+
             indicadores = []
             for ind in (raw_indicadores or []):
                 try:
@@ -632,19 +673,15 @@ def cargar_imagen_component():
                         elif not sexo_value or sexo_value == "Selecciona una opción" or sexo_value.strip() == "":
                             st.markdown('<div class="warning"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="flex:0 0 14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg> El sexo del evaluado es obligatorio</div>', unsafe_allow_html=True)
                         else:
-                            # Guardar campos en sesión
                             st.session_state["form_nombre"] = nombre_value
                             st.session_state["form_apellido"] = apellido_value
                             st.session_state["form_fecha_nacimiento"] = fecha_nacimiento
                             st.session_state["form_sexo"] = sexo_value
-                            # Normalizar select por defecto a cadena vacía si corresponde
                             st.session_state["form_estado_civil"] = "" if estado_civil_value == "Selecciona una opción" else estado_civil_value
                             st.session_state["form_escolaridad"] = "" if escolaridad_value == "Selecciona una opción" else escolaridad_value
                             st.session_state["form_ocupacion"] = "" if ocupacion_value == "Selecciona una opción" else ocupacion_value
                             st.session_state["form_grupo"] = grupo_value
 
-                            # Si el evaluado aún no está registrado, crear ahora para que al llegar al paso 2
-                            # el registro exista y se pueda enviar id_evaluado al endpoint.
                             if not st.session_state.get('already_registered', False):
                                 try:
                                     grupo = st.session_state.get("form_grupo", "")

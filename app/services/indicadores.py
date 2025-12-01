@@ -91,12 +91,13 @@ def _get_storage_client_from_secrets() -> 'storage.Client':
             try:
                 creds.refresh(Request())
             except Exception as e:
-                # Log a safe debug message with key id (do NOT log private_key)
-                logging.exception(
+                # Log a non-verbose warning with the key id (do NOT log private_key)
+                logging.warning(
                     "Service account credential refresh failed for private_key_id=%s: %s",
                     parsed.get('private_key_id'), str(e)
                 )
-                raise
+                # continue and allow client creation to proceed; failures will be
+                # handled by the caller or by the storage client creation below.
         except Exception:
             # If the transport package isn't available or refresh fails, we still proceed
             # to create the storage client and let the caller observe runtime errors.
@@ -104,8 +105,9 @@ def _get_storage_client_from_secrets() -> 'storage.Client':
 
         client = storage.Client(credentials=creds, project=parsed.get('project_id'))
         return client
-    except Exception:
-        logging.exception("Failed to create storage.Client from provided service account")
+    except Exception as e:
+        # Warn but do not print a full traceback here; caller can handle failures.
+        logging.warning("Failed to create storage.Client from provided service account: %s", str(e))
         raise
 
 
@@ -120,16 +122,14 @@ def find_and_download_latest_for_id(id_evaluado: int, bucket_name: str = 'bucket
     try:
         client = _get_storage_client_from_secrets()
     except Exception:
-        # Try to fall back to Application Default Credentials (ADC), but if that
-        # fails surface a clear RuntimeError so callers can fallback gracefully
+        # Attempt ADC fallback but avoid letting low-level exceptions create noisy
+        # stack traces at this level. If ADC isn't available, raise a RuntimeError
+        # so callers can handle gracefully.
         try:
             client = storage.Client()
         except Exception as e:
-            logging.exception("Failed to create storage.Client fallback in find_and_download_latest_for_id")
-            raise RuntimeError(
-                "No usable GCS credentials found (checked GCP_SA_KEY_JSON/st.secrets). "
-                "Attempt to create default storage.Client() failed."
-            ) from e
+            logging.warning("Unable to create default storage.Client() in find_and_download_latest_for_id: %s", str(e))
+            raise RuntimeError("No usable GCS credentials available") from e
 
     prefix = f"pruebas/{id_evaluado}/"
     blobs = list(client.list_blobs(bucket_name, prefix=prefix))
@@ -158,15 +158,13 @@ def download_gcs_uri_to_tmp(gcs_uri: str) -> str:
     try:
         client = _get_storage_client_from_secrets()
     except Exception:
-        # As above, attempt to use ADC but surface a clear error if unavailable.
+        # Attempt ADC fallback but avoid noisy exceptions; surface a clear error
+        # if ADC is not configured.
         try:
             client = storage.Client()
         except Exception as e:
-            logging.exception("Failed to create storage.Client fallback in download_gcs_uri_to_tmp")
-            raise RuntimeError(
-                "No usable GCS credentials found (checked GCP_SA_KEY_JSON/st.secrets). "
-                "Attempt to create default storage.Client() failed."
-            ) from e
+            logging.warning("Unable to create default storage.Client() in download_gcs_uri_to_tmp: %s", str(e))
+            raise RuntimeError("No usable GCS credentials available") from e
 
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(blob_path)
@@ -335,8 +333,9 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                             os.replace(preview_local, tmp_preview)
                         except Exception:
                             pass
-                except Exception:
-                    logging.exception("Failed to download preview from archivo.ruta_gcs")
+                except Exception as e:
+                    # Log a compact warning without a full traceback to reduce noise
+                    logging.warning("Failed to download preview from archivo.ruta_gcs: %s", str(e))
                 try:
                     st.session_state['last_ruta_gcs'] = ruta_gcs
                     st.session_state['last_preview_local'] = tmp_preview
@@ -415,7 +414,8 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
 
             result_holder['result'] = resultados_local
         except Exception as e:
-            logging.exception("Error in simular_resultado worker")
+            # Report the error concisely to avoid noisy stack traces in normal runs
+            logging.error("Error in simular_resultado worker: %s", str(e))
             result_holder['error'] = e
         finally:
             result_holder['done'] = True

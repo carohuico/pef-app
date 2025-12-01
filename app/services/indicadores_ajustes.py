@@ -35,22 +35,21 @@ def agregar_indicador_dialog():
         
         nombre = st.text_input(
             "Nombre del Indicador :red[*]",
-            help="Nombre único para el indicador"
         )
         
         st.write("##### Selecciona los indicadores a combinar:")
         indicador_1 = st.selectbox(
-            "Primer Indicador :red[*]",
+            "Primer Indicador",
             options=opciones_indicadores,
             index=0,
-            placeholder="Selecciona un indicador"
+            placeholder="Selecciona un indicador (opcional)"
         )
         
         indicador_2 = st.selectbox(
-            "Segundo Indicador :red[*]",
+            "Segundo Indicador",
             options=opciones_indicadores,
             index=0,
-            placeholder="Selecciona un indicador"
+            placeholder="Selecciona un indicador (opcional)"
         )
         
         significado = st.text_area(
@@ -58,6 +57,21 @@ def agregar_indicador_dialog():
             placeholder="Describe el significado de combinar estos dos indicadores...",
             help="Explica qué representa la combinación de estos indicadores",
             height=150
+        )
+
+        # Cargar categorías para el selector (crear)
+        categorias_df = fetch_df("SELECT id_categoria, nombre FROM Categoria ORDER BY nombre")
+        opciones_categorias = [""]
+        if categorias_df is not None and not categorias_df.empty:
+            try:
+                opciones_categorias = [""] + list(categorias_df['nombre'].values)
+            except Exception:
+                opciones_categorias = [""]
+
+        categoria_seleccionada = st.selectbox(
+            "Categoría :red[*]",
+            options=opciones_categorias,
+            index=0
         )
         
         col_btn1, col_btn2 = st.columns([1, 1])
@@ -76,20 +90,25 @@ def agregar_indicador_dialog():
             campos_vacios = []
             if not nombre:
                 campos_vacios.append("Nombre del Indicador")
-            if not indicador_1:
-                campos_vacios.append("Primer Indicador")
-            if not indicador_2:
-                campos_vacios.append("Segundo Indicador")
+            # Categoria ahora es obligatoria
+            if not categoria_seleccionada or (isinstance(categoria_seleccionada, str) and categoria_seleccionada.strip() == ""):
+                campos_vacios.append("Categoría")
+            # Primer y Segundo indicador son opcionales
             if not significado:
                 campos_vacios.append("Significado")
             
             if campos_vacios:
                 st.error(f"⚠️ Los siguientes campos son obligatorios: {', '.join(campos_vacios)}")
                 st.stop()
-            # Validar que los dos indicadores seleccionados no sean el mismo
-            if indicador_1.strip() and indicador_2.strip() and indicador_1.strip() == indicador_2.strip():
-                st.error("El Primer Indicador no puede ser igual al Segundo Indicador")
-                st.stop()
+            # Validar que los dos indicadores seleccionados no sean el mismo (solo si ambos proporcionados)
+            try:
+                if indicador_1 and indicador_2:
+                    if isinstance(indicador_1, str) and isinstance(indicador_2, str) and indicador_1.strip() != "" and indicador_2.strip() != "":
+                        if indicador_1.strip() == indicador_2.strip():
+                            st.error("El Primer Indicador no puede ser igual al Segundo Indicador")
+                            st.stop()
+            except Exception:
+                pass
             
             # Verificar unicidad
             es_unico, mensaje = verificar_indicador_unico(nombre)
@@ -99,12 +118,24 @@ def agregar_indicador_dialog():
                 st.stop()
             
             try:
+                # Resolver id_categoria seleccionado (None si vacio)
+                sel_cat_id = None
+                try:
+                    if isinstance(categoria_seleccionada, str) and categoria_seleccionada.strip() != '' and categorias_df is not None and not categorias_df.empty:
+                        names = list(categorias_df['nombre'].astype(str).values)
+                        if categoria_seleccionada in names:
+                            idx = names.index(categoria_seleccionada)
+                            sel_cat_id = int(categorias_df.iloc[idx]['id_categoria'])
+                except Exception:
+                    sel_cat_id = None
+
                 # Insertar indicador
                 fetch_df(INSERT_INDICADOR, {
                     "nombre": nombre.strip(),
-                    "indicador_1": indicador_1.strip(),
-                    "indicador_2": indicador_2.strip(),
-                    "significado": significado.strip()
+                    "indicador_1": (indicador_1.strip() if isinstance(indicador_1, str) else None),
+                    "indicador_2": (indicador_2.strip() if isinstance(indicador_2, str) else None),
+                    "significado": significado.strip(),
+                    "id_categoria": sel_cat_id
                 })
                 
                 label = f":material/check: Indicador '{nombre}'"
@@ -148,13 +179,13 @@ def editar_indicador_dialog(indicador_data):
             idx_2 = 0
         
         indicador_1 = st.selectbox(
-            "Primer Indicador :red[*]",
+            "Primer Indicador",
             options=opciones_indicadores,
             index=idx_1
         )
         
         indicador_2 = st.selectbox(
-            "Segundo Indicador :red[*]",
+            "Segundo Indicador",
             options=opciones_indicadores,
             index=idx_2
         )
@@ -162,8 +193,52 @@ def editar_indicador_dialog(indicador_data):
         significado = st.text_area(
             "Significado :red[*]",
             value=indicador_data["significado"],
-            help="Explica qué representa la combinación de estos indicadores",
             height=150
+        )
+
+        # Cargar categorías para el selector (mostrar nombres)
+        categorias_df = fetch_df("SELECT id_categoria, nombre FROM Categoria ORDER BY nombre")
+        opciones_categorias = [""]
+        if categorias_df is not None and not categorias_df.empty:
+            try:
+                opciones_categorias = [""] + list(categorias_df['nombre'].values)
+            except Exception:
+                opciones_categorias = [""]
+
+        # Determinar índice seleccionado actual (buscar por id_categoria o por nombre)
+        try:
+            current_cat_idx = 0
+            if indicador_data.get('id_categoria') is not None and categorias_df is not None and not categorias_df.empty:
+                try:
+                    # buscar por id
+                    ids = list(categorias_df['id_categoria'].astype(str).values)
+                    current_cat = str(indicador_data.get('id_categoria'))
+                    if current_cat in ids:
+                        current_cat_idx = ids.index(current_cat) + 1
+                    else:
+                        # fallback buscar por nombre
+                        names = list(categorias_df['nombre'].astype(str).values)
+                        catname = indicador_data.get('categoria') or indicador_data.get('categoria_nombre') or ''
+                        if catname in names:
+                            current_cat_idx = names.index(catname) + 1
+                except Exception:
+                    current_cat_idx = 0
+            else:
+                # intentar por nombre si no hay id_categoria
+                try:
+                    names = list(categorias_df['nombre'].astype(str).values) if categorias_df is not None and not categorias_df.empty else []
+                    catname = indicador_data.get('categoria') or indicador_data.get('categoria_nombre') or ''
+                    if catname in names:
+                        current_cat_idx = names.index(catname) + 1
+                except Exception:
+                    current_cat_idx = 0
+        except Exception:
+            current_cat_idx = 0
+
+        categoria_seleccionada = st.selectbox(
+            "Categoría",
+            options=opciones_categorias,
+            index=current_cat_idx
         )
         
         col_btn1, col_btn2 = st.columns([1, 1])
@@ -182,10 +257,6 @@ def editar_indicador_dialog(indicador_data):
             campos_vacios = []
             if not nombre:
                 campos_vacios.append("Nombre del Indicador")
-            if not indicador_1:
-                campos_vacios.append("Primer Indicador")
-            if not indicador_2:
-                campos_vacios.append("Segundo Indicador")
             if not significado:
                 campos_vacios.append("Significado")
             
@@ -194,11 +265,16 @@ def editar_indicador_dialog(indicador_data):
                 st.error(f"{label}: {', '.join(campos_vacios)}")
                 st.stop()
 
-            # Validar que los dos indicadores seleccionados no sean el mismo
-            if indicador_1.strip() and indicador_2.strip() and indicador_1.strip() == indicador_2.strip():
-                label = ":material/warning:"
-                st.error(f"{label} El Primer Indicador no puede ser igual al Segundo Indicador")
-                st.stop()
+            # Validar que los dos indicadores seleccionados no sean el mismo (solo si ambos proporcionados)
+            try:
+                if indicador_1 and indicador_2:
+                    if isinstance(indicador_1, str) and isinstance(indicador_2, str) and indicador_1.strip() != "" and indicador_2.strip() != "":
+                        if indicador_1.strip() == indicador_2.strip():
+                            label = ":material/warning:"
+                            st.error(f"{label} El Primer Indicador no puede ser igual al Segundo Indicador")
+                            st.stop()
+            except Exception:
+                pass
             
             # Verificar unicidad (excluyendo el indicador actual)
             es_unico, mensaje = verificar_indicador_unico(nombre, indicador_data["id_indicador"])
@@ -208,13 +284,27 @@ def editar_indicador_dialog(indicador_data):
                 st.stop()
             
             try:
-                # Actualizar indicador
+                # Resolver id_categoria seleccionado (None si vacio)
+                sel_cat_id = None
+                try:
+                    if isinstance(categoria_seleccionada, str) and categoria_seleccionada.strip() != '' and categorias_df is not None and not categorias_df.empty:
+                        # la primera opción de opciones_categorias es "", los nombres están en el mismo orden que categorias_df
+                        # encontrar el id correspondiente
+                        mask_names = categorias_df['nombre'].astype(str).values.tolist()
+                        if categoria_seleccionada in mask_names:
+                            idx = mask_names.index(categoria_seleccionada)
+                            sel_cat_id = int(categorias_df.iloc[idx]['id_categoria'])
+                except Exception:
+                    sel_cat_id = None
+
+                # Actualizar indicador con id_categoria
                 fetch_df(UPDATE_INDICADOR, {
                     "id_indicador": indicador_data["id_indicador"],
                     "nombre": nombre.strip(),
                     "indicador_1": indicador_1.strip(),
                     "indicador_2": indicador_2.strip(),
-                    "significado": significado.strip()
+                    "significado": significado.strip(),
+                    "id_categoria": sel_cat_id
                 })
                 
                 label = f":material/check: Indicador '{nombre}'"
@@ -302,7 +392,7 @@ def indicadores():
     df.insert(0, 'Seleccionar', False)
     
     # Reordenar columnas para display (sin id_indicador visible)
-    columns_order = ['Seleccionar', 'nombre', 'significado']
+    columns_order = ['Seleccionar', 'nombre', 'significado', 'categoria']
     df_display = df[[col for col in columns_order if col in df.columns]]
     
     # Barra de búsqueda y botones
@@ -370,6 +460,10 @@ def indicadores():
             "significado": st.column_config.TextColumn(
                 "Significado",
                 width="large",
+            ),
+            "categoria": st.column_config.TextColumn(
+                "Categoría",
+                width="small",
             ),
         },
         disabled=['nombre', 'significado', 'id_indicador']

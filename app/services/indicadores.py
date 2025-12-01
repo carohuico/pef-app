@@ -409,6 +409,49 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                     'ruta_imagen': p.get('ruta_imagen', None),
                 })
 
+            # Business rule: if indicator 16 is present AND any of indicators {8,9,10,11,12,13} present,
+            # then add indicator 61 to the results (with its name, significado and id_categoria)
+            try:
+                present_ids = {r.get('id_indicador') for r in resultados_local}
+                trigger_set = {8, 9, 10, 11, 12, 13}
+                if 16 in present_ids and (present_ids & trigger_set):
+                    # Fetch indicator 61 details
+                    try:
+                        df61 = load_indicadores_por_ids('61')
+                        if df61 is not None and not df61.empty:
+                            row = df61.iloc[0]
+                            try:
+                                nombre61 = row.get('nombre', '')
+                            except Exception:
+                                nombre61 = ''
+                            try:
+                                significado61 = row.get('significado', '')
+                            except Exception:
+                                significado61 = ''
+                            try:
+                                id_categoria61 = row.get('id_categoria') if 'id_categoria' in row.index else None
+                            except Exception:
+                                id_categoria61 = None
+                            # Append if not already present
+                            if 61 not in present_ids:
+                                resultados_local.append({
+                                    'id_indicador': 61,
+                                    'nombre': nombre61,
+                                    'significado': significado61,
+                                    'confianza': 0.0,
+                                    'x_min': 0,
+                                    'x_max': 0,
+                                    'y_min': 0,
+                                    'y_max': 0,
+                                    'ruta_imagen': None,
+                                    'id_categoria': id_categoria61,
+                                })
+                    except Exception:
+                        # Ignore failures to fetch the extra indicator
+                        pass
+            except Exception:
+                pass
+
             result_holder['result'] = resultados_local
         except Exception as e:
             # Report the error concisely to avoid noisy stack traces in normal runs

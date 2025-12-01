@@ -368,8 +368,6 @@ def get_historial_data() -> List[Dict]:
 def historial():
     """Renderiza la vista de historial de evaluaciones/pruebas"""
     
-    # Configuración
-    st.set_page_config(page_title="Rainly - Historial", layout="wide", initial_sidebar_state="auto")
     
     # CSS
     _css_grupos = Path(__file__).parent.parent / 'assets' / 'grupos.css'
@@ -470,7 +468,7 @@ def historial():
         on_select="rerun",
         selection_mode="multi-row",
         column_config={
-            "id_prueba": st.column_config.TextColumn("ID", width="small"),
+            "id_prueba": st.column_config.TextColumn("ID Prueba", width="small"),
             "Nombre del evaluado": st.column_config.TextColumn("Nombre del evaluado", width="medium"),
             "Edad": st.column_config.NumberColumn("Edad", width="small"),
             "Sexo": st.column_config.TextColumn("Sexo", width="small"),

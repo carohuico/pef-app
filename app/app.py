@@ -46,7 +46,9 @@ from components.ajustes import ajustes
 import services.auth as auth
 import components.login_page as login_page
 
-st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto")
+#Imagen en assets (luis.jpg)
+img = Path(__file__).parent / 'assets' / 'gota.png'
+st.set_page_config(page_title="Rainly", layout="wide", initial_sidebar_state="auto", page_icon=img)
 
 # Cargar CSS
 _css_general = Path(__file__).parent / 'assets' / 'general.css'

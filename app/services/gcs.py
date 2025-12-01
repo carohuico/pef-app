@@ -1,3 +1,4 @@
+import streamlit as st
 import logging
 import mimetypes
 import os
@@ -19,7 +20,6 @@ def get_gcs_client():
     
     try:
         # Primero intentar desde Streamlit secrets
-        import streamlit as st
         if hasattr(st, 'secrets') and 'GCP_SA_KEY_JSON' in st.secrets:
             sa_json = st.secrets['GCP_SA_KEY_JSON']
             # Try to load JSON normally, but accept malformed multiline private_key

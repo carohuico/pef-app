@@ -18,8 +18,6 @@ from PIL import Image
 import datetime
 
 def cargar_imagen_component():
-    # ---------- CONFIGURACIÓN ----------
-    st.set_page_config(page_title="Nueva evaluación", layout="wide", initial_sidebar_state="auto")
     # ---------- CSS (externo) ----------
     _css_general = Path(__file__).parent.parent / 'assets' / 'general.css'
     _css_registrar = Path(__file__).parent.parent / 'assets' / '1_registrar.css'

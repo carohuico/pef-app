@@ -12,6 +12,7 @@ import datetime
 import json
 import os
 import mimetypes
+from services.gcs import get_image_data_uri
 
 
 # Cached loader for indicador names used during export
@@ -203,13 +204,27 @@ def render_export_popover(info_evaluado=None, indicadores=None):
             try:
                 ruta = dem.get('ruta_imagen') or dem.get('ruta') or dem.get('image') or dem.get('imagen')
                 if ruta:
-                    # manejar rutas absolutas en Windows o Unix
-                    if os.path.exists(ruta):
-                        with open(ruta, 'rb') as f:
-                            b = f.read()
-                        b64 = base64.b64encode(b).decode('utf-8')
-                        mime = mimetypes.guess_type(ruta)[0] or 'image/jpeg'
-                        data_url = f"data:{mime};base64,{b64}"
+                    data_url = None
+                    # Si la ruta es un URI de GCS, intentar obtener un data URI usando la utilidad existente
+                    try:
+                        if isinstance(ruta, str) and ruta.strip().lower().startswith('gs://'):
+                            data_url = get_image_data_uri(ruta)
+                    except Exception:
+                        data_url = None
+
+                    # Si no obtuvimos data_url desde GCS, intentar como ruta local
+                    if not data_url:
+                        try:
+                            if os.path.exists(ruta):
+                                with open(ruta, 'rb') as f:
+                                    b = f.read()
+                                b64 = base64.b64encode(b).decode('utf-8')
+                                mime = mimetypes.guess_type(ruta)[0] or 'image/jpeg'
+                                data_url = f"data:{mime};base64,{b64}"
+                        except Exception:
+                            data_url = None
+
+                    if data_url:
                         prueba_info['demograficos']['image_base64'] = data_url
             except Exception:
                 pass

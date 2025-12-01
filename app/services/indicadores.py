@@ -120,10 +120,25 @@ def find_and_download_latest_for_id(id_evaluado: int, bucket_name: str = 'bucket
     try:
         client = _get_storage_client_from_secrets()
     except Exception:
-        client = storage.Client()
+        # No service account JSON in env/secrets. Try application default credentials
+        if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') or os.environ.get('GOOGLE_CLOUD_PROJECT') or os.environ.get('GCP_PROJECT') or os.environ.get('GCP_PROJECT_ID'):
+            try:
+                client = storage.Client()
+            except Exception:
+                logging.exception("Failed to create default storage.Client using ADC")
+                # Signal to caller that no GCS content is available so they can fallback
+                raise FileNotFoundError("Could not access GCS for listing blobs (credentials failure)")
+        else:
+            logging.warning("No GCS credentials found in env/secrets; skipping GCS access for id %s", id_evaluado)
+            # Raise FileNotFoundError to let callers fallback to local files
+            raise FileNotFoundError("No GCS credentials configured")
 
     prefix = f"pruebas/{id_evaluado}/"
-    blobs = list(client.list_blobs(bucket_name, prefix=prefix))
+    try:
+        blobs = list(client.list_blobs(bucket_name, prefix=prefix))
+    except Exception:
+        logging.exception("Error listing blobs for bucket=%s prefix=%s", bucket_name, prefix)
+        raise FileNotFoundError("Could not list blobs (GCS access error)")
     if not blobs:
         raise FileNotFoundError(f"No blobs found under gs://{bucket_name}/{prefix}")
 
@@ -149,13 +164,26 @@ def download_gcs_uri_to_tmp(gcs_uri: str) -> str:
     try:
         client = _get_storage_client_from_secrets()
     except Exception:
-        client = storage.Client()
+        # If no explicit service account provided, try ADC only when it looks available
+        if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') or os.environ.get('GOOGLE_CLOUD_PROJECT') or os.environ.get('GCP_PROJECT') or os.environ.get('GCP_PROJECT_ID'):
+            try:
+                client = storage.Client()
+            except Exception:
+                logging.exception("Failed to create default storage.Client using ADC for %s", gcs_uri)
+                raise RuntimeError(f"Could not create GCS client to download {gcs_uri}")
+        else:
+            logging.warning("No GCS credentials configured; cannot download %s", gcs_uri)
+            raise RuntimeError(f"No GCS credentials configured; cannot download {gcs_uri}")
 
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(blob_path)
-    local_path = os.path.join(tempfile.gettempdir(), os.path.basename(blob_path))
-    blob.download_to_filename(local_path)
-    return local_path
+    try:
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_path)
+        local_path = os.path.join(tempfile.gettempdir(), os.path.basename(blob_path))
+        blob.download_to_filename(local_path)
+        return local_path
+    except Exception:
+        logging.exception("Failed to download blob %s from bucket %s", blob_path, bucket_name)
+        raise
 
 
 def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict]:

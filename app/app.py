@@ -1,4 +1,11 @@
 import streamlit as st
+import logging
+
+# Reduce noisy logs coming from asyncio/tornado (common in websocket disconnects).
+# Keep default app logging unchanged but raise threshold for these noisy libraries.
+logging.getLogger('asyncio').setLevel(logging.WARNING)
+logging.getLogger('tornado').setLevel(logging.WARNING)
+logging.getLogger('tornado.websocket').setLevel(logging.WARNING)
 from pathlib import Path
 from components.sidebar_component import sidebar_component
 from components.cargarImagen import cargar_imagen_component 

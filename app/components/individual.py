@@ -11,7 +11,7 @@ import base64
 import json
 import os
 from services.gcs import get_image_local_path, get_image_data_uri
-from components.loader import start_loader, stop_loader
+from components.loader import show_loader
 
 
 @st.cache_data(ttl=300, max_entries=256)
@@ -254,17 +254,6 @@ def individual(id_evaluado: str = None):
         metadata_map = {}
     
     for idx, prueba in enumerate(expediente):
-        # Show a full-page loader while we process the expediente images.
-        # Use a dedicated session flag so we don't interfere with other loaders.
-        if idx == 0:
-            try:
-                st.session_state['show_individual_loader'] = True
-            except Exception:
-                pass
-            try:
-                _individual_loader_handle = start_loader('show_individual_loader')
-            except Exception:
-                _individual_loader_handle = None
         img_rel = prueba.get('ruta_imagen', '')
         img_rel_str = str(img_rel) if img_rel is not None else ''
         img_rel_norm = img_rel_str.replace('\\', '/').replace('\\\\', '/')
@@ -449,14 +438,13 @@ def individual(id_evaluado: str = None):
         <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
     </svg>'''
     
-    # Stop the individual loader (if started) before rendering the HTML
+    # Show/hide the standard loader used across views. The navigation logic
+    # should set `st.session_state['show_individual_loader'] = True` before
+    # switching to this view so `show_loader` displays the overlay here.
     try:
-        stop_loader(_individual_loader_handle)
+        show_loader('show_individual_loader', min_seconds=1.0)
     except Exception:
-        try:
-            stop_loader(None)
-        except Exception:
-            pass
+        pass
 
     html_content = f"""
     <!DOCTYPE html>

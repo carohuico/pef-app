@@ -186,6 +186,20 @@ def logout():
             _auth_debug(f"logout: error borrando {k} en cleanup: {str(exc)}")
     _auth_debug(f"logout: borradas claves: {keys}")
 
+    # Also attempt to remove jwt cookie from client via CookieController (best-effort)
+    try:
+        from streamlit_cookies_controller import CookieController
+        try:
+            controller = CookieController()
+            try:
+                controller.remove("jwt_token")
+            except Exception:
+                pass
+        except Exception:
+            pass
+    except Exception:
+        pass
+
     try:
         rerun_new = getattr(st, "rerun", None)
         if callable(rerun_new):
@@ -205,6 +219,15 @@ def logout():
     _auth_debug("logout: no se pudo llamar a rerun; llamando st.stop() como último recurso")
     try:
         st.stop()
+    except Exception:
+        pass
+    # Also clear any stored token in browser localStorage (best-effort)
+    try:
+        from streamlit_js_eval import set_local_storage
+        try:
+            set_local_storage("jwt_token", "")
+        except Exception:
+            pass
     except Exception:
         pass
     

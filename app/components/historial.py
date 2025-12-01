@@ -636,11 +636,6 @@ def historial():
                 st.session_state["open_prueba_id"] = selected_data['id_prueba']
                 st.session_state["selected_evaluation_id"] = selected_data['id_evaluado']
                 st.session_state['from_ajustes'] = False
-                # Signal the individual view to show its loader (consistent with sidebar logic)
-                try:
-                    st.session_state['show_individual_loader'] = True
-                except Exception:
-                    pass
                 st.session_state["active_view"] = "individual"
                 st.rerun()
             except Exception as e:

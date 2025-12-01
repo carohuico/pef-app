@@ -129,10 +129,38 @@ def agregar_dibujo(info_obj):
             id_evaluado = info_obj.get('id_evaluado')
             if st.session_state.get("agregar_indicadores") is None:
                 try:
-                    indicadores = simular_resultado(id_evaluado, show_overlay=True)
-                    st.session_state["agregar_indicadores"] = indicadores
+                    raw_indicadores = simular_resultado(id_evaluado, show_overlay=True)
+                    # Store raw result (same idea as cargarImagen)
                     try:
-                        for ind in (indicadores or []):
+                        st.session_state['agregar_raw_indicadores'] = raw_indicadores
+                    except Exception:
+                        pass
+
+                    # Filter indicators to only those with a usable 'significado' (same as cargarImagen)
+                    indicadores = []
+                    for ind in (raw_indicadores or []):
+                        try:
+                            sig = ind.get('significado', None)
+                        except Exception:
+                            sig = None
+                        if sig is None:
+                            continue
+                        if isinstance(sig, str) and sig.strip() == "":
+                            continue
+                        if isinstance(sig, str) and sig.strip() == "-":
+                            continue
+                        indicadores.append(ind)
+
+                    st.session_state["agregar_indicadores"] = indicadores
+                    # Also mirror the short-name used elsewhere for exports/listing
+                    try:
+                        st.session_state['indicadores'] = indicadores
+                    except Exception:
+                        pass
+
+                    # Try to capture ruta_gcs/ruta_imagen reported by the model (prefer raw entries)
+                    try:
+                        for ind in (raw_indicadores or []):
                             ruta = None
                             if isinstance(ind, dict):
                                 ruta = ind.get('ruta_imagen') or ind.get('ruta_gcs')
@@ -358,21 +386,33 @@ def agregar_dibujo(info_obj):
         elif step == 3:
             if st.button("Guardar prueba", type="primary", use_container_width=True, key="agregar_save"):
                     try:
-                        # Insertar prueba usando fetch_df (pymssql)
                         nombre_archivo = st.session_state["agregar_uploaded_file"].name
-                        # Prefer a local preview produced by the inference service (so
-                        # the individual view can read natural image dimensions and
-                        # draw bounding boxes). Fallback to the GCS path if no local
-                        # preview exists, then fall back to the original local file.
+
+                        # Prefer ruta reported by the model (from raw indicators), then GCS preview,
+                        # otherwise store a relative path under uploads/originals so individual view can
+                        # resolve it consistently (avoid saving absolute local paths).
+                        ruta_imagen = None
+                        raw_ind = st.session_state.get('agregar_raw_indicadores', None)
+                        try:
+                            if isinstance(raw_ind, dict):
+                                ruta_imagen = raw_ind.get('ruta_imagen') or raw_ind.get('ruta_gcs')
+                            elif isinstance(raw_ind, list):
+                                for item in raw_ind:
+                                    if isinstance(item, dict) and item.get('ruta_imagen'):
+                                        ruta_imagen = item.get('ruta_imagen')
+                                        break
+                        except Exception:
+                            ruta_imagen = None
+
                         last_preview = st.session_state.get('last_preview_local', None)
                         last_gcs = st.session_state.get('last_ruta_gcs', None)
 
-                        if last_preview and isinstance(last_preview, str) and os.path.exists(last_preview):
-                            ruta_imagen = str(Path(last_preview))
-                        elif last_gcs:
-                            ruta_imagen = last_gcs
-                        else:
-                            ruta_imagen = str(Path(ORIGINALS_DIR) / nombre_archivo)
+                        if not ruta_imagen:
+                            if last_gcs:
+                                ruta_imagen = last_gcs
+                            else:
+                                # Prefer storing a relative uploads path rather than an absolute filesystem path
+                                ruta_imagen = str(Path("uploads") / "originals" / nombre_archivo)
                         formato = os.path.splitext(nombre_archivo)[1].lstrip('.').lower()
                         fecha_actual = datetime.datetime.now()
 
@@ -468,6 +508,17 @@ def agregar_dibujo(info_obj):
                         st.session_state["agregar_step"] = 1
                         st.session_state["agregar_uploaded_file"] = None
                         st.session_state["agregar_indicadores"] = None
+                        # Clear raw indicators and mirrored indicadores (same as cargarImagen cleanup)
+                        if 'agregar_raw_indicadores' in st.session_state:
+                            try:
+                                del st.session_state['agregar_raw_indicadores']
+                            except Exception:
+                                st.session_state['agregar_raw_indicadores'] = None
+                        if 'indicadores' in st.session_state:
+                            try:
+                                del st.session_state['indicadores']
+                            except Exception:
+                                st.session_state['indicadores'] = None
                         st.session_state['add_drawing'] = False
                         # Limpiar la solicitud de apertura del diálogo
                         st.session_state['_agregar_dialog_open_requested'] = False

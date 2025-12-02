@@ -31,6 +31,5 @@ build/
 
 # Streamlit
 .streamlit/secrets.toml
-
 # Test files
 test.jpg

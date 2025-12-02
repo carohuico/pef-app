@@ -52,7 +52,6 @@ def inicio():
                 const dialog = document.querySelector('.stDialog, .stModal, [data-testid="stDialog"]');
                 if(!dialog) return;
 
-                // Captura clics en todo el documento y evita que cierren el diálogo
                 document.addEventListener('click', function(e){
                     const openDlg = document.querySelector('.stDialog, .stModal, [data-testid="stDialog"]');
                     if(!openDlg) return;
@@ -83,7 +82,7 @@ def inicio():
         st.write("Bajo protesta de decir verdad, hago constar que cuento con las credenciales profesionales que me acreditan como Licenciado(a) en Psicología, ya que reconozco y entiendo que el uso de esta plataforma lo requiere.")
         st.markdown("<br>", unsafe_allow_html=True)
 
-        st.checkbox("Confirmo que cuento con las credenciales profesionales (Licenciado(a) en Psicología)", key="disclaimer_checkbox")
+        st.checkbox("Confirmo que cuento con las credenciales profesionales", key="disclaimer_checkbox")
 
         if st.button(":material/check: Aceptar", use_container_width=True, type="primary", key="disclaimer_accept"):
                 if st.session_state.get("disclaimer_checkbox", False):

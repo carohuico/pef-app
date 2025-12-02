@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from services.queries.q_inicio import GET_RECIENTES, GET_EVALUADOS_EXISTENTES
 from services.db import fetch_df
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 from components.loader import show_loader
 
@@ -42,6 +43,42 @@ def inicio():
         }
         </style>
         """, unsafe_allow_html=True)
+
+        # Ejecutar JS para bloquear clics fuera del diálogo y la tecla Escape mientras esté abierto
+        components.html("""
+        <script>
+        (function(){
+            function blockInteractions(){
+                const dialog = document.querySelector('.stDialog, .stModal, [data-testid="stDialog"]');
+                if(!dialog) return;
+
+                // Captura clics en todo el documento y evita que cierren el diálogo
+                document.addEventListener('click', function(e){
+                    const openDlg = document.querySelector('.stDialog, .stModal, [data-testid="stDialog"]');
+                    if(!openDlg) return;
+                    if(!e.target.closest('.stDialog') && !e.target.closest('.stModal') && !e.target.closest('[data-testid="stDialog"]')){
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                    }
+                }, true);
+
+                // Bloquear Escape
+                document.addEventListener('keydown', function(e){
+                    const openDlg = document.querySelector('.stDialog, .stModal, [data-testid="stDialog"]');
+                    if(!openDlg) return;
+                    if(e.key === 'Escape'){
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                    }
+                }, true);
+            }
+
+            const observer = new MutationObserver(blockInteractions);
+            observer.observe(document.body, {childList: true, subtree: true});
+            blockInteractions();
+        })();
+        </script>
+        """, height=0)
 
         st.write("Bajo protesta de decir verdad, hago constar que cuento con las credenciales profesionales que me acreditan como Licenciado(a) en Psicología, ya que reconozco y entiendo que el uso de esta plataforma lo requiere.")
         st.markdown("<br>", unsafe_allow_html=True)

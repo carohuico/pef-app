@@ -65,8 +65,16 @@ def cargar_imagen_component():
     if "_saving_in_progress" not in st.session_state:
         st.session_state["_saving_in_progress"] = False
 
-
-
+    try:
+        import services.auth as auth
+        is_admin = auth.is_admin()
+        is_esp = auth.is_especialista()
+        is_op = auth.is_operador()
+    except Exception:
+        is_admin = False
+        is_esp = False
+        is_op = False
+    
     with st.container():
         step = st.session_state.get("current_step", 1)
         st.markdown('<div class="page-header">Nueva evaluación</div>', unsafe_allow_html=True)
@@ -92,17 +100,6 @@ def cargar_imagen_component():
         
 
         def registrar_component():
-            # --- Primera fila: Selección de especialista (si aplica) ---
-            try:
-                import services.auth as auth
-                is_admin = auth.is_admin()
-                is_esp = auth.is_especialista()
-                is_op = auth.is_operador()
-            except Exception:
-                is_admin = False
-                is_esp = False
-                is_op = False
-
             # Obtener lista de especialistas para el selectbox
             try:
                 df_esp = fetch_df(GET_ESPECIALISTAS)
@@ -165,7 +162,6 @@ def cargar_imagen_component():
                 st.session_state["form_apellido"] = apellido_value.strip()
                 st.markdown('</div>', unsafe_allow_html=True)
 
-            # ( anteriormente mostrado aquí )
 
             # Segunda fila: Fecha de nacimiento y Sexo
             col1, col2 = st.columns(2)
@@ -360,8 +356,6 @@ def cargar_imagen_component():
                     st.error("No se encontró el ID del evaluado. Completa el registro antes de obtener resultados.")
                     raw_indicadores = []
                 else:
-                    # Only run inference when we purposely advanced to the results step
-                    # or when there's no cached raw result in session state.
                     if not st.session_state.get('_saving_in_progress', False):
                         should_run = st.session_state.get('_run_inference_on_results', False)
                         cached = st.session_state.get('raw_indicadores', None)
@@ -381,17 +375,6 @@ def cargar_imagen_component():
                         raw_indicadores = st.session_state.get('raw_indicadores', []) or []
             else:
                 raw_indicadores = []
-
-            # If the current user is an operator, they should not see the
-            # detailed results. We still run inference above and keep the
-            # results in session so the existing save/finalize flow persists
-            # them later, but we hide the UI output and show a concise
-            # success message.
-            try:
-                import services.auth as auth
-                is_op = auth.is_operador()
-            except Exception:
-                is_op = False
 
             if is_op:
                 indicadores = []
@@ -555,48 +538,49 @@ def cargar_imagen_component():
         if step == 3:
             with col_exp:
                 info_evaluado = {}
-                button_label = ":material/download: Exportar resultados"
-                if st.button(button_label, key="export_results", type="tertiary"):
-                    if not st.session_state.get("already_registered", False):
-                        info_evaluado = {
-                            "nombre": st.session_state.get("form_nombre", ""),
-                            "apellido": st.session_state.get("form_apellido", ""),
-                            "fecha_nacimiento": st.session_state.get("form_fecha_nacimiento_widget", ""),
-                            "sexo": st.session_state.get("sexo", ""),
-                            "estado_civil": st.session_state.get("estado_civil", ""),
-                            "escolaridad": st.session_state.get("escolaridad", ""),
-                            "ocupacion": st.session_state.get("ocupacion", ""),
-                            "grupo": st.session_state.get("form_grupo", ""),
-                        }
-                        render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
-                    else:
-                        id_evaluado = st.session_state.get("id_evaluado", None)
-                        if id_evaluado is None:
-                            st.error("No se encontró el ID del evaluado en la sesión.")
-                            return
-                        df_evaluado = fetch_df(
-                            "SELECT nombre, apellido, fecha_nacimiento, sexo, estado_civil, escolaridad, ocupacion, id_grupo FROM Evaluado WHERE id_evaluado = @id",
-                            {"id": id_evaluado},
-                        )
-                        info_evaluado = {
-                            "nombre": df_evaluado.at[0, "nombre"] if not df_evaluado.empty else "",
-                            "apellido": df_evaluado.at[0, "apellido"] if not df_evaluado.empty else "",
-                            "fecha_nacimiento": df_evaluado.at[0, "fecha_nacimiento"] if not df_evaluado.empty else "",
-                            "sexo": df_evaluado.at[0, "sexo"] if not df_evaluado.empty else "",
-                            "estado_civil": df_evaluado.at[0, "estado_civil"] if not df_evaluado.empty else "",
-                            "escolaridad": df_evaluado.at[0, "escolaridad"] if not df_evaluado.empty else "",
-                            "ocupacion": df_evaluado.at[0, "ocupacion"] if not df_evaluado.empty else "",
-                            "grupo": (
-                                (
-                                        fetch_df(
-                                        "SELECT nombre FROM Grupo WHERE id_grupo = @id",
-                                        {"id": int(df_evaluado.at[0, "id_grupo"]) }
-                                    ).at[0, "nombre"]
-                                    if not pd.isna(df_evaluado.at[0, "id_grupo"]) else ""
-                                ) if not df_evaluado.empty else ""
-                            ),
-                        }
-                        render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
+                if not is_op:
+                    button_label = ":material/download: Exportar resultados"
+                    if st.button(button_label, key="export_results", type="tertiary"):
+                        if not st.session_state.get("already_registered", False):
+                            info_evaluado = {
+                                "nombre": st.session_state.get("form_nombre", ""),
+                                "apellido": st.session_state.get("form_apellido", ""),
+                                "fecha_nacimiento": st.session_state.get("form_fecha_nacimiento_widget", ""),
+                                "sexo": st.session_state.get("sexo", ""),
+                                "estado_civil": st.session_state.get("estado_civil", ""),
+                                "escolaridad": st.session_state.get("escolaridad", ""),
+                                "ocupacion": st.session_state.get("ocupacion", ""),
+                                "grupo": st.session_state.get("form_grupo", ""),
+                            }
+                            render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
+                        else:
+                            id_evaluado = st.session_state.get("id_evaluado", None)
+                            if id_evaluado is None:
+                                st.error("No se encontró el ID del evaluado en la sesión.")
+                                return
+                            df_evaluado = fetch_df(
+                                "SELECT nombre, apellido, fecha_nacimiento, sexo, estado_civil, escolaridad, ocupacion, id_grupo FROM Evaluado WHERE id_evaluado = @id",
+                                {"id": id_evaluado},
+                            )
+                            info_evaluado = {
+                                "nombre": df_evaluado.at[0, "nombre"] if not df_evaluado.empty else "",
+                                "apellido": df_evaluado.at[0, "apellido"] if not df_evaluado.empty else "",
+                                "fecha_nacimiento": df_evaluado.at[0, "fecha_nacimiento"] if not df_evaluado.empty else "",
+                                "sexo": df_evaluado.at[0, "sexo"] if not df_evaluado.empty else "",
+                                "estado_civil": df_evaluado.at[0, "estado_civil"] if not df_evaluado.empty else "",
+                                "escolaridad": df_evaluado.at[0, "escolaridad"] if not df_evaluado.empty else "",
+                                "ocupacion": df_evaluado.at[0, "ocupacion"] if not df_evaluado.empty else "",
+                                "grupo": (
+                                    (
+                                            fetch_df(
+                                            "SELECT nombre FROM Grupo WHERE id_grupo = @id",
+                                            {"id": int(df_evaluado.at[0, "id_grupo"]) }
+                                        ).at[0, "nombre"]
+                                        if not pd.isna(df_evaluado.at[0, "id_grupo"]) else ""
+                                    ) if not df_evaluado.empty else ""
+                                ),
+                            }
+                            render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
                         
         with col_next:
             next_disabled = step > 3
@@ -873,7 +857,6 @@ def cargar_imagen_component():
                                         id_grupo = None
 
                                 params["id_grupo"] = id_grupo
-                                # Asegurar que id_usuario sea nativo (no numpy types) o None
                                 try:
                                     if params.get("id_usuario") is not None:
                                         params["id_usuario"] = int(params["id_usuario"])

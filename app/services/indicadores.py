@@ -254,7 +254,6 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
         "Detectando indicadores...",
         "Interpretando elementos...",
         "Generando análisis completo...",
-        "Finalizando evaluación...",
     ]
 
     result_holder = {"done": False, "result": None, "error": None}
@@ -496,9 +495,9 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                 overlay_ph.markdown(f"**{msg}**")
             except Exception:
                 pass
-        # wait up to 5 seconds but exit early if worker finishes
+        # wait up to 10 seconds but exit early if worker finishes
         waited = 0.0
-        while waited < 5.0 and not result_holder.get('done'):
+        while waited < 10.0 and not result_holder.get('done'):
             time.sleep(0.25)
             waited += 0.25
 

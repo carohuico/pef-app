@@ -856,6 +856,42 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
     - user_id: si provisto, mostrará sólo evaluados asignados a ese usuario.
     """
     
+    # --- Reset filters/session state ---
+    # Ensure filters and any evaluados-related session keys are cleared so the view
+    # always starts fresh and shows all evaluados (avoid stale cache/state interference).
+    try:
+        if 'active_filters' in st.session_state:
+            try:
+                del st.session_state['active_filters']
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    try:
+        # Remove any keys created by previous evaluados instances (prefixed with 'evaluados_')
+        for k in list(st.session_state.keys()):
+            try:
+                if isinstance(k, str) and k.startswith('evaluados_'):
+                    try:
+                        del st.session_state[k]
+                    except Exception:
+                        pass
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # Remove cached in-memory dataframe so we always reload current DB state
+    try:
+        if 'evaluados_df' in st.session_state:
+            try:
+                del st.session_state['evaluados_df']
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     _css_evaluados = Path(__file__).parent.parent / 'assets' / 'evaluados.css'
     
     try:

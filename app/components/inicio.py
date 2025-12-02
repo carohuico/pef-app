@@ -24,6 +24,53 @@ def inicio():
         st.markdown("""
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
         """, unsafe_allow_html=True)
+
+    # ---------- DIALOG: Aviso de privacidad (se muestra al abrir Inicio) ----------
+    @st.dialog("Aviso de privacidad")
+    def disclaimer_dialog():
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        st.markdown("""
+        <style>
+        .stDialog button[aria-label="Close"],
+        .stModal button[aria-label="Close"],
+        [data-testid="stDialogCloseButton"],
+        button[title="Close"],
+        button[aria-label="Cerrar"],
+        button[aria-label="close"] {
+            display: none !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        st.write("Bajo protesta de decir verdad, hago constar que cuento con las credenciales profesionales que me acreditan como Licenciado(a) en Psicología, ya que reconozco y entiendo que el uso de esta plataforma lo requiere.")
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        st.checkbox("Confirmo que cuento con las credenciales profesionales (Licenciado(a) en Psicología)", key="disclaimer_checkbox")
+
+        if st.button(":material/check: Aceptar", use_container_width=True, type="primary", key="disclaimer_accept"):
+                if st.session_state.get("disclaimer_checkbox", False):
+                    st.session_state['disclaimer_accepted'] = True
+                    st.session_state['disclaimer_error'] = False
+                    st.rerun()
+                else:
+                    st.session_state['disclaimer_error'] = True
+                    st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Placeholder que aparece debajo del botón y ocupa todo el ancho
+        msg_ph = st.empty()
+        if st.session_state.get('disclaimer_error', False):
+            msg_ph.warning("Debes marcar la casilla para aceptar el aviso de privacidad.")
+
+    # Mostrar el disclaimer si no se ha aceptado aún
+    try:
+        if not st.session_state.get('disclaimer_accepted', False):
+            disclaimer_dialog()
+    except Exception:
+        # En caso de error mostrando diálogo, forzar cierre de sesión por seguridad
+        st.session_state["active_view"] = "salir"
+        st.rerun()
     
     # ---------- DIÁLOGO SELECCIÓN EVALUADO ----------
     @st.dialog("Nueva evaluación")

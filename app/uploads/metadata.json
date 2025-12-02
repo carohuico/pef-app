@@ -1,0 +1,161 @@
+[
+  {
+    "image_original_path": "gs://bucket-pbll/pruebas/3038/3038_8a7313f9-d3f5-4daf-8bbb-cb7370860e20.jpg",
+    "image_filename": "3038_8a7313f9-d3f5-4daf-8bbb-cb7370860e20.jpg",
+    "image_width": 640,
+    "image_height": 640,
+    "archivo": {
+      "nombre": "3038_8a7313f9-d3f5-4daf-8bbb-cb7370860e20.jpg",
+      "ruta_gcs": "gs://bucket-pbll/pruebas/3038/3038_8a7313f9-d3f5-4daf-8bbb-cb7370860e20.jpg",
+      "width": 640,
+      "height": 640
+    },
+    "trazos_analysis": {
+      "image": "infer_c875e45bc09447c3ae732a8d3f6db246_3038_8a7313f9-d3f5-4daf-8bbb-cb7370860e20.jpg",
+      "tipo": "trazos normales",
+      "stroke_strength_index": 0.375,
+      "intensity_mean": 159.27,
+      "median_intensity": 170.0,
+      "stroke_coverage_%": 1.92,
+      "dark_ratio": 0.062,
+      "superposicion_stats": {
+        "junction_density": 0.0128,
+        "junctions": 31,
+        "length": 2419
+      },
+      "tipo_hibrido": "trazos débiles",
+      "angulosos_stats": {
+        "corner_density": 27.47,
+        "linearity_ratio": 0.334
+      },
+      "dinamismo_stats": {
+        "theta": null,
+        "oblique_ratio": 0.0
+      },
+      "labels": [
+        "trazos débiles"
+      ],
+      "indicator_ids": [
+        41
+      ]
+    },
+    "detections": [
+      {
+        "indicator_ids": [
+          2,
+          4
+        ],
+        "crop_filename": "infer_c875e45bc09447c3ae732a8d3f6db246_3038_8a7313f9-d3f5-4daf-8bbb-cb7370860e20_crop_1_Lluvia.jpg",
+        "base_label_yolo": "Lluvia",
+        "confidence_base": 0.942,
+        "bbox_original": [
+          21,
+          143,
+          615,
+          600
+        ],
+        "bbox_width": 594,
+        "bbox_height": 457,
+        "context_general": [],
+        "context_specific": [
+          "invade a la figura"
+        ],
+        "submodel_results": {
+          "lluvia_morfologia": {
+            "labels": [
+              "leve"
+            ],
+            "probabilities": {
+              "leve": 0.66,
+              "controlada": 0.34,
+              "excesivamente_torrencial": 0.0
+            },
+            "pretty_name": "Lluvia - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          31
+        ],
+        "crop_filename": "infer_c875e45bc09447c3ae732a8d3f6db246_3038_8a7313f9-d3f5-4daf-8bbb-cb7370860e20_crop_2_FiguraHumana.jpg",
+        "base_label_yolo": "FiguraHumana",
+        "confidence_base": 0.93,
+        "bbox_original": [
+          215,
+          260,
+          350,
+          582
+        ],
+        "bbox_width": 135,
+        "bbox_height": 322,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "figura_morfologia": {
+            "labels": [
+              "esquematica"
+            ],
+            "probabilities": {
+              "de_espaldas": 0.01,
+              "esquematica": 0.96,
+              "sin_rasgos_faciales": 0.03
+            },
+            "pretty_name": "Figura Humana - Morfología"
+          }
+        }
+      },
+      {
+        "indicator_ids": [
+          24
+        ],
+        "crop_filename": "infer_c875e45bc09447c3ae732a8d3f6db246_3038_8a7313f9-d3f5-4daf-8bbb-cb7370860e20_crop_3_Paisaje.jpg",
+        "base_label_yolo": "Paisaje",
+        "confidence_base": 0.919,
+        "bbox_original": [
+          52,
+          13,
+          616,
+          177
+        ],
+        "bbox_width": 564,
+        "bbox_height": 164,
+        "context_general": [],
+        "context_specific": [],
+        "submodel_results": {
+          "paisaje_nubes": {
+            "labels": [
+              "nube"
+            ],
+            "probabilities": {
+              "otro": 0.02,
+              "nube": 0.98
+            },
+            "pretty_name": "Paisaje - Morfología",
+            "stroke_strength_index": 0.362,
+            "p66_global": 0.671,
+            "criterion_met": true
+          }
+        }
+      }
+    ],
+    "annotated_image_path": null,
+    "indicator_ids": [
+      2,
+      4,
+      14,
+      23,
+      24,
+      29,
+      31,
+      41
+    ]
+  },
+  {
+    "summary": {
+      "total_images": 1,
+      "total_time_sec": 24.027,
+      "avg_time_sec": 24.027
+    }
+  }
+]

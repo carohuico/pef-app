@@ -272,10 +272,20 @@ def dialog_filtros():
             df_filtered = df_filtered[df_filtered['Edad'] >= edad_min]
 
             if fecha_desde:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['Fecha de evaluación']) >= pd.to_datetime(fecha_desde)]
+                try:
+                    fecha_series = pd.to_datetime(df_filtered['Fecha de evaluación'], dayfirst=True, errors='coerce')
+                    fecha_cmp = pd.to_datetime(fecha_desde)
+                    df_filtered = df_filtered[fecha_series >= fecha_cmp]
+                except Exception:
+                    pass
 
             if fecha_hasta:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['Fecha de evaluación']) <= pd.to_datetime(fecha_hasta)]
+                try:
+                    fecha_series = pd.to_datetime(df_filtered['Fecha de evaluación'], dayfirst=True, errors='coerce')
+                    fecha_cmp = pd.to_datetime(fecha_hasta)
+                    df_filtered = df_filtered[fecha_series <= fecha_cmp]
+                except Exception:
+                    pass
 
             if df_filtered is None or df_filtered.empty:
                 st.session_state['historial_filters_no_results'] = True

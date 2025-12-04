@@ -119,7 +119,7 @@ def render_export_popover(info_evaluado=None, indicadores=None):
     csv_href = f"data:text/csv;charset=utf-8-sig;base64,{csv_b64}"
     
     from datetime import datetime
-    filename = f"historial_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    filename = f"historial_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv" 
 
     # Lista de opciones/indicadores para el dropdown
     column_options = selected_rows.columns.tolist() if not selected_rows.empty else [

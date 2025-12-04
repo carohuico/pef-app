@@ -72,7 +72,7 @@ def agregar_usuario_dialog():
         password = st.text_input(
             "Contraseña :red[*]",
             type="password",
-            help="Requisitos:\n- Debe tener al menos 12 caracteres.\n- Puedes usar letras, números y símbolos."
+            help="Requisitos:\n- Debe tener al menos 12 caracteres.\n- Debe tener al menos una letra mayúscula. \n- Debe tener al menos una letra minúscula.\n- Debe tener al menos un número."
         )
     
         col_btn1, col_btn2 = st.columns([1, 1])
@@ -108,18 +108,18 @@ def agregar_usuario_dialog():
             if len(password) < 12:
                 st.error("La contraseña debe tener al menos 12 caracteres")
                 st.stop()
-            #si la contraseña no tiene al menos una mayuscula, una minuscula, un numero y un caracter especial
-            elif re.search(r'[A-Z]', password):
+
+            if not re.search(r"[A-Z]", password):
                 st.error("La contraseña debe contener al menos una letra mayúscula")
                 st.stop()
 
-            elif not re.search(r'[0-9]', password):
+            if not re.search(r"[a-z]", password):
+                st.error("La contraseña debe contener al menos una letra minúscula")
+                st.stop()
+
+            if not re.search(r"[0-9]", password):
                 st.error("La contraseña debe contener al menos un número")
                 st.stop()
-            elif re.search(r'[\W_]', password):
-                st.error("La contraseña debe contener al menos un carácter especial")
-                st.stop()
-            
             
             if telefono and len(telefono) != 10:
                 st.error("El teléfono debe tener exactamente 10 dígitos")
@@ -171,9 +171,7 @@ label = ":material/edit: Editar Usuario"
 @st.dialog(label)
 def editar_usuario_dialog(usuario_data):
     """Modal para editar un usuario existente"""
-    with st.form("form_editar_usuario", border=False):
-        st.write(f"Editando usuario: **{usuario_data['usuario']}**")
-        
+    with st.form("form_editar_usuario", border=False):        
         
         usuario = st.text_input(
             "Usuario :red[*]",
@@ -204,7 +202,7 @@ def editar_usuario_dialog(usuario_data):
             "Contraseña",
             type="password",
             placeholder="Dejar vacío para mantener la contraseña actual",
-            help="Requisitos:\n- Debe tener al menos 12 caracteres.\n- Puedes usar letras, números y símbolos.\n- Deja vacío si no deseas cambiarla."
+            help="Requisitos:\n- Debe tener al menos 12 caracteres.\n- Debe tener al menos una letra mayúscula. \n- Debe tener al menos una letra minúscula.\n- Debe tener al menos un número."
         )
         
         col_btn1, col_btn2 = st.columns([1, 1])
@@ -236,10 +234,28 @@ def editar_usuario_dialog(usuario_data):
                 st.stop()
             
             # Validar nueva contraseña solo si se proporcionó
-            if nueva_password and len(nueva_password) < 12:
-                label = ":material/warning:"
-                st.error(f"{label} La nueva contraseña debe tener al menos 12 caracteres")
-                st.stop()
+            if nueva_password:
+                if len(nueva_password) < 12:
+                    label = ":material/warning:"
+                    st.error(f"{label} La nueva contraseña debe tener al menos 12 caracteres")
+                    st.stop()
+
+                if not re.search(r"[A-Z]", nueva_password):
+                    label = ":material/warning:"
+                    st.error(f"{label} La nueva contraseña debe contener al menos una letra mayúscula")
+                    st.stop()
+
+                if not re.search(r"[a-z]", nueva_password):
+                    label = ":material/warning:"
+                    st.error(f"{label} La nueva contraseña debe contener al menos una letra minúscula")
+                    st.stop()
+
+                if not re.search(r"[0-9]", nueva_password):
+                    label = ":material/warning:"
+                    st.error(f"{label} La nueva contraseña debe contener al menos un número")
+                    st.stop()
+
+
             
             if telefono and len(telefono) != 10:
                 label = ":material/warning:"

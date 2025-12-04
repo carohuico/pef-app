@@ -1710,40 +1710,45 @@ def individual(id_evaluado: str = None):
         button_label = ":material/delete: Eliminar prueba"
         if st.button(button_label, width='stretch', type="secondary", key="btn_delete_drawing"):
             try:
-                id_prueba = current_prueba.get('id_prueba')
-            except Exception:
-                id_prueba = None
-
-            if id_prueba is None:
-                st.warning(":material/warning: No se pudo identificar la prueba a eliminar.")
-            else:
+                # Snapshot the id shown in the carousel into session_state so
+                # it survives any intermediate reruns triggered by Streamlit.
                 try:
+                    id_prueba = current_prueba.get('id_prueba')
+                except Exception:
+                    id_prueba = None
+
+                if id_prueba is None:
+                    st.warning(":material/warning: No se pudo identificar la prueba a eliminar.")
+                else:
                     try:
+                        # Store a pending delete id in session_state (useful for debugging
+                        # or if the confirmation flow needs to reference the id later).
+                        try:
+                            st.session_state['pending_delete_prueba'] = int(id_prueba)
+                        except Exception:
+                            st.session_state['pending_delete_prueba'] = id_prueba
+
+                        # Build a minimal DataFrame containing the exact id we want
+                        # to delete and pass it to the confirmation dialog. Use the
+                        # prueba id as the DataFrame index so the dialog's fallback
+                        # logic does not pick a different row from any global df.
                         selected_df = pd.DataFrame([
                             {
-                                'id_prueba': id_prueba,
+                                'id_prueba': int(id_prueba),
                                 'Nombre del evaluado': f"{info_obj.get('Nombre','')} {info_obj.get('Apellido','')}",
                                 'Fecha de evaluación': current_prueba.get('fecha', '')
                             }
                         ])
-                        # Ensure the DataFrame index does not collide with any external
-                        # historial index logic used by the confirmation dialog. Use
-                        # the prueba id as the index so the dialog can resolve IDs
-                        # reliably without falling back to the global historial DataFrame.
-                        try:
-                            selected_df.index = [int(id_prueba)]
-                        except Exception:
-                            pass
-                    except Exception:
-                        selected_df = pd.DataFrame([{'id_prueba': id_prueba}])
                         try:
                             selected_df.index = [int(id_prueba)]
                         except Exception:
                             pass
 
-                    confirmar_eliminacion_pruebas(selected_df)
-                except Exception as e:
-                    st.error(f"Error abriendo diálogo de confirmación: {e}")
+                        confirmar_eliminacion_pruebas(selected_df)
+                    except Exception as e:
+                        st.error(f"Error abriendo diálogo de confirmación: {e}")
+            except Exception:
+                st.error(":material/error: Error procesando eliminación.")
     
     with col3:
         button_label = ":material/add: Agregar dibujo"

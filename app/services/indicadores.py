@@ -388,14 +388,32 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
             if df is not None and not df.empty:
                 for _, row in df.iterrows():
                     try:
-                        id_map[int(row.get('id_indicador'))] = (row.get('nombre', ''), row.get('significado', ''))
+                        iid = int(row.get('id_indicador'))
                     except Exception:
                         continue
+                    try:
+                        id_map[iid] = {
+                            'nombre': row.get('nombre', '') if 'nombre' in row.index else row.get('nombre', ''),
+                            'significado': row.get('significado', '') if 'significado' in row.index else row.get('significado', ''),
+                            'id_categoria': row.get('id_categoria') if 'id_categoria' in row.index else None,
+                            'categoria_nombre': row.get('categoria_nombre') if 'categoria_nombre' in row.index else None,
+                        }
+                    except Exception:
+                        id_map[iid] = {
+                            'nombre': row.get('nombre', ''),
+                            'significado': row.get('significado', ''),
+                            'id_categoria': None,
+                            'categoria_nombre': None,
+                        }
 
             resultados_local: List[Dict] = []
             for p in indicadores_local:
                 iid = p['id_indicador']
-                nombre, significado = id_map.get(iid, ('', ''))
+                meta = id_map.get(iid, {}) if isinstance(id_map, dict) else {}
+                nombre = meta.get('nombre') if isinstance(meta, dict) else ''
+                significado = meta.get('significado') if isinstance(meta, dict) else ''
+                id_categoria = meta.get('id_categoria') if isinstance(meta, dict) else None
+                categoria_nombre = meta.get('categoria_nombre') if isinstance(meta, dict) else None
                 resultados_local.append({
                     'id_indicador': iid,
                     'nombre': nombre,
@@ -406,6 +424,8 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                     'y_min': p.get('y_min', 0),
                     'y_max': p.get('y_max', 0),
                     'ruta_imagen': p.get('ruta_imagen', None),
+                    'id_categoria': id_categoria,
+                    'categoria_nombre': categoria_nombre,
                 })
 
             # Business rule: if indicator 16 is present AND any of indicators {8,9,10,11,12,13} present,

@@ -9,6 +9,7 @@ import pandas as pd
 from components.loader import show_loader
 
 def inicio():
+    show_loader('show_inicio_loader', min_seconds=1.0)
     # ---------- CSS (externo) ----------
     _css_general = Path(__file__).parent.parent / 'assets' / 'general.css'
     _css_sidebar = Path(__file__).parent.parent / 'assets' / 'sidebar_component.css'
@@ -355,4 +356,3 @@ def inicio():
                         st.rerun()
             except Exception:
                 pass
-    show_loader('show_inicio_loader', min_seconds=1.0)

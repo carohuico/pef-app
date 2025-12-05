@@ -82,6 +82,12 @@
     font-weight: 400;
 }
 
+.stat-label-2 {
+    font-size: 11px;
+    color: #444444;
+    font-weight: 400;
+}
+
 /* Section Spacer */
 .section-spacer {
     height: 24px;

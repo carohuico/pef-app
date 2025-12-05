@@ -152,7 +152,6 @@ def agregar_dibujo(info_obj):
                         indicadores.append(ind)
 
                     st.session_state["agregar_indicadores"] = indicadores
-                    # Also mirror the short-name used elsewhere for exports/listing
                     try:
                         st.session_state['indicadores'] = indicadores
                     except Exception:
@@ -213,7 +212,6 @@ def agregar_dibujo(info_obj):
             with col2:
                 st.markdown("### Indicadores detectados")
                 if not indicadores:
-                    # Custom inline message with pulsing dots (avoid st.info/st.alert)
                     st.markdown(
                         """
                         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;background:transparent;">
@@ -275,8 +273,6 @@ def agregar_dibujo(info_obj):
                         if 'Confianza' in df.columns:
                             df['Confianza'] = df['Confianza'].round(2)
 
-                        # Mostrar DataFrame en modo sólo lectura usando data_editor
-                        # y configurar el ancho de columnas solicitadas a "small".
                         try:
                             st.data_editor(
                                 df,
@@ -314,11 +310,11 @@ def agregar_dibujo(info_obj):
                 if 'ruta_imagen' in ind and ind.get('ruta_imagen'):
                     ruta_imagen = ind.get('ruta_imagen')
                     break
-            # Preparar info del evaluado para el exportador (puede aceptar dict o lista de dicts)
+            
+            
             info_evaluado = {
-                "Fecha de evaluación": info_obj.get("Fecha de evaluación", ""),
+                "Fecha de evaluación": datetime.datetime.now().strftime("%d/%m/%Y"),
                 "Nombre": info_obj.get("Nombre", info_obj.get("Nombre del evaluado", "Desconocido")),
-                "Nombre del evaluado": info_obj.get("Nombre", info_obj.get("Nombre del evaluado", "Desconocido")),
                 "Apellido": info_obj.get("Apellido", ""),
                 "Edad": info_obj.get("Edad", "N/A"),
                 "Sexo": info_obj.get("Sexo", "N/A"),
@@ -330,7 +326,59 @@ def agregar_dibujo(info_obj):
             }
             st.markdown("<style>[data-testid=\"stBaseButton-tertiary\"]:not([data-testid=\"stSidebar\"] *) { background: #FFFFFF; border:none; color: #000000; margin-top: 1rem; padding: 16px 24px; display: inline-block; text-decoration: underline;  cursor: pointer; }</style>", unsafe_allow_html=True)
             if st.button("Exportar prueba", use_container_width=True, key="agregar_export", type="tertiary"):
-                indicadores = st.session_state.get("agregar_indicadores", [])
+                """"
+                lista_inds.append({
+                    "nombre": r.get('nombre_indicador') if 'nombre_indicador' in r else r.get('nombre') if 'nombre' in r else None,
+                    "significado": r.get('significado') if 'significado' in r else None,
+                    "confianza": r.get('confianza') if 'confianza' in r else None,
+                    "id_indicador": r.get('id_indicador') if 'id_indicador' in r else None,
+                    "id_categoria": r.get('id_categoria') if 'id_categoria' in r else None,
+                    "categoria_nombre": r.get('categoria_nombre') if 'categoria_nombre' in r else None,
+                    "categoria": r.get('categoria') if 'categoria' in r else None,
+                })
+                """
+                indicadores = []
+                raw_inds = st.session_state.get('agregar_raw_indicadores', [])
+                for r in raw_inds:
+                    lista_inds = []
+                    try:
+                        nombre = r.get('nombre_indicador') if 'nombre_indicador' in r else r.get('nombre') if 'nombre' in r else None
+                    except Exception:
+                        nombre = None
+                    try:
+                        significado = r.get('significado') if 'significado' in r else None
+                    except Exception:
+                        significado = None
+                    try:
+                        confianza = r.get('confianza') if 'confianza' in r else None
+                    except Exception:
+                        confianza = None
+                    try:
+                        id_indicador = r.get('id_indicador') if 'id_indicador' in r else None
+                    except Exception:
+                        id_indicador = None
+                    try:
+                        id_categoria = r.get('id_categoria') if 'id_categoria' in r else None
+                    except Exception:
+                        id_categoria = None
+                    try:
+                        categoria_nombre = r.get('categoria_nombre') if 'categoria_nombre' in r else None
+                    except Exception:
+                        categoria_nombre = None
+                    try:
+                        categoria = r.get('categoria') if 'categoria' in r else None
+                    except Exception:
+                        categoria = None
+
+                    indicadores.append({
+                        "nombre": nombre,
+                        "significado": significado, 
+                        "confianza": confianza,
+                        "id_indicador": id_indicador,
+                        "id_categoria": id_categoria,
+                        "categoria_nombre": categoria_nombre,
+                        "categoria": categoria,
+                    })                
                 render_export_popover(info_evaluado, indicadores)
 
     # ---------- NAVEGACIÓN ----------
@@ -361,7 +409,6 @@ def agregar_dibujo(info_obj):
                     label = ":material/warning: Por favor, sube una imagen para continuar"
                     st.error(label)
                 else:
-                    # Procesar imagen
                     with st.spinner("Procesando imagen..."):
                         imagen = Image.open(st.session_state["agregar_uploaded_file"])
                         nombre = st.session_state["agregar_uploaded_file"].name
@@ -377,7 +424,7 @@ def agregar_dibujo(info_obj):
         
         # PASO 2 -> PASO 3
         elif step == 2:
-            button_label = "Siguiente :material/arrow_forward:"
+            button_label = "Siguiente"
             if st.button(button_label, type="primary", use_container_width=True, key="agregar_next_step2"):
                 st.session_state["agregar_step"] = 3
                 st.rerun(scope="fragment")
@@ -388,9 +435,6 @@ def agregar_dibujo(info_obj):
                     try:
                         nombre_archivo = st.session_state["agregar_uploaded_file"].name
 
-                        # Prefer ruta reported by the model (from raw indicators), then GCS preview,
-                        # otherwise store a relative path under uploads/originals so individual view can
-                        # resolve it consistently (avoid saving absolute local paths).
                         ruta_imagen = None
                         raw_ind = st.session_state.get('agregar_raw_indicadores', None)
                         try:
@@ -472,7 +516,6 @@ def agregar_dibujo(info_obj):
                                 "confianza": confianza
                             }
                             params_result = _normalize_params(params_result)
-                            # execute insert (no result expected)
                             fetch_df(sql_resultado, params_result)
 
                         try:

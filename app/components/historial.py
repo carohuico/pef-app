@@ -438,7 +438,7 @@ def historial():
     st.markdown("<br/>", unsafe_allow_html=True)
     
     if buscar:
-        mask = df_display[['Nombre del evaluado', 'Sexo', 'Grupo']].apply(
+        mask = df_display[['Nombre del evaluado', 'Sexo', 'Grupo', 'id_prueba']].apply(
             lambda row: row.astype(str).str.contains(buscar, case=False).any(), axis=1
         )
         df_display = df_display[mask]
@@ -608,7 +608,6 @@ def historial():
                         except Exception:
                             indicadores_por_fila.append([])
 
-                    # Si no se encontraron indicadores por fila, como fallback usar indicadores en sesión o lista vacía
                     use_indicadores = indicadores_por_fila if any(len(x) for x in indicadores_por_fila) else st.session_state.get("indicadores", [])
                     render_export_popover(info_list, use_indicadores)
             except Exception as e:

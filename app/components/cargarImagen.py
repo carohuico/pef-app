@@ -552,6 +552,13 @@ def cargar_imagen_component():
                                 "ocupacion": st.session_state.get("ocupacion", ""),
                                 "grupo": st.session_state.get("form_grupo", ""),
                             }
+                            # Adjuntar ruta de imagen si está disponible en la sesión
+                            try:
+                                ruta = st.session_state.get('last_saved_image_path', None)
+                                if ruta:
+                                    info_evaluado['ruta_imagen'] = ruta
+                            except Exception:
+                                pass
                             render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
                         else:
                             id_evaluado = st.session_state.get("id_evaluado", None)
@@ -580,6 +587,24 @@ def cargar_imagen_component():
                                     ) if not df_evaluado.empty else ""
                                 ),
                             }
+                            # Intentar resolver una ruta de imagen conocida (raw_indicadores o sesión)
+                            try:
+                                ruta = None
+                                raw_ind = st.session_state.get('raw_indicadores', None)
+                                if isinstance(raw_ind, dict):
+                                    ruta = raw_ind.get('ruta_imagen') or raw_ind.get('ruta') or raw_ind.get('image') or raw_ind.get('imagen')
+                                elif isinstance(raw_ind, list):
+                                    for item in raw_ind:
+                                        if isinstance(item, dict) and item.get('ruta_imagen'):
+                                            ruta = item.get('ruta_imagen')
+                                            break
+                                # Fallback a la última imagen guardada en esta sesión
+                                if not ruta:
+                                    ruta = st.session_state.get('last_saved_image_path', None)
+                                if ruta:
+                                    info_evaluado['ruta_imagen'] = ruta
+                            except Exception:
+                                pass
                             render_export_popover(info_evaluado, st.session_state.get("indicadores", []))
                         
         with col_next:
@@ -759,6 +784,18 @@ def cargar_imagen_component():
                                 imagen.save(temp_path)
                             except Exception as e:
                                 st.warning(f"No se pudo guardar copia temporal de la imagen: {e}")
+                            # Guardar ruta en la sesión para permitir la exportación con imagen
+                            try:
+                                # Preferir la imagen estandarizada (orig_path) si existe
+                                if orig_path.exists():
+                                    st.session_state['last_saved_image_path'] = str(orig_path)
+                                else:
+                                    st.session_state['last_saved_image_path'] = str(temp_path)
+                            except Exception:
+                                try:
+                                    st.session_state['last_saved_image_path'] = str(orig_path)
+                                except Exception:
+                                    pass
 
                             # Si el evaluado NO está registrado aún, intentar crear uno ahora
                             if not st.session_state.get("already_registered", False):

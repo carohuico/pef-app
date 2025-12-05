@@ -55,7 +55,6 @@ def render_export_popover(info_evaluado=None, indicadores=None):
     else:
         indicadores_per_row = [[]] * max(1, len(df_info))
 
-    # Construir filas finales: por cada fila de info (o una fila vacía si no hay info), añadir columnas de indicadores
     rows_final = []
     if df_info.empty:
         rows_final = []
@@ -190,7 +189,7 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                 'indicadores': []
             }
             
-            # Obtener indicadores para esta prueba
+            
             try:
                 inds = indicadores_per_row[idx] if idx < len(indicadores_per_row) else []
                 if isinstance(inds, list):
@@ -200,19 +199,16 @@ def render_export_popover(info_evaluado=None, indicadores=None):
             except Exception:
                 pass
                 
-            # intentar incrustar la imagen (si `ruta_imagen` está presente y el archivo existe)
             try:
                 ruta = dem.get('ruta_imagen') or dem.get('ruta') or dem.get('image') or dem.get('imagen')
                 if ruta:
                     data_url = None
-                    # Si la ruta es un URI de GCS, intentar obtener un data URI usando la utilidad existente
                     try:
                         if isinstance(ruta, str) and ruta.strip().lower().startswith('gs://'):
                             data_url = get_image_data_uri(ruta)
                     except Exception:
                         data_url = None
 
-                    # Si no obtuvimos data_url desde GCS, intentar como ruta local
                     if not data_url:
                         try:
                             if os.path.exists(ruta):
@@ -233,7 +229,6 @@ def render_export_popover(info_evaluado=None, indicadores=None):
     
     pruebas_json = json.dumps(pruebas_data, default=make_serializable)
         
-    # Obtener fecha actual
     current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
     pdf_filename = f"evaluaciones_psicologicas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 

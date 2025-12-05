@@ -179,7 +179,7 @@ def modal_filtros():
             st.rerun()
     
     with col_btn2:
-        if st.button('Aplicar filtros', use_container_width=True, key='btn_aplicar'):
+        if st.button('Aplicar filtros', use_container_width=True, key='btn_aplicar', type='primary'):
             if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
                 st.error("La fecha 'Hasta' no puede ser anterior a la fecha 'Desde'.")
                 st.stop()
@@ -313,7 +313,7 @@ def estadisticas():
             <div class="stat-icon">{users_icon}</div>
             <div class="stat-content">
                 <div class="stat-number">{cantidad_evaluados}</div>
-                <div class="stat-label">Cantidad de personas evaluadas</div>
+                <div class="stat-label-2">Cantidad de personas evaluadas</div>
             </div>
         </div>
         """, unsafe_allow_html=True)

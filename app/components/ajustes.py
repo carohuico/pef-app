@@ -8,6 +8,7 @@ import pandas as pd
 from components.loader import show_loader
 
 def ajustes():
+    show_loader('show_ajustes_loader', min_seconds=2.0)
     # ---------- CSS (externo) ----------
     _css_general = Path(__file__).parent.parent / 'assets' / 'general.css'   
     _sidebar = Path(__file__).parent.parent / 'assets' / 'sidebar_component.css'   
@@ -57,5 +58,5 @@ def ajustes():
         usuarios()  
     with tab4:
         indicadores()
-    show_loader('show_ajustes_loader', min_seconds=1.0)
+    # show_loader('show_ajustes_loader', min_seconds=1.0)
     

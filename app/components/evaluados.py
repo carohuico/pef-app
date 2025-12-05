@@ -869,21 +869,6 @@ def evaluados(can_delete: bool = True, user_id: int = None, owner_name: str = No
         pass
 
     try:
-        # Remove any keys created by previous evaluados instances (prefixed with 'evaluados_')
-        for k in list(st.session_state.keys()):
-            try:
-                if isinstance(k, str) and k.startswith('evaluados_'):
-                    try:
-                        del st.session_state[k]
-                    except Exception:
-                        pass
-            except Exception:
-                continue
-    except Exception:
-        pass
-
-    # Remove cached in-memory dataframe so we always reload current DB state
-    try:
         if 'evaluados_df' in st.session_state:
             try:
                 del st.session_state['evaluados_df']

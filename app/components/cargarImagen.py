@@ -552,7 +552,6 @@ def cargar_imagen_component():
                                 "ocupacion": st.session_state.get("ocupacion", ""),
                                 "grupo": st.session_state.get("form_grupo", ""),
                             }
-                            # Adjuntar ruta de imagen si está disponible en la sesión
                             try:
                                 ruta = st.session_state.get('last_saved_image_path', None)
                                 if ruta:

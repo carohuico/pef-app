@@ -415,7 +415,6 @@ def agregar_dibujo(info_obj):
                         temp_path = Path(TEMP_DIR) / nombre
                         orig_path = Path(ORIGINALS_DIR) / nombre
 
-                        # Ensure parent directories exist before saving
                         try:
                             temp_path.parent.mkdir(parents=True, exist_ok=True)
                         except Exception:

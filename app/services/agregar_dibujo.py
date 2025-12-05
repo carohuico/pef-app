@@ -415,9 +415,25 @@ def agregar_dibujo(info_obj):
                         temp_path = Path(TEMP_DIR) / nombre
                         orig_path = Path(ORIGINALS_DIR) / nombre
 
-                        imagen.save(temp_path)
-                        # Save original image without forcing resize
-                        estandarizar_imagen(imagen, orig_path)
+                        # Ensure parent directories exist before saving
+                        try:
+                            temp_path.parent.mkdir(parents=True, exist_ok=True)
+                        except Exception:
+                            pass
+                        try:
+                            orig_path.parent.mkdir(parents=True, exist_ok=True)
+                        except Exception:
+                            pass
+
+                        # Try to save standardized original first, then a temp copy
+                        try:
+                            estandarizar_imagen(imagen, orig_path)
+                        except Exception as e:
+                            st.error(f"Error saving original image: {e}")
+                        try:
+                            imagen.save(temp_path)
+                        except Exception as e:
+                            st.warning(f"No se pudo guardar copia temporal de la imagen: {e}")
                     
                     st.session_state["agregar_step"] = 2
                     st.rerun(scope="fragment")

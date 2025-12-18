@@ -424,7 +424,6 @@ def agregar_dibujo(info_obj):
                         except Exception:
                             pass
 
-                        # Try to save standardized original first, then a temp copy
                         try:
                             estandarizar_imagen(imagen, orig_path)
                         except Exception as e:

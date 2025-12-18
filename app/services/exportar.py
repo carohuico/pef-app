@@ -737,8 +737,8 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                                 let leftY = rightY;
                                 let rightColY = rightY;
 
-                                const cat1 = catMap['1'] || {{ name: 'Categoría 1', indicadores: [] }};
-                                const cat2 = catMap['2'] || {{ name: 'Categoría 2', indicadores: [] }};
+                                const cat1 = catMap['1'] || {{ name: 'Capacidad de afrontamiento', indicadores: [] }};
+                                const cat2 = catMap['2'] || {{ name: 'Alto riesgo', indicadores: [] }};
 
                                 // Títulos de cada categoría
                                 doc.setFontSize(10);

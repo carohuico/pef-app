@@ -1564,15 +1564,27 @@ def individual(id_evaluado: str = None):
                 return;
             }}
             
-            let html = '';
-            resultados.forEach((resultado, idx) => {{
+            const agrupados = {{}};
+            resultados.forEach((resultado) => {{
                 const rawSignificado = resultado.significado;
                 if (rawSignificado === undefined || rawSignificado === null) return;
                 if (typeof rawSignificado === 'string' && rawSignificado.trim() === '') return;
                 if (typeof rawSignificado === 'string' && rawSignificado.trim() === '-') return;
 
+                const nombre = resultado.nombre_indicador || 'Indicador';
+                const confianza = resultado.confianza || 0;
+                
+                if (!agrupados[nombre] || agrupados[nombre].confianza < confianza) {{
+                    agrupados[nombre] = resultado;
+                }}
+            }});
+            
+            const resultadosUnicos = Object.values(agrupados);
+            
+            let html = '';
+            resultadosUnicos.forEach((resultado, idx) => {{
                 const nombre = escapeHtml(resultado.nombre_indicador || 'Indicador');
-                const significado = escapeHtml(rawSignificado || 'Sin descripción');
+                const significado = escapeHtml(resultado.significado || 'Sin descripción');
                 const confianza = resultado.confianza || 0;
                 const confianzaPct = Math.min(100, Math.max(0, confianza * 100));
                 const delay = idx * 0.05;

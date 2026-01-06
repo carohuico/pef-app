@@ -722,10 +722,15 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                                 prueba.indicadores.forEach(ind => {{
                                     const catId = (ind && ind.id_categoria !== undefined && ind.id_categoria !== null) ? String(ind.id_categoria) : '0';
                                     const catName = (ind && (ind.categoria_nombre || ind.categoria)) ? (ind.categoria_nombre || ind.categoria) : ('Categoría ' + catId);
-                                    if (!catMap[catId]) catMap[catId] = {{ name: catName, indicadores: [] }};
+                                    if (!catMap[catId]) catMap[catId] = {{ name: catName, indicadores: new Set() }};
                                     // Mostrar el 'significado' (oración) del indicador en lugar del nombre
                                     const significado = ind && (ind.significado || ind.descripcion || ind.descripcion_corta || ind.meaning || ind.nombre || ind.Indicador || ind.indicador);
-                                    if (significado) catMap[catId].indicadores.push(String(significado));
+                                    if (significado) catMap[catId].indicadores.add(String(significado));
+                                }});
+                                
+                                // Convertir Sets a arrays
+                                Object.keys(catMap).forEach(catId => {{
+                                    catMap[catId].indicadores = Array.from(catMap[catId].indicadores);
                                 }});
 
                                 // Preparar dos sub-columnas dentro de la columna de resultados

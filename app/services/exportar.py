@@ -733,7 +733,7 @@ def render_export_popover(info_evaluado=None, indicadores=None):
                                     catMap[catId].indicadores = Array.from(catMap[catId].indicadores);
                                 }});
 
-                                // Preparar dos sub-columnas dentro de la columna de resultados
+                                // Preparar dos columnas dentro de la columna de resultados
                                 const resColWidth = columnWidth;
                                 const gutter = 8;
                                 const resHalf = (resColWidth - gutter) / 2;

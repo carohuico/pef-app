@@ -272,6 +272,8 @@ def agregar_dibujo(info_obj):
                         df = pd.DataFrame(rows)
                         if 'Confianza' in df.columns:
                             df['Confianza'] = df['Confianza'].round(2)
+                            df = df.sort_values('Confianza', ascending=False)
+                            df = df.drop_duplicates(subset=['Indicador', 'Descripción'], keep='first')
 
                         try:
                             st.data_editor(

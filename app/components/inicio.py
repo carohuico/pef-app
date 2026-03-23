@@ -74,8 +74,18 @@ def inicio():
             }
 
             const observer = new MutationObserver(blockInteractions);
-            observer.observe(document.body, {childList: true, subtree: true});
-            blockInteractions();
+            const startObserve = function() {
+                if (document.body && document.body.nodeType === Node.ELEMENT_NODE) {
+                    observer.observe(document.body, {childList: true, subtree: true});
+                    blockInteractions();
+                }
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', startObserve, { once: true });
+            } else {
+                startObserve();
+            }
         })();
         </script>
         """, height=0)

@@ -10,7 +10,33 @@ from pathlib import Path
 import base64
 import json
 import os
+import io
+try:
+    import requests
+except Exception:
+    requests = None
 from components.loader import show_loader
+
+
+def _normalize_image_url(value):
+    """Normalize DB image path into an absolute URL when needed."""
+    try:
+        s = str(value).strip()
+    except Exception:
+        return ''
+
+    if not s:
+        return ''
+
+    if s.startswith('data:image/'):
+        return s
+    if s.startswith('http://') or s.startswith('https://'):
+        return s
+
+    hostinger_base = os.environ.get("HOSTINGER_BASE_URL", "http://187.124.151.106:8080")
+    if s.startswith('/'):
+        return f"{hostinger_base.rstrip('/')}{s}"
+    return f"{hostinger_base.rstrip('/')}/{s.lstrip('/')}"
 
 @st.cache_data(ttl=300, max_entries=256)
 def get_info(id: str):
@@ -93,7 +119,7 @@ def get_pruebas_data(id: str):
 
         df['formato'] = df['formato'].astype(str).fillna('').str.replace('.', '', regex=False).str.lower()
 
-        df['ruta_imagen'] = df['ruta_imagen'].apply(lambda x: f"http://187.124.151.106:8080{x}") #!
+        df['ruta_imagen'] = df['ruta_imagen'].apply(_normalize_image_url)
 
         def safe_int(x):
             try:
@@ -117,6 +143,26 @@ def encode_image_to_base64(image_path):
     except Exception as e:
         print(f"Error al leer imagen {image_path}: {e}")
         return None
+
+
+def encode_remote_image_to_base64(image_url):
+    """Download remote image and return (base64, width, height)."""
+    if requests is None:
+        return None, None, None
+    try:
+        resp = requests.get(image_url, timeout=30)
+        resp.raise_for_status()
+        data = resp.content
+        b64 = base64.b64encode(data).decode()
+        try:
+            with _PILImage.open(io.BytesIO(data)) as _tmpim:
+                w, h = _tmpim.size
+        except Exception:
+            w, h = None, None
+        return b64, w, h
+    except Exception as e:
+        print(f"Error al descargar imagen remota {image_url}: {e}")
+        return None, None, None
 
 def individual(id_evaluado: str = None):
     loader_shown_key = f"_individual_loader_shown_{str(id_evaluado)}"
@@ -292,6 +338,17 @@ def individual(id_evaluado: str = None):
                             prueba['_natural_h'] = nh
                     except Exception:
                         nw, nh = None, None
+                except Exception:
+                    b64 = None
+            elif img_rel_str.startswith('http://') or img_rel_str.startswith('https://'):
+                try:
+                    b64_remote, rw, rh = encode_remote_image_to_base64(img_rel_str)
+                    if b64_remote:
+                        b64 = b64_remote
+                    if rw and rh:
+                        nw, nh = rw, rh
+                        prueba['_natural_w'] = nw
+                        prueba['_natural_h'] = nh
                 except Exception:
                     b64 = None
 

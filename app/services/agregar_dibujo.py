@@ -119,6 +119,7 @@ def agregar_dibujo(info_obj):
         # PASO 2: Mostrar resultados
         if st.session_state.get("agregar_uploaded_file") is not None:
             filename = st.session_state["agregar_uploaded_file"].name
+            indicadores = st.session_state.get("agregar_indicadores", [])
             
             prev_uploaded = st.session_state.get('uploaded_file', None)
             try:
@@ -157,23 +158,25 @@ def agregar_dibujo(info_obj):
                     except Exception:
                         pass
 
-                    # Try to capture ruta_gcs/ruta_imagen reported by the model (prefer raw entries)
+                    # Capture ruta_imagen reported by the model (prefer raw entries)
                     try:
                         for ind in (raw_indicadores or []):
                             ruta = None
                             if isinstance(ind, dict):
-                                ruta = ind.get('ruta_imagen') or ind.get('ruta_gcs')
+                                ruta = ind.get('ruta_imagen')
                             if ruta:
-                                st.session_state['last_ruta_gcs'] = ruta
+                                st.session_state['last_ruta_imagen'] = ruta
                                 break
                     except Exception:
                         pass
                 except RuntimeError as e:
                     st.error(f"Error al consultar el servicio de inferencia: {e}")
                     st.session_state["agregar_indicadores"] = []
+                    indicadores = []
                 except Exception as e:
                     st.error(f"Error inesperado al procesar la imagen: {e}")
                     st.session_state["agregar_indicadores"] = []
+                    indicadores = []
             else:
                 indicadores = st.session_state.get("agregar_indicadores", [])
 
@@ -455,7 +458,7 @@ def agregar_dibujo(info_obj):
                         raw_ind = st.session_state.get('agregar_raw_indicadores', None)
                         try:
                             if isinstance(raw_ind, dict):
-                                ruta_imagen = raw_ind.get('ruta_imagen') or raw_ind.get('ruta_gcs')
+                                ruta_imagen = raw_ind.get('ruta_imagen')
                             elif isinstance(raw_ind, list):
                                 for item in raw_ind:
                                     if isinstance(item, dict) and item.get('ruta_imagen'):
@@ -465,11 +468,11 @@ def agregar_dibujo(info_obj):
                             ruta_imagen = None
 
                         last_preview = st.session_state.get('last_preview_local', None)
-                        last_gcs = st.session_state.get('last_ruta_gcs', None)
+                        last_ruta_imagen = st.session_state.get('last_ruta_imagen', None)
 
                         if not ruta_imagen:
-                            if last_gcs:
-                                ruta_imagen = last_gcs
+                            if last_ruta_imagen:
+                                ruta_imagen = last_ruta_imagen
                             else:
                                 # Prefer storing a relative uploads path rather than an absolute filesystem path
                                 ruta_imagen = str(Path("uploads") / "originals" / nombre_archivo)

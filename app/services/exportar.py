@@ -12,7 +12,12 @@ import datetime
 import json
 import os
 import mimetypes
-from services.gcs import get_image_data_uri
+from urllib.parse import urlparse
+
+try:
+    import requests
+except Exception:
+    requests = None
 
 
 # Cached loader for indicador names used during export
@@ -28,6 +33,57 @@ def load_indicadores_nombres():
 
    
 def render_export_popover(info_evaluado=None, indicadores=None):
+    def image_source_to_data_url(source):
+        """Return a data:image/...;base64 URL from http(s), relative URL or local path."""
+        if not source:
+            return None
+
+        try:
+            src = str(source).strip().strip("\"'")
+        except Exception:
+            return None
+
+        if not src:
+            return None
+
+        if src.startswith('data:image/'):
+            return src
+
+        # Relative host path -> absolute URL
+        if src.startswith('/') and not src.startswith('//'):
+            hostinger_base = os.environ.get("HOSTINGER_BASE_URL", "http://187.124.151.106:8080")
+            src = f"{hostinger_base.rstrip('/')}{src}"
+
+        # Remote URL
+        if src.startswith('http://') or src.startswith('https://'):
+            if requests is None:
+                return None
+            try:
+                resp = requests.get(src, timeout=30)
+                resp.raise_for_status()
+                data = resp.content
+                ctype = resp.headers.get('Content-Type', '') or ''
+                mime = ctype.split(';')[0].strip() if 'image/' in ctype else None
+                if not mime:
+                    mime = mimetypes.guess_type(urlparse(src).path)[0] or 'image/jpeg'
+                b64 = base64.b64encode(data).decode('utf-8')
+                return f"data:{mime};base64,{b64}"
+            except Exception:
+                return None
+
+        # Local file
+        try:
+            if os.path.exists(src):
+                with open(src, 'rb') as f:
+                    data = f.read()
+                mime = mimetypes.guess_type(src)[0] or 'image/jpeg'
+                b64 = base64.b64encode(data).decode('utf-8')
+                return f"data:{mime};base64,{b64}"
+        except Exception:
+            return None
+
+        return None
+
     def to_dataframe(obj):
         if obj is None:
             return pd.DataFrame()
@@ -202,23 +258,7 @@ def render_export_popover(info_evaluado=None, indicadores=None):
             try:
                 ruta = dem.get('ruta_imagen') or dem.get('ruta') or dem.get('image') or dem.get('imagen')
                 if ruta:
-                    data_url = None
-                    try:
-                        if isinstance(ruta, str) and ruta.strip().lower().startswith('gs://'):
-                            data_url = get_image_data_uri(ruta)
-                    except Exception:
-                        data_url = None
-
-                    if not data_url:
-                        try:
-                            if os.path.exists(ruta):
-                                with open(ruta, 'rb') as f:
-                                    b = f.read()
-                                b64 = base64.b64encode(b).decode('utf-8')
-                                mime = mimetypes.guess_type(ruta)[0] or 'image/jpeg'
-                                data_url = f"data:{mime};base64,{b64}"
-                        except Exception:
-                            data_url = None
+                    data_url = image_source_to_data_url(ruta)
 
                     if data_url:
                         prueba_info['demograficos']['image_base64'] = data_url

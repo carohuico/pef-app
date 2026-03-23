@@ -10,7 +10,6 @@ from pathlib import Path
 import base64
 import json
 import os
-from services.gcs import get_image_local_path, get_image_data_uri
 from components.loader import show_loader
 
 @st.cache_data(ttl=300, max_entries=256)
@@ -94,7 +93,7 @@ def get_pruebas_data(id: str):
 
         df['formato'] = df['formato'].astype(str).fillna('').str.replace('.', '', regex=False).str.lower()
 
-        df['ruta_imagen'] = df['ruta_imagen'].astype(str).fillna('').str.replace('/', r'\\') 
+        df['ruta_imagen'] = df['ruta_imagen'].apply(lambda x: f"http://187.124.151.106:8080{x}") #!
 
         def safe_int(x):
             try:
@@ -273,18 +272,7 @@ def individual(id_evaluado: str = None):
         img_rel = prueba.get('ruta_imagen', '')
         img_rel_str = str(img_rel) if img_rel is not None else ''
         img_rel_norm = img_rel_str.replace('\\', '/').replace('\\\\', '/')
-
-        is_gs = False
-        gcs_uri = None
-        if img_rel_norm.startswith('gs://'):
-            is_gs = True
-            gcs_uri = img_rel_norm
-        elif img_rel_norm.startswith('gs:/'):
-            is_gs = True
-            gcs_uri = 'gs://' + img_rel_norm.split(':', 1)[1].lstrip('/')
-        elif img_rel_norm.startswith('gs:'):
-            is_gs = True
-            gcs_uri = 'gs://' + img_rel_norm.split(':', 1)[1].lstrip('/')
+        print(f"Processing image path: original='{img_rel}', normalized='{img_rel_norm}'")
 
         nw, nh = None, None
         b64 = None
@@ -292,43 +280,20 @@ def individual(id_evaluado: str = None):
         src_to_use = None
 
         try:
-            if is_gs and gcs_uri:
-                # Prefer a downloaded local file so we can read natural size
-                local_path = get_image_local_path(gcs_uri)
-                if local_path and os.path.exists(local_path):
+            img_rel_clean = img_rel_str.lstrip('/').lstrip('\\')
+            img_path = (Path(__file__).parent / img_rel_clean).resolve()
+            if os.path.isfile(img_path):
+                try:
+                    b64 = encode_image_to_base64(str(img_path))
                     try:
-                        img_path = Path(local_path)
-                        b64 = encode_image_to_base64(str(img_path))
-                        try:
-                            with _PILImage.open(img_path) as _tmpim:
-                                nw, nh = _tmpim.size
-                                prueba['_natural_w'] = nw
-                                prueba['_natural_h'] = nh
-                        except Exception:
-                            nw, nh = None, None
+                        with _PILImage.open(img_path) as _tmpim:
+                            nw, nh = _tmpim.size
+                            prueba['_natural_w'] = nw
+                            prueba['_natural_h'] = nh
                     except Exception:
-                        b64 = None
-                else:
-                    # Try building a data URI directly from GCS
-                    data_uri = get_image_data_uri(gcs_uri)
-                    if data_uri:
-                        src_to_use = data_uri
-            else:
-                # Local or relative path: construct path relative to this file
-                img_rel_clean = img_rel_str.lstrip('/').lstrip('\\')
-                img_path = (Path(__file__).parent / img_rel_clean).resolve()
-                if os.path.isfile(img_path):
-                    try:
-                        b64 = encode_image_to_base64(str(img_path))
-                        try:
-                            with _PILImage.open(img_path) as _tmpim:
-                                nw, nh = _tmpim.size
-                                prueba['_natural_w'] = nw
-                                prueba['_natural_h'] = nh
-                        except Exception:
-                            nw, nh = None, None
-                    except Exception:
-                        b64 = None
+                        nw, nh = None, None
+                except Exception:
+                    b64 = None
 
             # Build final source to append
             if b64:
@@ -337,7 +302,7 @@ def individual(id_evaluado: str = None):
                 src_to_use = data_uri
 
             if src_to_use is None:
-                src_to_use = gcs_uri if (is_gs and gcs_uri) else img_rel_str
+                src_to_use = img_rel_str
 
             prueba['_data_uri'] = src_to_use
             images_data.append(src_to_use)
@@ -348,7 +313,6 @@ def individual(id_evaluado: str = None):
         fechas_data.append(prueba.get('fecha', 'N/A'))
         ids_prueba.append(prueba.get('id_prueba'))
         
-        # IMPORTANTE: Procesar resultados_json DENTRO del loop
         resultados_json = prueba.get('resultados_json', '')
         if resultados_json:
             try:
@@ -1238,18 +1202,59 @@ def individual(id_evaluado: str = None):
             return div.innerHTML;
         }}
         
-        function convertBboxToPixels(bbox, imgNaturalWidth, imgNaturalHeight, metaW, metaH) {{
-            const x_min = bbox[0];
-            const y_min = bbox[1];
-            const x_max = bbox[2];
-            const y_max = bbox[3];
-
-            return {{
-                x: Math.max(0, Math.min(imgNaturalWidth, x_min)),
-                y: Math.max(0, Math.min(imgNaturalHeight, y_min)),
-                width: Math.max(0, Math.min(imgNaturalWidth - x_min, x_max - x_min)),
-                height: Math.max(0, Math.min(imgNaturalHeight - y_min, y_max - y_min))
+        function convertBboxToPixels(resultado, imgNaturalWidth, imgNaturalHeight) {{
+            const toNum = (v, fallback = 0) => {{
+                const n = Number(v);
+                return Number.isFinite(n) ? n : fallback;
             }};
+
+            const W = Math.max(1, toNum(imgNaturalWidth, 1));
+            const H = Math.max(1, toNum(imgNaturalHeight, 1));
+
+            const xMinRaw = toNum(resultado?.x_min, 0);
+            const yMinRaw = toNum(resultado?.y_min, 0);
+            const xMaxRaw = toNum(resultado?.x_max, 0);
+            const yMaxRaw = toNum(resultado?.y_max, 0);
+
+            let x = 0;
+            let y = 0;
+            let width = 0;
+            let height = 0;
+
+            const isAbsoluteXyxy = Boolean(resultado?._coords_in_absolute_pixels === true);
+            const valuesLookNormalized = [xMinRaw, yMinRaw, xMaxRaw, yMaxRaw].every(v => v >= 0 && v <= 1.0001);
+
+            if (isAbsoluteXyxy) {{
+                x = xMinRaw;
+                y = yMinRaw;
+                width = xMaxRaw - xMinRaw;
+                height = yMaxRaw - yMinRaw;
+            }} else if (valuesLookNormalized) {{
+                // DB stores normalized xywh: x_min, y_min, width, height in [0,1].
+                x = xMinRaw * W;
+                y = yMinRaw * H;
+                width = xMaxRaw * W;
+                height = yMaxRaw * H;
+            }} else {{
+                // Fallback: support both absolute xyxy and absolute xywh.
+                const looksLikeXyxy = (xMaxRaw > xMinRaw) && (yMaxRaw > yMinRaw);
+                x = xMinRaw;
+                y = yMinRaw;
+                if (looksLikeXyxy) {{
+                    width = xMaxRaw - xMinRaw;
+                    height = yMaxRaw - yMinRaw;
+                }} else {{
+                    width = xMaxRaw;
+                    height = yMaxRaw;
+                }}
+            }}
+
+            x = Math.max(0, Math.min(W, x));
+            y = Math.max(0, Math.min(H, y));
+            width = Math.max(0, Math.min(W - x, width));
+            height = Math.max(0, Math.min(H - y, height));
+
+            return {{ x, y, width, height }};
         }}
 
         function drawBoundingBoxes() {{
@@ -1292,13 +1297,7 @@ def individual(id_evaluado: str = None):
             resultados.forEach((resultado, idx) => {{
                 if (resultado.x_min === undefined || resultado.x_min === null) return;
                 
-                const bboxPixels = convertBboxToPixels(
-                    [resultado.x_min, resultado.y_min, resultado.x_max, resultado.y_max],
-                    img.naturalWidth,
-                    img.naturalHeight,
-                    null,
-                    null
-                );
+                const bboxPixels = convertBboxToPixels(resultado, img.naturalWidth, img.naturalHeight);
                 
                 // bboxPixels are already in natural image pixels (internal canvas coords)
                 const x = bboxPixels.x;

@@ -7,8 +7,7 @@ import threading
 import time
 from typing import Optional
 
-# Lightweight connection pool to reduce latency when opening many DB connections.
-# Pool size is configurable via st.secrets['DB_POOL_SIZE'] or env DB_POOL_SIZE.
+
 _POOL: Optional[queue.Queue] = None
 _POOL_LOCK = threading.Lock()
 
@@ -25,10 +24,10 @@ def _get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
 
 
 def _make_connection():
-    server = _get_secret("DB_HOST") or "34.55.82.47"
+    server = _get_secret("DB_HOST") or "187.124.151.106"
     port = int(_get_secret("DB_PORT") or os.environ.get("DB_PORT") or 1433)
     user = _get_secret("DB_USER") or "streamlit_user"
-    password = _get_secret("DB_PASS") or "pbll_pwd"
+    password = _get_secret("DB_PASS") or "Pbll_pwd_2026!"
     database = _get_secret("DB_NAME") or "PBLL"
 
     return pymssql.connect(
@@ -81,7 +80,6 @@ def borrow_connection(timeout: float = 2.0):
     try:
         conn = _POOL.get(block=True, timeout=timeout)
     except Exception:
-        # pool vacío o timeout -> crear conexión efímera
         return _make_connection()
 
     # health check

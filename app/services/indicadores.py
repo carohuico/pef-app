@@ -5,15 +5,10 @@ import json
 import os
 import tempfile
 import logging
-from datetime import datetime
 from typing import List, Dict, Optional
+from urllib.parse import urlparse
 
 # external libs
-try:
-    from google.cloud import storage
-except Exception:
-    storage = None
-
 try:
     import requests
 except Exception:
@@ -30,144 +25,54 @@ def load_indicadores_por_ids(ids_csv: str):
     return fetch_df(GET_INDICADORES_POR_IDS, {"ids_csv": ids_csv})
 
 
-def _get_storage_client_from_secrets() -> 'storage.Client':
-    """Create a google.storage client from service-account JSON placed in:
-    - env `GCP_SA_KEY_JSON` (string JSON), or
-    - `st.secrets['GCP_SA_KEY_JSON']`, or
-    - any secret dict that looks like a service account.
+def download_image_source_to_tmp(image_source: str) -> str:
+    """Resolve a preview source into a local temp file path.
 
-    Raises RuntimeError when no usable credentials found.
+    Supports:
+    - Hostinger/public URLs (http/https)
+    - Hostinger relative paths like /static/pruebas/... (using HOSTINGER_BASE_URL)
+    - Local filesystem paths
     """
-    if storage is None:
-        raise RuntimeError("google-cloud-storage package not available")
+    if not image_source:
+        raise ValueError("Empty image source")
 
-    sa_json = os.environ.get('GCP_SA_KEY_JSON')
-    if not sa_json:
-        try:
-            if isinstance(st.secrets, dict) and 'GCP_SA_KEY_JSON' in st.secrets:
-                sa_json = st.secrets.get('GCP_SA_KEY_JSON')
-            else:
-                for k, v in st.secrets.items():
-                    if isinstance(v, dict) and (v.get('type') == 'service_account' or 'private_key' in v):
-                        sa_json = json.dumps(v)
-                        break
-        except Exception:
-            sa_json = None
+    src = str(image_source).strip().strip("\"'")
+    if not src:
+        raise ValueError("Empty image source")
 
-    parsed = None
-    if sa_json:
+    # Relative hostinger path (e.g. /static/pruebas/...) -> absolute URL
+    if src.startswith('/') and not src.startswith('//'):
+        hostinger_base = os.environ.get("HOSTINGER_BASE_URL", "http://187.124.151.106:8080")
+        src = f"{hostinger_base.rstrip('/')}{src}"
+
+    # HTTP(S): download to temp
+    if src.startswith("http://") or src.startswith("https://"):
+        if requests is None:
+            raise RuntimeError("The 'requests' package is required to download http(s) images")
+
+        parsed = urlparse(src)
+        ext = os.path.splitext(parsed.path)[1] or '.jpg'
+        fd, local_path = tempfile.mkstemp(prefix='pef_preview_', suffix=ext)
+        os.close(fd)
+
         try:
-            if isinstance(sa_json, str):
-                parsed = json.loads(sa_json)
-            elif isinstance(sa_json, dict):
-                parsed = sa_json
+            resp = requests.get(src, timeout=60)
+            resp.raise_for_status()
+            with open(local_path, 'wb') as f:
+                f.write(resp.content)
+            return local_path
         except Exception:
             try:
-                repaired = sa_json.replace('\\n', '\n')
-                parsed = json.loads(repaired)
+                os.remove(local_path)
             except Exception:
-                parsed = None
+                pass
+            raise
 
-    if parsed is None:
-        raise RuntimeError("No GCP service account JSON found in 'GCP_SA_KEY_JSON' (env) or Streamlit secrets")
+    # Local file path
+    if os.path.exists(src):
+        return src
 
-    try:
-        # Normalize private_key newlines if they were escaped (common when storing JSON in env/secrets)
-        try:
-            pk = parsed.get('private_key')
-            if isinstance(pk, str) and "\\n" in pk:
-                parsed = dict(parsed)
-                parsed['private_key'] = pk.replace('\\n', '\n')
-        except Exception:
-            # if normalization fails, continue and let from_service_account_info raise
-            pass
-
-        from google.oauth2 import service_account
-        creds = service_account.Credentials.from_service_account_info(parsed)
-
-        # Quick proactive refresh test to surface signature/invalid-key errors early.
-        try:
-            from google.auth.transport.requests import Request
-            try:
-                creds.refresh(Request())
-            except Exception as e:
-                # Log a non-verbose warning with the key id (do NOT log private_key)
-                logging.warning(
-                    "Service account credential refresh failed for private_key_id=%s: %s",
-                    parsed.get('private_key_id'), str(e)
-                )
-                # continue and allow client creation to proceed; failures will be
-                # handled by the caller or by the storage client creation below.
-        except Exception:
-            # If the transport package isn't available or refresh fails, we still proceed
-            # to create the storage client and let the caller observe runtime errors.
-            pass
-
-        client = storage.Client(credentials=creds, project=parsed.get('project_id'))
-        return client
-    except Exception as e:
-        # Warn but do not print a full traceback here; caller can handle failures.
-        logging.warning("Failed to create storage.Client from provided service account: %s", str(e))
-        raise
-
-
-def find_and_download_latest_for_id(id_evaluado: int, bucket_name: str = 'bucket-pbll') -> str:
-    """List objects under `pruebas/{id_evaluado}/` and download the most recently-updated blob to /tmp.
-
-    Returns the local file path. Raises FileNotFoundError if no blobs found.
-    """
-    if storage is None:
-        raise RuntimeError("google-cloud-storage package not available")
-
-    try:
-        client = _get_storage_client_from_secrets()
-    except Exception:
-        try:
-            client = storage.Client()
-        except Exception as e:
-            logging.warning("Unable to create default storage.Client() in find_and_download_latest_for_id: %s", str(e))
-            raise RuntimeError("No usable GCS credentials available") from e
-
-    prefix = f"pruebas/{id_evaluado}/"
-    blobs = list(client.list_blobs(bucket_name, prefix=prefix))
-    if not blobs:
-        raise FileNotFoundError(f"No blobs found under gs://{bucket_name}/{prefix}")
-
-    # choose the most recently-updated blob
-    blobs_sorted = sorted(blobs, key=lambda b: b.updated or datetime.min, reverse=True)
-    chosen = blobs_sorted[0]
-    local_path = os.path.join(tempfile.gettempdir(), os.path.basename(chosen.name))
-    chosen.download_to_filename(local_path)
-    return local_path
-
-
-def download_gcs_uri_to_tmp(gcs_uri: str) -> str:
-    """Download a gs://bucket/path into /tmp and return local path."""
-    if not gcs_uri.startswith('gs://'):
-        raise ValueError("gcs_uri must start with 'gs://'")
-    if storage is None:
-        raise RuntimeError("google-cloud-storage package not available")
-
-    parts = gcs_uri[5:].split('/', 1)
-    bucket_name = parts[0]
-    blob_path = parts[1] if len(parts) > 1 else ''
-
-    try:
-        client = _get_storage_client_from_secrets()
-    except Exception:
-        # Attempt ADC fallback but avoid noisy exceptions; surface a clear error
-        # if ADC is not configured.
-        try:
-            client = storage.Client()
-        except Exception as e:
-            logging.warning("Unable to create default storage.Client() in download_gcs_uri_to_tmp: %s", str(e))
-            raise RuntimeError("No usable GCS credentials available") from e
-
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(blob_path)
-    local_path = os.path.join(tempfile.gettempdir(), os.path.basename(blob_path))
-    blob.download_to_filename(local_path)
-    return local_path
+    raise FileNotFoundError(f"Unsupported or missing image source: {src}")
 
 
 def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict]:
@@ -175,17 +80,14 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
 
     Selection priority for the image sent to the model:
       1. `st.session_state['uploaded_file']` if present (uploaded in UI)
-      2. newest blob under `pruebas/{id_evaluado}/` when `id_evaluado` is known
-      3. `image_name_or_id` interpreted as a local file path
+            2. `image_name_or_id` interpreted as URL o local file path
 
-    After receiving the response, prefer `archivo.ruta_gcs` from the model metadata
+        After receiving the response, prefer `archivo.ruta_imagen` from the model metadata
     to download an annotated preview image (saved to `/tmp/pef_img.jpg`).
     Returns a list of indicadores enriched from the DB.
     """
     if requests is None:
         raise RuntimeError("The 'requests' package is required. Install with: pip install requests")
-    if storage is None:
-        raise RuntimeError("The 'google-cloud-storage' package is required. Install with: pip install google-cloud-storage")
 
     id_evaluado: Optional[int] = None
     try:
@@ -225,27 +127,23 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
             f.write(uploaded.getbuffer())
         used_uploaded = True
     else:
-        if id_evaluado is not None:
-            try:
-                downloaded = find_and_download_latest_for_id(id_evaluado)
-                try:
-                    with open(downloaded, 'rb') as r, open(tmp_send, 'wb') as w:
-                        w.write(r.read())
-                except Exception:
-                    tmp_send = downloaded
-            except FileNotFoundError:
-                # 3) fallback: local path
-                if os.path.exists(str(image_name_or_id)):
-                    tmp_send = str(image_name_or_id)
-                else:
-                    logging.warning(f"No source image found for id {id_evaluado}")
-                    return []
-        else:
-            if os.path.exists(str(image_name_or_id)):
-                tmp_send = str(image_name_or_id)
-            else:
-                logging.warning("No uploaded file, no id_evaluado and image_name_or_id is not a local path")
-                return []
+        resolved_source = None
+        source_candidate = str(image_name_or_id)
+        try:
+            resolved_source = download_image_source_to_tmp(source_candidate)
+        except Exception:
+            if os.path.exists(source_candidate):
+                resolved_source = source_candidate
+
+        if resolved_source is None:
+            logging.warning("No source image found for id=%s source=%s", str(id_evaluado), str(image_name_or_id))
+            return []
+
+        try:
+            with open(resolved_source, 'rb') as r, open(tmp_send, 'wb') as w:
+                w.write(r.read())
+        except Exception:
+            tmp_send = resolved_source
 
 
     loading_messages = [
@@ -314,13 +212,14 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                 result_holder['result'] = []
                 return
 
-            # prefer archivo.ruta_gcs for preview if present
+            # Prefer model-provided image path/url for preview if present.
             archivo = principal.get('archivo') or {}
-            ruta_gcs = archivo.get('ruta_gcs') if isinstance(archivo, dict) else None
-            print("ruta_gcs =", ruta_gcs)
-            if ruta_gcs:
+            ruta_imagen = None
+            if isinstance(archivo, dict):
+                ruta_imagen = archivo.get('ruta_imagen')
+            if ruta_imagen:
                 try:
-                    preview_local = download_gcs_uri_to_tmp(ruta_gcs)
+                    preview_local = download_image_source_to_tmp(ruta_imagen)
                     try:
                         with open(preview_local, 'rb') as r, open(tmp_preview, 'wb') as w:
                             w.write(r.read())
@@ -330,10 +229,9 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                         except Exception:
                             pass
                 except Exception as e:
-                    # Log a compact warning without a full traceback to reduce noise
-                    logging.warning("Failed to download preview from archivo.ruta_gcs: %s", str(e))
+                    logging.warning("Failed to download preview from archivo.ruta_imagen: %s", str(e))
                 try:
-                    st.session_state['last_ruta_gcs'] = ruta_gcs
+                    st.session_state['last_ruta_imagen'] = ruta_imagen
                     st.session_state['last_preview_local'] = tmp_preview
                 except Exception:
                     pass
@@ -342,13 +240,6 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                     if used_uploaded:
                         with open(tmp_send, 'rb') as r, open(tmp_preview, 'wb') as w:
                             w.write(r.read())
-                    elif id_evaluado is not None:
-                        try:
-                            preview_local = find_and_download_latest_for_id(id_evaluado)
-                            with open(preview_local, 'rb') as r, open(tmp_preview, 'wb') as w:
-                                w.write(r.read())
-                        except Exception:
-                            pass
                 except Exception:
                     pass
 
@@ -372,7 +263,7 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                             'y_min': int(bbox[1]) if len(bbox) > 1 else 0,
                             'x_max': int(bbox[2]) if len(bbox) > 2 else 0,
                             'y_max': int(bbox[3]) if len(bbox) > 3 else 0,
-                            'ruta_imagen': ruta_gcs,
+                            'ruta_imagen': ruta_imagen,
                         })
                     except Exception:
                         continue

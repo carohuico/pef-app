@@ -172,26 +172,29 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
             try:
                 with open(tmp_send, 'rb') as f:
                     files = {"file": (os.path.basename(tmp_send), f, mime_type)}
+                    logging.warning(f"[PBLL] Calling inference endpoint={endpoint} id_evaluado={id_evaluado} file={os.path.basename(tmp_send)}")
                     resp = requests.post(endpoint, params=params, files=files, timeout=120)
-            except Exception:
-                logging.exception("Error sending request to inference endpoint")
-                raise
+                    logging.warning(f"[PBLL] Response status={resp.status_code}")
+                    logging.warning(f"[PBLL] Response headers={dict(resp.headers)}")
+            except Exception as e:
+                logging.exception("[PBLL] Error sending request to inference endpoint")
+                raise RuntimeError(f"Error sending request to inference endpoint: {e}")
 
             if not resp.ok:
-                body = None
                 try:
                     body = resp.text
-                except Exception:
-                    body = '<unable to read body>'
-                err_msg = f"Inference endpoint returned {resp.status_code}: {body}"
-                logging.error(err_msg)
-                raise RuntimeError(err_msg)
+                except Exception as e:
+                    body = f"<unable to read body: {e}>"
+
+                logging.error(f"[PBLL] Inference endpoint failed status={resp.status_code} body={body}")
+                raise RuntimeError(f"Inference endpoint returned {resp.status_code}: {body}")
 
             try:
                 data = resp.json()
-            except Exception:
-                logging.exception("Failed to parse JSON from inference response")
-                raise
+                logging.warning(f"[PBLL] JSON parsed ok type={type(data)}")
+            except Exception as e:
+                logging.exception("[PBLL] Failed to parse JSON from inference response")
+                raise RuntimeError(f"Failed to parse JSON from inference response: {e}")
 
             if not data:
                 result_holder['result'] = []
@@ -215,11 +218,14 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
                 result_holder['result'] = []
                 return
 
+            logging.warning(f"[PBLL] principal keys={list(principal.keys()) if isinstance(principal, dict) else type(principal)}")
+
             # Prefer model-provided image path/url for preview if present.
             archivo = principal.get('archivo') or {}
             ruta_imagen = None
             if isinstance(archivo, dict):
                 ruta_imagen = archivo.get('ruta_imagen') or archivo.get('ruta_gcs')
+            logging.warning(f"[PBLL] ruta_imagen resolved={ruta_imagen}")
             if ruta_imagen:
                 try:
                     preview_local = download_image_source_to_tmp(ruta_imagen)

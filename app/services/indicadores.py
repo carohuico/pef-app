@@ -159,7 +159,10 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
     def worker():
         try:
             # call inference
-            endpoint = "https://pef-model-326047181104.us-central1.run.app/predict"
+            endpoint = os.environ.get(
+                "INFERENCE_ENDPOINT",
+                "http://187.124.151.106:8080/predict"
+            )
             params = {}
             if id_evaluado is not None:
                 params['id_evaluado'] = int(id_evaluado)
@@ -216,7 +219,7 @@ def simular_resultado(image_name_or_id, show_overlay: bool = False) -> List[Dict
             archivo = principal.get('archivo') or {}
             ruta_imagen = None
             if isinstance(archivo, dict):
-                ruta_imagen = archivo.get('ruta_imagen')
+                ruta_imagen = archivo.get('ruta_imagen') or archivo.get('ruta_gcs')
             if ruta_imagen:
                 try:
                     preview_local = download_image_source_to_tmp(ruta_imagen)

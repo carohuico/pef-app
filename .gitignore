@@ -33,3 +33,5 @@ build/
 .streamlit/secrets.toml
 # Test files
 test.jpg
+__pycache__/
+*.pyc
